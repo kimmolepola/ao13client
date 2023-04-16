@@ -17,7 +17,7 @@ const Game = () => {
 
   const { connect, disconnect } = networkingHooks.useConnection();
   hooks.useControls();
-  hooks.useAnimation(ref);
+  hooks.useRendering(ref);
 
   const setPage = useSetRecoilState(atoms.page);
   const turnCredentials = useRecoilValue(atoms.turnCredentials);

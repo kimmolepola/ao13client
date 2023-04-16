@@ -90,7 +90,7 @@ const Input = () => {
       autoComplete="off"
     >
       <input
-        className={clsx(theme.cInput, "w-[unset] grow")}
+        className={clsx(theme.cInput, "w-0 grow relative w-full")}
         type="text"
         value={value}
         onChange={onChange}
@@ -99,7 +99,10 @@ const Input = () => {
         onBlur={onBlur}
       />
       <button
-        className={clsx(theme.cButton, "w-8 flex justify-center items-center")}
+        className={clsx(
+          theme.cButton,
+          "w-[10%] max-w-[2.5rem] min-w-[1rem] flex justify-center items-center"
+        )}
         type="submit"
         aria-label="submit"
       >

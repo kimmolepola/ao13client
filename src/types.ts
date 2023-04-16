@@ -1,6 +1,13 @@
 import { RefObject } from "react";
 import * as THREE from "three";
 
+export enum Position {
+  RIGHT,
+  DOWN,
+  LEFT,
+  UP,
+}
+
 export type Three = {
   scene: THREE.Scene;
   camera: THREE.Camera;

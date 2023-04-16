@@ -27,6 +27,10 @@
     "JSX": "readonly"
   },
   "rules": {
+    "no-lonely-if": "off",
+    "react/self-closing-comp": "off",
+    "no-empty": "warn",
+    "spaced-comment": "off",
     "prefer-const": "warn",
     "prefer-template": "off",
     "no-unused-vars": "off",
@@ -56,7 +60,7 @@
       }
     ],
     "prettier/prettier": [
-      "error",
+      "warn",
       {
         "endOfLine": "auto"
       },

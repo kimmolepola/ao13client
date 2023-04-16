@@ -41,7 +41,6 @@ export const useObjectsOnClient = () => {
         const s = o && data.data[o.id];
         if (!s) {
           objectIdsChanged = true;
-          objects.splice(i, 1);
         } else {
           o.username = s.sUsername;
         }
