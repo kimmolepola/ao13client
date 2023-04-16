@@ -170,6 +170,7 @@ export const useConnection = () => {
     state.main
       ? await handleQuitForObjectsOnMain()
       : handleQuitForObjectsOnClient();
+    state.main = false;
     socket?.disconnect();
     socket?.off("connect");
     socket?.off("disconnect");
@@ -182,7 +183,6 @@ export const useConnection = () => {
     peerConnections.splice(0, peerConnections.length);
     setOwnId(undefined);
     setMain(false);
-    state.main = false;
   };
 
   const connect = async () => {

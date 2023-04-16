@@ -96,7 +96,7 @@ export const useObjectsOnMain = () => {
       console.log("--SET OBJECT IDS:", ids);
       handleSendState(sendOrdered);
     },
-    [setObjectIds, sendOrdered]
+    [setObjectIds, sendOrdered, ownId]
   );
 
   const handleRemoveIdOnMain = useCallback(
@@ -121,6 +121,7 @@ export const useObjectsOnMain = () => {
         handleSendState(sendOrdered);
       }, parameters.sendIntervalMainState);
       savePlayerDataIntervalId = window.setInterval(() => {
+        console.log("--interval");
         savePlayerDataOnMain();
       }, parameters.savePlayerDataInterval);
     }
@@ -131,6 +132,7 @@ export const useObjectsOnMain = () => {
   }, [main, sendOrdered]);
 
   const handleQuitForObjectsOnMain = useCallback(async () => {
+    console.log("--handleQuitForObjectsOnMain");
     await savePlayerDataOnMain();
     objects.splice(0, objects.length);
     setObjectIds([]);

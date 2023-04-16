@@ -1,4 +1,4 @@
-import { useEffect, memo, useCallback } from "react";
+import { useRef, useEffect, memo, useCallback } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
 import * as networkingHooks from "../networking/hooks";
@@ -13,18 +13,19 @@ let initialized = false;
 
 const Game = () => {
   console.log("--Game");
+  const ref = useRef(null);
 
   const { connect, disconnect } = networkingHooks.useConnection();
   hooks.useControls();
-  hooks.useAnimation();
+  hooks.useAnimation(ref);
 
   const setPage = useSetRecoilState(atoms.page);
   const turnCredentials = useRecoilValue(atoms.turnCredentials);
 
   const quit = useCallback(async () => {
+    await disconnect();
     setPage("frontpage");
     initialized = false;
-    disconnect();
   }, [setPage, disconnect]);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ const Game = () => {
 
   return (
     <div className="w-full h-full bg-rose-50">
-      {/* <Canvas /> */}
+      <div ref={ref} />
       <UserInterface quit={quit} />
     </div>
   );
