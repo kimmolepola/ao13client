@@ -1,7 +1,7 @@
 import { useEffect, memo, useCallback } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
-import * as networkingHooks from "../networking/hooks2";
+import * as networkingHooks from "../networking/hooks";
 
 import Canvas from "./components/Canvas";
 import UserInterface from "./components/UI";
@@ -16,6 +16,7 @@ const Game = () => {
 
   const { connect, disconnect } = networkingHooks.useConnection();
   hooks.useControls();
+  hooks.useAnimation();
 
   const setPage = useSetRecoilState(atoms.page);
   const turnCredentials = useRecoilValue(atoms.turnCredentials);
@@ -39,10 +40,10 @@ const Game = () => {
   }, [connect, turnCredentials]);
 
   return (
-    <>
-      <Canvas />
+    <div className="w-full h-full bg-rose-50">
+      {/* <Canvas /> */}
       <UserInterface quit={quit} />
-    </>
+    </div>
   );
 };
 

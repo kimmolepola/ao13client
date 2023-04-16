@@ -30,7 +30,7 @@ const AppBar = () => {
         <div className="w-1/3 flex justify-center">
           {user?.username && `Hi, ${user.username}`}
         </div>
-        <div className="w-1/3 flex justify-end pr-3 gap-4">
+        <div className="w-1/3 flex justify-end pr-3 gap-2">
           {user && !user.username.includes("guest_") && (
             <Link className="text-2xl active:text-black" to="/settings">
               {"\u2699"}

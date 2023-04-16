@@ -4,7 +4,7 @@ import { useRecoilValue, useSetRecoilState } from "recoil";
 
 import { checkOkToStart } from "src/networking/services/user.service";
 import { getTurnCredentials } from "src/networking/services/auth.service";
-import * as networkingHooks from "src/networking/hooks3";
+import * as networkingHooks from "src/networking/hooks";
 
 import Settings from "./Settings";
 

@@ -1,61 +1,55 @@
-import { useEffect, useCallback, RefObject } from "react";
+import { useEffect, useCallback } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import * as THREE from "three";
 
 import {
   savePlayerData,
   getGameObject,
-} from "../../networking/services/gameObject.service";
-import * as networkingHooks from "../../networking/hooks3";
+} from "src/networking/services/gameObject.service";
+import * as networkingHooks from "src/networking/hooks";
+import { objects } from "src/globals";
 
-import * as parameters from "../../parameters";
-import * as atoms from "../../atoms";
-import * as types from "../../types";
+import * as parameters from "src/parameters";
+import * as atoms from "src/atoms";
+import * as types from "src/types";
 
-const handleNewIds = async (newIds: string[], o: types.GameObject[]) => {
-  const objects = o;
-  await Promise.all(
-    newIds.map(async (id) => {
-      const initialGameObject = (await getGameObject(id)).data;
-      if (initialGameObject) {
-        const gameObject = {
-          ...initialGameObject,
-          id,
-          controlsUp: 0,
-          controlsDown: 0,
-          controlsLeft: 0,
-          controlsRight: 0,
-          controlsOverChannelsUp: 0,
-          controlsOverChannelsDown: 0,
-          controlsOverChannelsLeft: 0,
-          controlsOverChannelsRight: 0,
-          rotationSpeed: parameters.rotationSpeed,
-          speed: parameters.speed,
-          backendPosition: new THREE.Vector3(),
-          backendQuaternion: new THREE.Quaternion(),
-          keyDowns: [],
-          infoElement: undefined,
-          infoBoxElement: undefined,
-          object3D: undefined,
-        };
-        const oldInstanceIndex = objects.findIndex((x) => x.id === id);
-        if (oldInstanceIndex !== -1) {
-          objects[oldInstanceIndex] = gameObject;
-        } else {
-          objects.push(gameObject);
-        }
-      } else {
-        console.error("Failed to add new object, no initialGameObject");
-      }
-    })
-  );
+const handleNewId = async (ownId: string | undefined, id: string) => {
+  if (!objects.some((x) => x.id === id)) {
+    const initialGameObject = (await getGameObject(id)).data;
+    if (initialGameObject) {
+      const gameObject = {
+        ...initialGameObject,
+        id,
+        isMe: id === ownId,
+        controlsUp: 0,
+        controlsDown: 0,
+        controlsLeft: 0,
+        controlsRight: 0,
+        controlsOverChannelsUp: 0,
+        controlsOverChannelsDown: 0,
+        controlsOverChannelsLeft: 0,
+        controlsOverChannelsRight: 0,
+        rotationSpeed: parameters.rotationSpeed,
+        speed: parameters.speed,
+        backendPosition: new THREE.Vector3(),
+        backendQuaternion: new THREE.Quaternion(),
+        keyDowns: [],
+        infoElement: undefined,
+        infoBoxElement: undefined,
+        object3D: undefined,
+      };
+      objects.push(gameObject);
+    } else {
+      console.error("Failed to add new object, no initialGameObject");
+    }
+  }
   return objects.map((x) => x.id);
 };
 
-const savePlayerDataOnMain = async (objects: types.GameObject[]) => {
+const savePlayerDataOnMain = async () => {
   const data =
     objects.reduce((acc: types.PlayerState[], cur) => {
-      if (cur.player) {
+      if (cur.isPlayer) {
         acc.push({ remoteId: cur.id, score: cur.score });
       }
       return acc;
@@ -63,27 +57,13 @@ const savePlayerDataOnMain = async (objects: types.GameObject[]) => {
   await savePlayerData(data);
 };
 
-const handleRemoveIds = (idsToRemove: string[], o: types.GameObject[]) => {
-  const objects = o;
-  savePlayerDataOnMain(objects);
-  for (let i = objects.length - 1; i > -1; i--) {
-    if (idsToRemove.includes(objects[i].id)) {
-      objects.splice(i, 1);
-    }
-  }
-  return objects.map((x) => x.id);
-};
-
-const handleSendState = (
-  sendOrdered: (data: types.State) => void,
-  objects: types.GameObject[]
-) => {
+const handleSendState = (sendOrdered: (data: types.State) => void) => {
   sendOrdered({
     type: types.NetDataType.STATE,
     data: objects.reduce((acc: { [id: string]: types.StateObject }, cur) => {
       acc[cur.id] = {
         sId: cur.id,
-        sPlayer: cur.player,
+        sIsPlayer: cur.isPlayer,
         sUsername: cur.username,
         sScore: cur.score,
         sRotationSpeed: cur.rotationSpeed,
@@ -101,51 +81,35 @@ const handleSendState = (
   });
 };
 
-export const useObjectsOnMain = (objectsRef: RefObject<types.GameObject[]>) => {
-  console.log("--useObjectsOnMain");
-
+export const useObjectsOnMain = () => {
+  const ownId = useRecoilValue(atoms.ownId);
   const main = useRecoilValue(atoms.main);
   const setObjectIds = useSetRecoilState(atoms.objectIds);
   const { sendOrdered } = networkingHooks.useSendFromMain();
 
-  const handlePossiblyNewIdOnMain = useCallback(
-    async (id: string) => {
-      if (objectsRef.current && !objectsRef.current.some((x) => x.id === id)) {
-        const ids = await handleNewIds([id], objectsRef.current);
-        setObjectIds(ids);
-        handleSendState(sendOrdered, objectsRef.current);
-      }
+  const handleNewIdOnMain = useCallback(
+    async (newId: string) => {
+      console.log("--new id:", newId);
+      const ids = await handleNewId(ownId, newId);
+      setObjectIds(ids);
+      console.log("--objects:", objects);
+      console.log("--SET OBJECT IDS:", ids);
+      handleSendState(sendOrdered);
     },
-    [objectsRef, setObjectIds, sendOrdered]
+    [setObjectIds, sendOrdered]
   );
 
-  const handleNewIdsOnMain = useCallback(
-    async (newIds: string[]) => {
-      console.log(
-        "--handleNewIdsOnMain main objectsRef newIds:",
-        main,
-        objectsRef,
-        newIds
-      );
-      if (main && objectsRef.current) {
-        const ids = await handleNewIds(newIds, objectsRef.current);
-        setObjectIds(ids);
-        handleSendState(sendOrdered, objectsRef.current);
-      }
+  const handleRemoveIdOnMain = useCallback(
+    (idToRemove: string) => {
+      savePlayerDataOnMain();
+      const indexToRemove = objects.findIndex((x) => x.id === idToRemove);
+      indexToRemove !== -1 && objects.splice(indexToRemove, 1);
+      const ids = objects.map((x) => x.id);
+      console.log("--handle remove, objects, ids:", objects, ids);
+      setObjectIds(ids);
+      handleSendState(sendOrdered);
     },
-    [objectsRef, setObjectIds, main, sendOrdered]
-  );
-
-  const handleRemoveIdsOnMain = useCallback(
-    (idsToRemove: string[]) => {
-      if (main && objectsRef.current) {
-        console.log("--remove ids:", idsToRemove);
-        const ids = handleRemoveIds(idsToRemove, objectsRef.current);
-        setObjectIds(ids);
-        handleSendState(sendOrdered, objectsRef.current);
-      }
-    },
-    [objectsRef, setObjectIds, main, sendOrdered]
+    [setObjectIds, sendOrdered]
   );
 
   useEffect(() => {
@@ -154,33 +118,27 @@ export const useObjectsOnMain = (objectsRef: RefObject<types.GameObject[]>) => {
     let savePlayerDataIntervalId = 0;
     if (main) {
       sendMainStateIntervalId = window.setInterval(() => {
-        if (objectsRef.current) {
-          handleSendState(sendOrdered, objectsRef.current);
-        }
+        handleSendState(sendOrdered);
       }, parameters.sendIntervalMainState);
       savePlayerDataIntervalId = window.setInterval(() => {
-        if (objectsRef.current) {
-          savePlayerDataOnMain(objectsRef.current);
-        }
+        savePlayerDataOnMain();
       }, parameters.savePlayerDataInterval);
     }
     return () => {
       clearInterval(sendMainStateIntervalId);
       clearInterval(savePlayerDataIntervalId);
     };
-  }, [main, objectsRef, sendOrdered]);
+  }, [main, sendOrdered]);
 
   const handleQuitForObjectsOnMain = useCallback(async () => {
-    if (main && objectsRef.current) {
-      await savePlayerDataOnMain(objectsRef.current);
-      objectsRef.current.splice(0, objectsRef.current.length);
-    }
+    await savePlayerDataOnMain();
+    objects.splice(0, objects.length);
     setObjectIds([]);
-  }, [objectsRef, setObjectIds, main]);
+  }, [setObjectIds]);
 
   const handleReceiveControlsData = useCallback(
     (data: types.Controls, remoteId: string) => {
-      const o = objectsRef.current?.find((x) => x.id === remoteId);
+      const o = objects.find((x) => x.id === remoteId);
       if (o) {
         o.controlsUp += data.data.up || 0;
         o.controlsDown += data.data.down || 0;
@@ -192,13 +150,12 @@ export const useObjectsOnMain = (objectsRef: RefObject<types.GameObject[]>) => {
         o.controlsOverChannelsRight += data.data.right || 0;
       }
     },
-    [objectsRef]
+    []
   );
 
   return {
-    handlePossiblyNewIdOnMain,
-    handleNewIdsOnMain,
-    handleRemoveIdsOnMain,
+    handleNewIdOnMain,
+    handleRemoveIdOnMain,
     handleQuitForObjectsOnMain,
     handleReceiveControlsData,
   };

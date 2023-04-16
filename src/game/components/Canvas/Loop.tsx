@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 
-import * as networkingHooks from "src/networking/hooks2";
+import * as networkingHooks from "src/networking/hooks";
 import { radiansToDegrees } from "src/utils";
 import {
   interpolationAlpha,
@@ -154,11 +154,9 @@ const interpolatePosition = (o: types.GameObject, object3D: THREE.Object3D) => {
   object3D.quaternion.slerp(o.backendQuaternion, interpolationAlpha);
 };
 
-const Loop = () => {
+const Loop = ({ three }: { three: types.Three | undefined }) => {
   console.log("--Loop");
-
   const main = useRecoilValue(atoms.main);
-  const ownId = useRecoilValue(atoms.ownId);
   const setScore = useSetRecoilState(atoms.score);
 
   const { sendUnordered: sendUnorderedFromClient } =
@@ -183,7 +181,7 @@ const Loop = () => {
       for (let i = objects.length - 1; i > -1; i--) {
         const o = objects[i];
         if (o && o.object3D) {
-          if (o.id === ownId) {
+          if (o.isMe) {
             handleKeys(delta, o);
             handleCamera(camera, o, o.object3D);
             handleInfoBoxElement(o, o.object3D);
@@ -215,7 +213,7 @@ const Loop = () => {
       for (let i = objects.length - 1; i > -1; i--) {
         const o = objects[i];
         if (o && o.object3D) {
-          if (o.id === ownId) {
+          if (o.isMe) {
             handleKeys(delta, o);
             handleCamera(camera, o, o.object3D);
             handleInfoBoxElement(o, o.object3D);
@@ -235,6 +233,6 @@ const Loop = () => {
       }
     }
   });
-  return (<></>); // eslint-disable-line
+  return <></>; // eslint-disable-line
 };
 export default memo(Loop);

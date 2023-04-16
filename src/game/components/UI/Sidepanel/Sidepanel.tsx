@@ -18,7 +18,7 @@ const Sidepanel = ({ quit }: { quit: () => void }) => {
   }, [quit]);
 
   return (
-    <div className="absolute left-0 right-0 top-[70%] bottom-0 landscape:top-0 landscape:left-[80%] flex flex-col">
+    <div className="bg-white p-0.5 border absolute left-0 right-0 top-[70%] bottom-0 landscape:top-0 landscape:left-[80%] flex flex-col">
       <div className="flex flex-col">
         <div className="flex w-full justify-between m-[1px]">
           <div className="text-rose-900 font-bold select-none items-center">
@@ -33,7 +33,6 @@ const Sidepanel = ({ quit }: { quit: () => void }) => {
           </button>
         </div>
         <div className="flex gap-1 flex-wrap text-xs p-0.5 border">
-          {"hello" + Boolean(main)}
           <div>{user?.username} |</div>
           {main && <div>{`Players: ${connectedAmount + 1} |`}</div>}
           <div>{`${connectionMessage} |`}</div>

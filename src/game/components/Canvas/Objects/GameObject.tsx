@@ -1,20 +1,13 @@
 import { memo, useMemo } from "react";
 import * as THREE from "three";
-import { useRecoilValue } from "recoil";
 
 import { objects } from "src/globals";
-import * as atoms from "src/atoms";
 
 const GameObject = ({ id, map }: { id: string; map: THREE.Texture }) => {
   console.log("--GameObject");
-
-  const ownId = useRecoilValue(atoms.ownId);
   const o = objects.find((x) => x.id === id);
 
-  const meshColor = useMemo(
-    () => (ownId === id ? "orange" : undefined),
-    [ownId, id]
-  );
+  const meshColor = useMemo(() => (o?.isMe ? "orange" : undefined), [o?.isMe]);
 
   const boxGeometryArgs = useMemo(
     () => ({
@@ -35,7 +28,7 @@ const GameObject = ({ id, map }: { id: string; map: THREE.Texture }) => {
         o.object3D = ref as THREE.Object3D;
       }}
     >
-      <meshBasicMaterial
+      {/* <meshBasicMaterial
         attach="material-4"
         color={meshColor}
         transparent
@@ -47,7 +40,7 @@ const GameObject = ({ id, map }: { id: string; map: THREE.Texture }) => {
           boxGeometryArgs.height,
           boxGeometryArgs.depth,
         ]}
-      />
+      /> */}
     </mesh>
   );
 };

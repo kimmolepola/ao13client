@@ -1,10 +1,17 @@
 import { memo, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 // eslint-disable-next-line
-import { useRecoilBridgeAcrossReactRoots_UNSTABLE } from 'recoil';
+import { useRecoilBridgeAcrossReactRoots_UNSTABLE } from "recoil";
 
 import Loop from "./Loop";
 import Objects from "./Objects";
+
+declare module "react" {
+  interface color<T> {
+    attach: any;
+    args: any;
+  }
+}
 
 const CanvasContainer = () => {
   console.log("--CanvasContainer");
@@ -22,8 +29,8 @@ const CanvasContainer = () => {
         }}
       >
         <RecoilBridge>
-          <color attach="background" args={["bisque"]} />
-          <Loop />
+          {/* <color attach="background" args={["bisque"]} />
+          <Loop /> */}
           <Suspense fallback={null}>
             <Objects />
           </Suspense>

@@ -14,7 +14,7 @@ import { objects } from "src/globals";
 import * as parameters from "src/parameters";
 import * as theme from "src/theme";
 import * as atoms from "src/atoms";
-import * as networkingHooks from "src/networking/hooks2";
+import * as networkingHooks from "src/networking/hooks";
 import * as types from "src/types";
 
 const Input = () => {

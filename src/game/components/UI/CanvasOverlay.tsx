@@ -1,4 +1,4 @@
-import { memo, useMemo, useCallback } from "react";
+import { TouchEvent, MouseEvent, memo, useMemo, useCallback } from "react";
 import { useRecoilValue } from "recoil";
 import {
   TfiArrowCircleLeft,
@@ -71,6 +71,10 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
     handleReleased(control, ownId);
   }, [control, ownId]);
 
+  const onContextMenu = useCallback((e: MouseEvent) => {
+    e.preventDefault();
+  }, []);
+
   const symbol = useMemo(() => {
     switch (control) {
       case types.Keys.LEFT:
@@ -87,16 +91,16 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
   }, [control]);
 
   return (
-    <button
-      className="text-red-900 text-[40px]"
-      type="button"
+    <div
+      className="text-red-900 text-[40px] select-none"
       onTouchStart={onPressed}
       onTouchEnd={onReleased}
       onMouseDown={onPressed}
       onMouseUp={onReleased}
+      onContextMenu={onContextMenu}
     >
       {symbol}
-    </button>
+    </div>
   );
 };
 

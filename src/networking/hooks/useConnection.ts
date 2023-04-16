@@ -6,7 +6,7 @@ import { state, peerConnections } from "src/globals";
 import { useReceiveOnClient } from "./useReceiveOnClient";
 import { useReceiveOnMain } from "./useReceiveOnMain";
 import * as gameHooks from "src/game/hooks";
-import * as hooks from "../hooks3";
+import * as hooks from ".";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
 
@@ -20,12 +20,12 @@ export const useConnection = () => {
   const setConnectionMessage = useSetRecoilState(atoms.connectionMessage);
   const setConnectedAmount = useSetRecoilState(atoms.connectedAmount);
   const { handleRemoveIdOnClient, handleQuitForObjectsOnClient } =
-    gameHooks.useObjectsOnClient2();
+    gameHooks.useObjectsOnClient();
   const {
     handleQuitForObjectsOnMain,
     handleRemoveIdOnMain,
     handleNewIdOnMain,
-  } = gameHooks.useObjectsOnMain2();
+  } = gameHooks.useObjectsOnMain();
   const { iceServers } = hooks.useIceServers();
   const { onReceive: onReceiveOnMain } = useReceiveOnMain();
   const { onReceive: onReceiveOnClient } = useReceiveOnClient();

@@ -1,6 +1,12 @@
 import { RefObject } from "react";
 import * as THREE from "three";
 
+export type Three = {
+  scene: THREE.Scene;
+  camera: THREE.Camera;
+  renderer: THREE.Renderer;
+};
+
 export type PeerConnection = {
   remoteId: string;
   peerConnection: RTCPeerConnection;
@@ -41,7 +47,8 @@ export enum Keys {
 
 export type GameObject = {
   id: string;
-  player: boolean;
+  isMe: boolean;
+  isPlayer: boolean;
   username: string;
   score: number;
   controlsUp: number;
@@ -111,7 +118,7 @@ export type UpdateObject = {
 
 export type StateObject = {
   sId: string;
-  sPlayer: boolean;
+  sIsPlayer: boolean;
   sUsername: string;
   sScore: number;
   sRotationSpeed: number;
@@ -158,5 +165,5 @@ export type Signaling = {
 export type InitialGameObject = {
   username: string;
   score: number;
-  player: boolean;
+  isPlayer: boolean;
 };

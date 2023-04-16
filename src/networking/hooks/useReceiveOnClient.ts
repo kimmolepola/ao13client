@@ -1,22 +1,19 @@
-import { useCallback, RefObject } from "react";
+import { useCallback } from "react";
 import { useSetRecoilState } from "recoil";
 
-import { chatMessageTimeToLive } from "../../parameters";
-
-import * as atoms from "../../atoms";
-import * as types from "../../types";
-import * as gameHooks from "../../game/hooks";
+import { chatMessageTimeToLive } from "src/parameters";
+import { objects } from "src/globals";
+import * as atoms from "src/atoms";
+import * as types from "src/types";
+import * as gameHooks from "src/game/hooks";
 
 let mostRecentTimestamp = 0;
 
-export const useReceiveOnClient = (
-  objectsRef: RefObject<types.GameObject[]>
-) => {
+export const useReceiveOnClient = () => {
   console.log("--useReceiveOnClient");
 
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
-  const { handleUpdateData, handleStateData } =
-    gameHooks.useObjectsOnClient(objectsRef);
+  const { handleUpdateData, handleStateData } = gameHooks.useObjectsOnClient();
 
   const onReceive = useCallback(
     (data: types.NetData) => {
@@ -37,9 +34,7 @@ export const useReceiveOnClient = (
           console.log("--CLIENT on receive chat:", data);
           const message = {
             ...data,
-            username:
-              (objectsRef.current || []).find((x) => x.id === data.userId)
-                ?.username || "",
+            username: objects.find((x) => x.id === data.userId)?.username || "",
           };
           setChatMessages((x) => [message, ...x]);
           setTimeout(
@@ -53,7 +48,7 @@ export const useReceiveOnClient = (
           break;
       }
     },
-    [handleStateData, handleUpdateData, objectsRef, setChatMessages]
+    [handleStateData, handleUpdateData, setChatMessages]
   );
   return { onReceive };
 };
