@@ -3,9 +3,9 @@ import * as THREE from "three";
 
 export enum Position {
   RIGHT,
-  DOWN,
+  BOTTOM,
   LEFT,
-  UP,
+  TOP,
 }
 
 export type Three = {

@@ -4,6 +4,19 @@ import { Socket } from "socket.io-client";
 
 import * as types from "./types";
 
+export const windowSize = atom<{ width: number; height: number }>({
+  key: "windowSize",
+  default: { width: window.innerWidth, height: window.innerHeight },
+});
+
+export const sidepanelGeometry = atom<{
+  position: types.Position;
+  size: number;
+}>({
+  key: "sidepanelGeometry",
+  default: { position: types.Position.BOTTOM, size: 100 },
+});
+
 export const turnCredentials = atom<
   { urls: string; username: string; credential: string } | undefined
 >({

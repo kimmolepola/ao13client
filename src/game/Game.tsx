@@ -1,5 +1,6 @@
-import { useRef, useEffect, memo, useCallback } from "react";
+import { useMemo, useRef, useEffect, memo, useCallback } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
+import _ from "lodash";
 
 import * as networkingHooks from "../networking/hooks";
 
@@ -8,19 +9,26 @@ import UserInterface from "./components/UI";
 
 import * as atoms from "../atoms";
 import * as hooks from "./hooks";
+import * as types from "../types";
 
 let initialized = false;
 
 const Game = () => {
-  console.log("--Game");
+  const sidepanelGeometry = useRecoilValue(atoms.sidepanelGeometry);
+  const setWindowSize = useSetRecoilState(atoms.windowSize);
+  const setPage = useSetRecoilState(atoms.page);
+  const turnCredentials = useRecoilValue(atoms.turnCredentials);
   const ref = useRef(null);
 
   const { connect, disconnect } = networkingHooks.useConnection();
   hooks.useControls();
   hooks.useRendering(ref);
 
-  const setPage = useSetRecoilState(atoms.page);
-  const turnCredentials = useRecoilValue(atoms.turnCredentials);
+  const onResize = useCallback(() => {
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+  }, [setWindowSize]);
+
+  window.addEventListener("resize", _.debounce(onResize, 200));
 
   const quit = useCallback(async () => {
     await disconnect();
@@ -40,9 +48,25 @@ const Game = () => {
     };
   }, [connect, turnCredentials]);
 
+  const style = useMemo(() => {
+    const { size } = sidepanelGeometry;
+    switch (sidepanelGeometry.position) {
+      case types.Position.BOTTOM:
+        return { bottom: size };
+      case types.Position.LEFT:
+        return { left: size };
+      case types.Position.RIGHT:
+        return { right: size };
+      case types.Position.TOP:
+        return { top: size };
+      default:
+        return undefined;
+    }
+  }, [sidepanelGeometry]);
+
   return (
     <div className="w-full h-full bg-rose-50">
-      <div ref={ref} />
+      <div ref={ref} className="absolute inset-0" style={style} />
       <UserInterface quit={quit} />
     </div>
   );

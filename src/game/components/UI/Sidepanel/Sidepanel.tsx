@@ -1,19 +1,26 @@
-import { useState, memo, useCallback } from "react";
-import { useRecoilValue } from "recoil";
-import styled from "styled-components";
+import { useMemo, memo, useCallback } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
 
 import Chat from "./Chat";
 import * as atoms from "src/atoms";
-import * as globals from "src/globals";
 import * as types from "src/types";
+import NumberBox from "src/components/NumberBox";
 
 const Sidepanel = ({ quit }: { quit: () => void }) => {
-  const [panelPosition, setPanelPosition] = useState(
-    globals.state.panelPosition
+  const windowSize = useRecoilValue(atoms.windowSize);
+  const [sidepanelGeometry, setSidepanelGeometry] = useRecoilState(
+    atoms.sidepanelGeometry
   );
-  const [panelSizePercent, setPanelSizePercent] = useState(
-    globals.state.panelSizePercent
+
+  const getMaxSize = useCallback(
+    (panelPos?: types.Position) =>
+      (panelPos || sidepanelGeometry.position) === types.Position.LEFT ||
+      (panelPos || sidepanelGeometry.position) === types.Position.RIGHT
+        ? windowSize.width
+        : windowSize.height,
+    [sidepanelGeometry.position, windowSize]
   );
+
   const user = useRecoilValue(atoms.user);
   const main = useRecoilValue(atoms.main);
   const connectedAmount = useRecoilValue(atoms.connectedAmount);
@@ -24,78 +31,75 @@ const Sidepanel = ({ quit }: { quit: () => void }) => {
     quit();
   }, [quit]);
 
-  const changePanelSizePercent = useCallback(
-    (panelPos: types.Position, value: number) => {
-      if (value > 100) {
-        setPanelSizePercent(100);
-      } else {
-        const minPixels = 100;
-        let minPercent = Math.round((minPixels / window.innerWidth) * 100);
-        if (
-          panelPos === types.Position.DOWN ||
-          panelPos === types.Position.UP
-        ) {
-          minPercent = Math.round((minPixels / window.innerHeight) * 100);
-        }
-        if (value < minPercent) {
-          setPanelSizePercent(minPercent);
-        } else {
-          setPanelSizePercent(value);
-        }
-      }
-    },
-    []
-  );
-
   const onClickPosition = useCallback(() => {
-    let newPosition = globals.state.panelPosition + 1;
-    if (newPosition > 3) {
-      newPosition = 0;
-    }
-    globals.state.panelPosition = newPosition;
-    setPanelPosition(newPosition);
-    changePanelSizePercent(newPosition, panelSizePercent);
-  }, [panelSizePercent, changePanelSizePercent]);
+    const pos = sidepanelGeometry.position;
+    const newPosition = pos === 3 ? 0 : pos + 1;
+    const maxSize = getMaxSize(newPosition);
+    const newSize =
+      sidepanelGeometry.size > maxSize ? maxSize : sidepanelGeometry.size;
+    setSidepanelGeometry({ position: newPosition, size: newSize });
+  }, [sidepanelGeometry, getMaxSize, setSidepanelGeometry]);
 
-  const onChange = useCallback(
-    (e: any) => {
-      const value = Number(e.target.value);
-      if (!Number.isNaN(value)) {
-        changePanelSizePercent(panelPosition, value);
-      }
+  const onChangeSize = useCallback(
+    (x: number) => {
+      setSidepanelGeometry((xx) => ({ ...xx, size: x }));
     },
-    [panelPosition, changePanelSizePercent]
+    [setSidepanelGeometry]
   );
+
+  const style1 = useMemo(() => {
+    switch (sidepanelGeometry.position) {
+      case types.Position.BOTTOM:
+        return { top: windowSize.height - sidepanelGeometry.size };
+      case types.Position.LEFT:
+        return { right: windowSize.width - sidepanelGeometry.size };
+      case types.Position.RIGHT:
+        return { left: windowSize.width - sidepanelGeometry.size };
+      case types.Position.TOP:
+        return { bottom: windowSize.height - sidepanelGeometry.size };
+      default:
+        return undefined;
+    }
+  }, [sidepanelGeometry, windowSize]);
+
+  const style2 = useMemo(() => {
+    const size = "66%";
+    switch (sidepanelGeometry.position) {
+      case types.Position.BOTTOM:
+        return { top: size };
+      case types.Position.LEFT:
+        return { right: size };
+      case types.Position.RIGHT:
+        return { left: size };
+      case types.Position.TOP:
+        return { bottom: size };
+      default:
+        return undefined;
+    }
+  }, [sidepanelGeometry.position]);
 
   return (
-    <StyledDiv
-      panelPosition={panelPosition}
-      panelSizePercent={panelSizePercent}
-    >
+    <div className="absolute inset-0 bg-white" style={style1}>
       <div className="w-full h-full bg-white border flex flex-col">
         <div className="flex flex-col">
           <div className="p-0.5 flex w-full justify-between flex-wrap gap-0.5">
             <div className="text-rose-900 font-bold select-none items-center">
               AO13
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <input
-                className="w-10 border h-6 text-xs text-center"
-                value={panelSizePercent}
-                onChange={onChange}
+            <div className="flex gap-2 flex-wrap z-40">
+              <NumberBox
+                value={sidepanelGeometry.size}
+                min={100}
+                calculateMax={getMaxSize}
+                onChange={onChangeSize}
               />
-              <StyledDiv2>
-                <button
-                  className="border w-full h-full relative bg-zinc-200 z-50"
-                  type="button"
-                  onClick={onClickPosition}
-                >
-                  <StyledDiv
-                    panelPosition={panelPosition}
-                    panelSizePercent={panelSizePercent}
-                  />
-                </button>
-              </StyledDiv2>
+              <button
+                className="border relative w-6 h-6 bg-zinc-200 z-50"
+                type="button"
+                onClick={onClickPosition}
+              >
+                <div className="absolute inset-0 bg-white" style={style2} />
+              </button>
               <button
                 className="w-10 h-6 text-rose-900 border-2 active:brightness-80 text-xs font-bold"
                 type="button"
@@ -114,59 +118,8 @@ const Sidepanel = ({ quit }: { quit: () => void }) => {
         </div>
         <Chat />
       </div>
-    </StyledDiv>
+    </div>
   );
 };
 
 export default memo(Sidepanel);
-
-const StyledDiv2 = styled.div`
-  display: flex;
-  height: 1.5rem;
-  ${() => {
-    const ratio = window.innerWidth / window.innerHeight;
-    return `width: ${1.5 * ratio}rem`;
-  }}
-`;
-
-const StyledDiv = styled.div<{
-  panelPosition: types.Position;
-  panelSizePercent: number;
-}>`
-  position: absolute;
-  background-color: white;
-  ${(x) => {
-    switch (x.panelPosition) {
-      case types.Position.DOWN:
-        return `
-        left: 0%;
-        right: 0%;
-        top: ${100 - x.panelSizePercent}%;
-        bottom: 0%;
-        `;
-      case types.Position.LEFT:
-        return `
-        left: 0%;
-        right: ${100 - x.panelSizePercent}%;
-        top: 0%;
-        bottom: 0%;
-        `;
-      case types.Position.RIGHT:
-        return `
-        left: ${100 - x.panelSizePercent}%;
-        right: 0%;
-        top: 0%;
-        bottom: 0%;
-        `;
-      case types.Position.UP:
-        return `
-        left: 0%;
-        right: 0%;
-        top: 0%;
-        bottom: ${100 - x.panelSizePercent}%;
-        `;
-      default:
-        return "";
-    }
-  }}
-`;

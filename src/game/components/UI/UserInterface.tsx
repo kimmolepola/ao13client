@@ -3,8 +3,6 @@ import CanvasOverlay from "./CanvasOverlay";
 import Sidepanel from "./Sidepanel";
 
 const UserInterface = ({ quit }: { quit: () => void }) => {
-  console.log("--UserInterface");
-
   return (
     <>
       <CanvasOverlay />

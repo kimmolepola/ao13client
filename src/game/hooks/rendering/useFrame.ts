@@ -156,6 +156,7 @@ const interpolatePosition = (o: types.GameObject, object3D: THREE.Object3D) => {
 export const useFrame = (camera: THREE.Camera) => {
   console.log("--Loop");
   const main = useRecoilValue(atoms.main);
+  const windowSize = useRecoilValue(atoms.windowSize);
   const setScore = useSetRecoilState(atoms.score);
 
   const { sendUnordered: sendUnorderedFromClient } =
@@ -164,8 +165,8 @@ export const useFrame = (camera: THREE.Camera) => {
     networkingHooks.useSendFromMain();
 
   const v = new THREE.Vector3();
-  const h = window.innerHeight / 2;
-  const w = window.innerWidth / 2;
+  const w = windowSize.width / 2;
+  const h = windowSize.height / 2;
 
   let nextSendTime = Date.now();
 
