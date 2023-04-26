@@ -11,7 +11,6 @@ import * as types from "../types";
 import * as hooks from "../hooks";
 
 const Login = () => {
-  console.log("--Login");
   const setUser = useSetRecoilState(atoms.user);
   const navigate = useNavigate();
   const [validation, setValidation, resetValidation] = hooks.useValidation();

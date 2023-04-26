@@ -3,13 +3,11 @@ import { useRecoilValue, useSetRecoilState } from "recoil";
 import _ from "lodash";
 
 import * as networkingHooks from "../networking/hooks";
-
-import Canvas from "./components/Canvas";
 import UserInterface from "./components/UI";
-
 import * as atoms from "../atoms";
 import * as hooks from "./hooks";
 import * as types from "../types";
+import * as globals from "src/globals";
 
 let initialized = false;
 
@@ -25,10 +23,15 @@ const Game = () => {
   hooks.useRendering(ref);
 
   const onResize = useCallback(() => {
+    console.log("--onresize");
+    globals.windowSize.width = window.innerWidth;
+    globals.windowSize.height = window.innerHeight;
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
   }, [setWindowSize]);
 
-  window.addEventListener("resize", _.debounce(onResize, 200));
+  const debouncedResize = useMemo(() => _.debounce(onResize, 200), [onResize]);
+
+  window.addEventListener("resize", debouncedResize);
 
   const quit = useCallback(async () => {
     await disconnect();
@@ -37,15 +40,10 @@ const Game = () => {
   }, [setPage, disconnect]);
 
   useEffect(() => {
-    console.log("--game useEffect, initialized:", initialized);
     if (!initialized && turnCredentials) {
-      console.log("--initialize");
       initialized = true;
       connect();
     }
-    return () => {
-      console.log("--game useEffect return");
-    };
   }, [connect, turnCredentials]);
 
   const style = useMemo(() => {

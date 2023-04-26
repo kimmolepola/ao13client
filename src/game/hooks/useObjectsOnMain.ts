@@ -7,20 +7,20 @@ import {
   getGameObject,
 } from "src/networking/services/gameObject.service";
 import * as networkingHooks from "src/networking/hooks";
-import { objects } from "src/globals";
+import * as globals from "src/globals";
 
 import * as parameters from "src/parameters";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
 
-const handleNewId = async (ownId: string | undefined, id: string) => {
-  if (!objects.some((x) => x.id === id)) {
+const handleNewId = async (id: string) => {
+  if (!globals.objects.some((x) => x.id === id)) {
     const initialGameObject = (await getGameObject(id)).data;
     if (initialGameObject) {
       const gameObject = {
         ...initialGameObject,
         id,
-        isMe: id === ownId,
+        isMe: id === globals.state.ownId,
         controlsUp: 0,
         controlsDown: 0,
         controlsLeft: 0,
@@ -29,6 +29,7 @@ const handleNewId = async (ownId: string | undefined, id: string) => {
         controlsOverChannelsDown: 0,
         controlsOverChannelsLeft: 0,
         controlsOverChannelsRight: 0,
+        acceleration: parameters.acceleration,
         rotationSpeed: parameters.rotationSpeed,
         speed: parameters.speed,
         backendPosition: new THREE.Vector3(),
@@ -38,17 +39,17 @@ const handleNewId = async (ownId: string | undefined, id: string) => {
         infoBoxElement: undefined,
         object3D: undefined,
       };
-      objects.push(gameObject);
+      globals.objects.push(gameObject);
     } else {
       console.error("Failed to add new object, no initialGameObject");
     }
   }
-  return objects.map((x) => x.id);
+  return globals.objects.map((x) => x.id);
 };
 
 const savePlayerDataOnMain = async () => {
   const data =
-    objects.reduce((acc: types.PlayerState[], cur) => {
+    globals.objects.reduce((acc: types.PlayerState[], cur) => {
       if (cur.isPlayer) {
         acc.push({ remoteId: cur.id, score: cur.score });
       }
@@ -60,52 +61,53 @@ const savePlayerDataOnMain = async () => {
 const handleSendState = (sendOrdered: (data: types.State) => void) => {
   sendOrdered({
     type: types.NetDataType.STATE,
-    data: objects.reduce((acc: { [id: string]: types.StateObject }, cur) => {
-      acc[cur.id] = {
-        sId: cur.id,
-        sIsPlayer: cur.isPlayer,
-        sUsername: cur.username,
-        sScore: cur.score,
-        sRotationSpeed: cur.rotationSpeed,
-        sSpeed: cur.speed,
-        sPositionX: cur.object3D?.position.x || 0,
-        sPositionY: cur.object3D?.position.y || 0,
-        sPositionZ: cur.object3D?.position.z || 0,
-        sQuaternionX: cur.object3D?.quaternion.x || 0,
-        sQuaternionY: cur.object3D?.quaternion.y || 0,
-        sQuaternionZ: cur.object3D?.quaternion.z || 0,
-        sQuaternionW: cur.object3D?.quaternion.w || 0,
-      };
-      return acc;
-    }, {}),
+    data: globals.objects.reduce(
+      (acc: { [id: string]: types.StateObject }, cur) => {
+        acc[cur.id] = {
+          sId: cur.id,
+          sIsPlayer: cur.isPlayer,
+          sUsername: cur.username,
+          sScore: cur.score,
+          sAcceleration: cur.acceleration,
+          sRotationSpeed: cur.rotationSpeed,
+          sSpeed: cur.speed,
+          sPositionX: cur.object3D?.position.x || 0,
+          sPositionY: cur.object3D?.position.y || 0,
+          sPositionZ: cur.object3D?.position.z || 0,
+          sQuaternionX: cur.object3D?.quaternion.x || 0,
+          sQuaternionY: cur.object3D?.quaternion.y || 0,
+          sQuaternionZ: cur.object3D?.quaternion.z || 0,
+          sQuaternionW: cur.object3D?.quaternion.w || 0,
+        };
+        return acc;
+      },
+      {}
+    ),
   });
 };
 
 export const useObjectsOnMain = () => {
-  const ownId = useRecoilValue(atoms.ownId);
   const main = useRecoilValue(atoms.main);
   const setObjectIds = useSetRecoilState(atoms.objectIds);
   const { sendOrdered } = networkingHooks.useSendFromMain();
 
   const handleNewIdOnMain = useCallback(
     async (newId: string) => {
-      console.log("--new id:", newId);
-      const ids = await handleNewId(ownId, newId);
+      const ids = await handleNewId(newId);
       setObjectIds(ids);
-      console.log("--objects:", objects);
-      console.log("--SET OBJECT IDS:", ids);
       handleSendState(sendOrdered);
     },
-    [setObjectIds, sendOrdered, ownId]
+    [setObjectIds, sendOrdered]
   );
 
   const handleRemoveIdOnMain = useCallback(
     (idToRemove: string) => {
       savePlayerDataOnMain();
-      const indexToRemove = objects.findIndex((x) => x.id === idToRemove);
-      indexToRemove !== -1 && objects.splice(indexToRemove, 1);
-      const ids = objects.map((x) => x.id);
-      console.log("--handle remove, objects, ids:", objects, ids);
+      const indexToRemove = globals.objects.findIndex(
+        (x) => x.id === idToRemove
+      );
+      indexToRemove !== -1 && globals.objects.splice(indexToRemove, 1);
+      const ids = globals.objects.map((x) => x.id);
       setObjectIds(ids);
       handleSendState(sendOrdered);
     },
@@ -121,7 +123,6 @@ export const useObjectsOnMain = () => {
         handleSendState(sendOrdered);
       }, parameters.sendIntervalMainState);
       savePlayerDataIntervalId = window.setInterval(() => {
-        console.log("--interval");
         savePlayerDataOnMain();
       }, parameters.savePlayerDataInterval);
     }
@@ -132,15 +133,14 @@ export const useObjectsOnMain = () => {
   }, [main, sendOrdered]);
 
   const handleQuitForObjectsOnMain = useCallback(async () => {
-    console.log("--handleQuitForObjectsOnMain");
     await savePlayerDataOnMain();
-    objects.splice(0, objects.length);
+    globals.objects.splice(0, globals.objects.length);
     setObjectIds([]);
   }, [setObjectIds]);
 
   const handleReceiveControlsData = useCallback(
     (data: types.Controls, remoteId: string) => {
-      const o = objects.find((x) => x.id === remoteId);
+      const o = globals.objects.find((x) => x.id === remoteId);
       if (o) {
         o.controlsUp += data.data.up || 0;
         o.controlsDown += data.data.down || 0;

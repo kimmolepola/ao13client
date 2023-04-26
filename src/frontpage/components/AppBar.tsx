@@ -7,8 +7,6 @@ import { logout, setToken } from "src/networking/services/auth.service";
 import * as atoms from "src/atoms";
 
 const AppBar = () => {
-  console.log("--AppBar");
-
   const [user, setUser] = useRecoilState(atoms.user);
 
   const onClickLogout = useCallback(async () => {

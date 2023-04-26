@@ -3,12 +3,13 @@ import { useRecoilValue } from "recoil";
 import * as THREE from "three";
 
 import * as renderingHooks from ".";
-import * as atoms from "../../../atoms";
-import * as types from "../../../types";
+import * as atoms from "src/atoms";
+import * as types from "src/types";
 
 export const useRendering = (ref: RefObject<HTMLDivElement>) => {
-  const windowSize = useRecoilValue(atoms.windowSize);
   const sidepanelGeometry = useRecoilValue(atoms.sidepanelGeometry);
+  const main = useRecoilValue(atoms.main);
+  const windowSize = useRecoilValue(atoms.windowSize);
 
   const size = useMemo(() => {
     switch (sidepanelGeometry.position) {
@@ -33,7 +34,7 @@ export const useRendering = (ref: RefObject<HTMLDivElement>) => {
   }, [sidepanelGeometry, windowSize]);
 
   const camera = useMemo(
-    () => new THREE.PerspectiveCamera(70, size.width / size.height, 0.01, 11),
+    () => new THREE.PerspectiveCamera(70, size.width / size.height, 1, 20),
     [size]
   );
 
@@ -48,11 +49,16 @@ export const useRendering = (ref: RefObject<HTMLDivElement>) => {
   const { startAnimation, stopAnimation } = renderingHooks.useAnimation(
     camera,
     scene,
-    renderer
+    renderer,
+    main
   );
 
   const setCamera = useCallback(() => {
-    camera.position.z = Math.min(10, 10 / (size.width / size.height));
+    if (size.width > size.height) {
+      camera.position.z = 13 * (size.height / size.width);
+    } else {
+      camera.position.z = 13 * (size.width / size.height);
+    }
   }, [camera, size]);
 
   useEffect(() => {
@@ -60,6 +66,9 @@ export const useRendering = (ref: RefObject<HTMLDivElement>) => {
   }, [renderer, size]);
 
   useEffect(() => {
+    // Do not set useState-state here.
+    // startAnimation is not wrapped in useCallback.
+    // It would cause an infinite loop.
     const node = ref.current;
     node?.appendChild(renderer.domElement);
     setCamera();

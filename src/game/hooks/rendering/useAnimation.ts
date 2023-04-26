@@ -2,32 +2,34 @@ import { useCallback } from "react";
 import * as THREE from "three";
 import * as renderingHooks from ".";
 
-let running = false;
+let loopId: number | undefined;
 let previousTimestamp = 0;
 
 export const useAnimation = (
   camera: THREE.Camera,
   scene: THREE.Scene,
-  renderer: THREE.Renderer
+  renderer: THREE.Renderer,
+  main: boolean
 ) => {
-  const { run } = renderingHooks.useFrame(camera);
+  const { run } = renderingHooks.useFrame(camera, main);
 
-  const animate = (timestamp: number) => {
-    running && requestAnimationFrame(animate);
+  const animate = (timestamp: number, xLoopId: number) => {
+    loopId === xLoopId && requestAnimationFrame((x) => animate(x, xLoopId));
     const delta = timestamp - previousTimestamp;
+    run(delta);
     previousTimestamp = timestamp;
     renderer.render(scene, camera);
   };
 
   const startAnimation = () => {
-    running = true;
     const time = performance.now();
     previousTimestamp = time;
-    animate(time);
+    loopId = time;
+    animate(time, time);
   };
 
   const stopAnimation = useCallback(() => {
-    running = false;
+    loopId = undefined;
   }, []);
 
   return { startAnimation, stopAnimation };

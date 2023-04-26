@@ -2,8 +2,6 @@ import axios from "axios";
 import { backendUrl } from "src/config";
 
 export const checkOkToStart = async () => {
-  console.log("--checkOkToStart");
-
   try {
     const response = await axios.get(
       ` ${backendUrl}/api/v1/user/checkOkToStart`
@@ -16,8 +14,6 @@ export const checkOkToStart = async () => {
 };
 
 export const getUser = async () => {
-  console.log("--getUser");
-
   try {
     const response = await axios.get(`${backendUrl}/api/v1/user`);
     return { data: response.data, error: null };
@@ -28,8 +24,6 @@ export const getUser = async () => {
 };
 
 export const updateUsername = async (username: any) => {
-  console.log("--updateUsername");
-
   try {
     const response = await axios.post(
       `${backendUrl}/api/v1/user/updateUsername`,

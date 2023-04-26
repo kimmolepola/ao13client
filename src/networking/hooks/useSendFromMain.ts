@@ -5,8 +5,6 @@ import { peerConnections } from "src/globals";
 import * as types from "src/types";
 
 export const useSendFromMain = () => {
-  console.log("--useSendFromMain");
-
   const sendOrdered = useCallback(
     (data: types.State | types.ChatMessageFromMain) => {
       try {

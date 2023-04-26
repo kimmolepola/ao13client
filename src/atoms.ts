@@ -55,11 +55,6 @@ export const connectedIdsOnMain = atom<string[]>({
   default: [],
 });
 
-export const ownId = atom<string | undefined>({
-  key: "ownId",
-  default: undefined,
-});
-
 export const main = atom<boolean>({
   key: "main",
   default: false,

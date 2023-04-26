@@ -10,8 +10,6 @@ import * as gameHooks from "src/game/hooks";
 let mostRecentTimestamp = 0;
 
 export const useReceiveOnClient = () => {
-  console.log("--useReceiveOnClient");
-
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
   const { handleUpdateData, handleStateData } = gameHooks.useObjectsOnClient();
 
@@ -19,7 +17,6 @@ export const useReceiveOnClient = () => {
     (data: types.NetData) => {
       switch (data.type) {
         case types.NetDataType.STATE: {
-          console.log("--CLIENT on receive state:", data);
           handleStateData(data);
           break;
         }
@@ -31,7 +28,6 @@ export const useReceiveOnClient = () => {
           break;
         }
         case types.NetDataType.CHATMESSAGE_MAIN: {
-          console.log("--CLIENT on receive chat:", data);
           const message = {
             ...data,
             username: objects.find((x) => x.id === data.userId)?.username || "",
@@ -44,7 +40,6 @@ export const useReceiveOnClient = () => {
           break;
         }
         default:
-          console.log("--CLIENT on receive default:", data);
           break;
       }
     },

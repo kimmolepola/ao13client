@@ -1,13 +1,12 @@
 import { memo } from "react";
 import { useRecoilValue } from "recoil";
-import * as atoms from "src/atoms";
 import clsx from "clsx";
 
-const Chat = () => {
-  console.log("--Chat");
+import * as atoms from "src/atoms";
+import * as globals from "src/globals";
 
+const Chat = () => {
   const chatMessages = useRecoilValue(atoms.chatMessages);
-  const ownId = useRecoilValue(atoms.ownId);
 
   return (
     <div className="relative h-full w-full">
@@ -17,7 +16,7 @@ const Chat = () => {
             key={x.id}
             className={clsx(
               "flex gap-1 p-0.5",
-              x.userId === ownId ? "bg-amber-300" : "bg-stone-300"
+              x.userId === globals.state.ownId ? "bg-amber-300" : "bg-stone-300"
             )}
           >
             <div className="grow text-xs">

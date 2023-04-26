@@ -17,6 +17,7 @@ export const useObjects = (scene: THREE.Scene) => {
         if (obj && !obj.object3D) {
           scene.add(mesh);
           obj.object3D = mesh;
+          console.log("--obj:", obj);
         }
       } else {
         scene.add(mesh);
@@ -35,7 +36,7 @@ export const useObjects = (scene: THREE.Scene) => {
       const o = os[i];
       if (objectIds.includes(o.id)) {
         if (!o.object3D) {
-          load(loadFighter);
+          load(loadFighter, o.id);
         }
       } else {
         if (o.object3D) {

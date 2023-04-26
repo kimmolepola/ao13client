@@ -5,8 +5,6 @@ import { peerConnections } from "src/globals";
 import * as types from "src/types";
 
 export const useSendFromClient = () => {
-  console.log("--useSendFromClient");
-
   const sendOrdered = useCallback((data: types.ChatMessageFromClient) => {
     const dataString = JSON.stringify(data);
     peerConnections.forEach((x) => {

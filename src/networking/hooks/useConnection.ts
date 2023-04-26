@@ -9,13 +9,12 @@ import * as gameHooks from "src/game/hooks";
 import * as hooks from ".";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
+import * as globals from "src/globals";
 
 let socket: (Socket & { auth: { [key: string]: any } }) | undefined;
 
 export const useConnection = () => {
-  console.log("--useConnection");
   const user = useRecoilValue(atoms.user);
-  const setOwnId = useSetRecoilState(atoms.ownId);
   const setMain = useSetRecoilState(atoms.main);
   const setConnectionMessage = useSetRecoilState(atoms.connectionMessage);
   const setConnectedAmount = useSetRecoilState(atoms.connectedAmount);
@@ -38,7 +37,6 @@ export const useConnection = () => {
 
   const removePeer = (remoteId: string) => {
     const index = peerConnections.findIndex((x) => x.remoteId === remoteId);
-    console.log("--remove index:", index);
     if (index !== -1) {
       closePeerConnection(peerConnections[index]);
       peerConnections.splice(index, 1);
@@ -166,7 +164,6 @@ export const useConnection = () => {
   };
 
   const disconnect = async () => {
-    console.log("--DISCONNECT");
     state.main
       ? await handleQuitForObjectsOnMain()
       : handleQuitForObjectsOnClient();
@@ -181,13 +178,12 @@ export const useConnection = () => {
     socket = undefined;
     peerConnections.forEach((x) => closePeerConnection(x));
     peerConnections.splice(0, peerConnections.length);
-    setOwnId(undefined);
+    globals.state.ownId = undefined;
     setMain(false);
   };
 
   const connect = async () => {
     await disconnect();
-    console.log("--CONNECT");
     socket = io(backendUrl, {
       auth: {
         token: `${user?.token}`,
@@ -200,7 +196,7 @@ export const useConnection = () => {
     });
 
     socket?.on("init", (id: string) => {
-      setOwnId(id);
+      globals.state.ownId = id;
     });
 
     socket?.on("main", (id: string) => {

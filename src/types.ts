@@ -66,6 +66,7 @@ export type GameObject = {
   controlsOverChannelsDown: number;
   controlsOverChannelsLeft: number;
   controlsOverChannelsRight: number;
+  acceleration: number;
   rotationSpeed: number;
   speed: number;
   backendPosition: THREE.Vector3;
@@ -128,6 +129,7 @@ export type StateObject = {
   sIsPlayer: boolean;
   sUsername: string;
   sScore: number;
+  sAcceleration: number;
   sRotationSpeed: number;
   sSpeed: number;
   sPositionX: number;

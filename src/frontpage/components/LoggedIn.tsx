@@ -12,8 +12,6 @@ import * as theme from "src/theme";
 import * as atoms from "src/atoms";
 
 const LoggedIn = () => {
-  console.log("--LoggedIn");
-
   const location = useLocation();
   const user = useRecoilValue(atoms.user);
   const setPage = useSetRecoilState(atoms.page);

@@ -2,13 +2,10 @@ import axios from "axios";
 import { backendUrl } from "src/config";
 
 export const setToken = (token: string) => {
-  console.log("--setToken");
-
   axios.defaults.headers.common = { Authorization: `Bearer ${token}` };
 };
 
 export const getTurnCredentials = async () => {
-  console.log("--getTurnCredentials");
   try {
     const response = await axios.post(
       `${backendUrl}/api/v1/auth/getTurnCredentials`
@@ -21,8 +18,6 @@ export const getTurnCredentials = async () => {
 };
 
 export const logout = async () => {
-  console.log("--logout");
-
   try {
     const response = await axios.post(`${backendUrl}/api/v1/auth/logout`);
     return { data: response.data };
@@ -41,8 +36,6 @@ export const resetPassword = async ({
   userId: string;
   password: string;
 }) => {
-  console.log("--resetPassword");
-
   try {
     const response = await axios.post(
       `${backendUrl}/api/v1/auth/resetpassword`,
@@ -64,8 +57,6 @@ export const requestPasswordReset = async ({
 }: {
   username: string;
 }) => {
-  console.log("--requestPasswordReset");
-
   try {
     const response = await axios.post(
       `${backendUrl}/api/v1/auth/requestResetPassword`,
@@ -87,8 +78,6 @@ export const login = async ({
   username: string;
   password: string;
 }) => {
-  console.log("--login");
-
   try {
     const response = await axios.post(`${backendUrl}/api/v1/auth/login`, {
       username,
@@ -108,8 +97,6 @@ export const signup = async ({
   email: string;
   password: string;
 }) => {
-  console.log("--signup");
-
   try {
     const response = await axios.post(`${backendUrl}/api/v1/auth/signup`, {
       email,

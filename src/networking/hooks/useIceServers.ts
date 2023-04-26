@@ -10,7 +10,5 @@ export const useIceServers = () => {
     [turnCredentials]
   );
 
-  console.log("--turn credentials:", turnCredentials, iceServers);
-
   return { iceServers };
 };

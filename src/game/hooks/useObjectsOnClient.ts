@@ -1,25 +1,20 @@
 import { useCallback } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useSetRecoilState } from "recoil";
 import * as THREE from "three";
 
-import { objects } from "src/globals";
+import * as globals from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
 
 export const useObjectsOnClient = () => {
-  const ownId = useRecoilValue(atoms.ownId);
   const setObjectIds = useSetRecoilState(atoms.objectIds);
 
   const handleUpdateData = useCallback((data: types.Update) => {
-    for (let i = objects.length - 1; i > -1; i--) {
-      const o = objects[i];
+    for (let i = globals.objects.length - 1; i > -1; i--) {
+      const o = globals.objects[i];
       const u = o && data.data[o.id];
       if (u) {
         o.score = u.uScore;
-        o.controlsUp += u.uControlsUp || 0;
-        o.controlsDown += u.uControlsDown || 0;
-        o.controlsLeft += u.uControlsLeft || 0;
-        o.controlsUp += u.uControlsUp || 0;
         o.rotationSpeed = u.uRotationSpeed || 0;
         o.speed = u.uSpeed || 0;
         o.backendPosition.set(u.uPositionX, u.uPositionY, u.uPositionZ);
@@ -29,6 +24,12 @@ export const useObjectsOnClient = () => {
           u.uQuaternionZ,
           u.uQuaternionW
         );
+        if (!o.isMe) {
+          o.controlsUp += u.uControlsUp || 0;
+          o.controlsDown += u.uControlsDown || 0;
+          o.controlsLeft += u.uControlsLeft || 0;
+          o.controlsUp += u.uControlsUp || 0;
+        }
       }
     }
   }, []);
@@ -36,8 +37,8 @@ export const useObjectsOnClient = () => {
   const handleStateData = useCallback(
     (data: types.State) => {
       let objectIdsChanged = false;
-      for (let i = objects.length - 1; i > -1; i--) {
-        const o = objects[i];
+      for (let i = globals.objects.length - 1; i > -1; i--) {
+        const o = globals.objects[i];
         const s = o && data.data[o.id];
         if (!s) {
           objectIdsChanged = true;
@@ -46,11 +47,11 @@ export const useObjectsOnClient = () => {
         }
       }
       Object.values(data.data).forEach((s) => {
-        if (!objects.some((x) => x.id === s.sId)) {
+        if (!globals.objects.some((x) => x.id === s.sId)) {
           objectIdsChanged = true;
-          objects.push({
+          globals.objects.push({
             id: s.sId,
-            isMe: s.sId === ownId,
+            isMe: s.sId === globals.state.ownId,
             isPlayer: s.sIsPlayer,
             username: s.sUsername,
             score: s.sScore,
@@ -62,6 +63,7 @@ export const useObjectsOnClient = () => {
             controlsOverChannelsDown: 0,
             controlsOverChannelsLeft: 0,
             controlsOverChannelsRight: 0,
+            acceleration: s.sAcceleration,
             rotationSpeed: s.sRotationSpeed,
             speed: s.sSpeed,
             backendPosition: new THREE.Vector3(
@@ -87,19 +89,19 @@ export const useObjectsOnClient = () => {
         setObjectIds(ids);
       }
     },
-    [ownId, setObjectIds]
+    [setObjectIds]
   );
 
   const handleQuitForObjectsOnClient = useCallback(() => {
-    objects.splice(0, objects.length);
+    globals.objects.splice(0, globals.objects.length);
     setObjectIds([]);
   }, [setObjectIds]);
 
   const handleRemoveIdOnClient = useCallback(
     (remoteId: string) => {
-      const indexToRemove = objects.findIndex((x) => x.id === remoteId);
-      indexToRemove !== -1 && objects.splice(indexToRemove, 1);
-      const newIds = objects.map((x) => x.id);
+      const indexToRemove = globals.objects.findIndex((x) => x.id === remoteId);
+      indexToRemove !== -1 && globals.objects.splice(indexToRemove, 1);
+      const newIds = globals.objects.map((x) => x.id);
       setObjectIds(newIds);
     },
     [setObjectIds]

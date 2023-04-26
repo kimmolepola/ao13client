@@ -8,7 +8,7 @@ export const useMeshes = () => {
     async (
       filename: string,
       createGeometry: (x: THREE.Texture) => THREE.BufferGeometry,
-      createMaterial: (x: THREE.Texture) => THREE.Material
+      createMaterial: (x: THREE.Texture) => THREE.Material | THREE.Material[]
     ) => {
       const result = await new Promise((resolve, reject) => {
         const onLoad = (x: THREE.Texture) => {
@@ -45,11 +45,22 @@ export const useMeshes = () => {
         return new THREE.BoxGeometry(width, height, depth);
       };
       const createMaterial = (x: THREE.Texture) => {
-        return new THREE.MeshBasicMaterial({
-          map: x,
+        const empty = new THREE.MeshBasicMaterial({
           transparent: true,
-          color,
+          opacity: 0,
         });
+        return [
+          empty,
+          empty,
+          empty,
+          empty,
+          new THREE.MeshBasicMaterial({
+            map: x,
+            transparent: true,
+            color,
+          }),
+          empty,
+        ];
       };
       return load("fighter.png", createGeometry, createMaterial);
     },

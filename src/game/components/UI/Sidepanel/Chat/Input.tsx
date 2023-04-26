@@ -10,7 +10,7 @@ import { AiOutlineEnter } from "react-icons/ai";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import clsx from "clsx";
 
-import { objects } from "src/globals";
+import * as globals from "src/globals";
 import * as parameters from "src/parameters";
 import * as theme from "src/theme";
 import * as atoms from "src/atoms";
@@ -18,40 +18,37 @@ import * as networkingHooks from "src/networking/hooks";
 import * as types from "src/types";
 
 const Input = () => {
-  console.log("--InputForm");
-
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
   const { sendOrdered: sendOrderedFromMain } =
     networkingHooks.useSendFromMain();
   const { sendOrdered: sendOrderedFromClient } =
     networkingHooks.useSendFromClient();
   const main = useRecoilValue(atoms.main);
-  const ownId = useRecoilValue(atoms.ownId);
   const [value, setValue] = useState("");
 
   const onSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (main) {
-        if (ownId) {
-          const message = {
-            id: ownId + Date.now().toString(),
-            text: value,
-            userId: ownId,
-            username: objects.find((xx) => xx.id === ownId)?.username || "",
-          };
-          sendOrderedFromMain({
-            type: types.NetDataType.CHATMESSAGE_MAIN,
-            id: message.id,
-            text: message.text,
-            userId: message.userId,
-          });
-          setChatMessages((x) => [message, ...x]);
-          setTimeout(
-            () => setChatMessages((x) => x.filter((xx) => xx !== message)),
-            parameters.chatMessageTimeToLive
-          );
-        }
+      if (main && globals.state.ownId) {
+        const message = {
+          id: globals.state.ownId + Date.now().toString(),
+          text: value,
+          userId: globals.state.ownId,
+          username:
+            globals.objects.find((xx) => xx.id === globals.state.ownId)
+              ?.username || "",
+        };
+        sendOrderedFromMain({
+          type: types.NetDataType.CHATMESSAGE_MAIN,
+          id: message.id,
+          text: message.text,
+          userId: message.userId,
+        });
+        setChatMessages((x) => [message, ...x]);
+        setTimeout(
+          () => setChatMessages((x) => x.filter((xx) => xx !== message)),
+          parameters.chatMessageTimeToLive
+        );
       } else {
         sendOrderedFromClient({
           type: types.NetDataType.CHATMESSAGE_CLIENT,
@@ -60,14 +57,7 @@ const Input = () => {
       }
       setValue("");
     },
-    [
-      main,
-      ownId,
-      sendOrderedFromClient,
-      sendOrderedFromMain,
-      setChatMessages,
-      value,
-    ]
+    [main, sendOrderedFromClient, sendOrderedFromMain, setChatMessages, value]
   );
 
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {

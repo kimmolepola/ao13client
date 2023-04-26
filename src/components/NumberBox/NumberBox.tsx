@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { MouseEvent, useEffect, useState, useCallback } from "react";
 import { BiUpArrow, BiDownArrow } from "react-icons/bi";
 
 const repeatDelay = 500;
@@ -106,6 +106,11 @@ const NumberBox = ({
     );
   }, []);
 
+  const onContextMenu = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => e.preventDefault(),
+    []
+  );
+
   return (
     <div className="flex">
       <input
@@ -114,20 +119,22 @@ const NumberBox = ({
         onChange={onChangeFn}
       />
       <div className="flex flex-col text-[8px] justify-between border">
-        <div
+        <button
           className="flex justify-center items-center grow active:bg-zinc-200"
           onClick={onClickIncrement}
           onMouseDown={onPressIncrement}
           onTouchStart={onPressIncrement}
+          onContextMenu={onContextMenu}
         >
           <BiUpArrow />
-        </div>
+        </button>
         <div className="border w-3"></div>
         <button
           className="flex justify-center items-center grow active:bg-zinc-200"
           onClick={onClickDecrement}
           onMouseDown={onPressDecrement}
           onTouchStart={onPressDecrement}
+          onContextMenu={onContextMenu}
         >
           <BiDownArrow />
         </button>

@@ -1,6 +1,5 @@
-import { memo } from "react";
 import * as THREE from "three";
-import { useSetRecoilState, useRecoilValue } from "recoil";
+import { useSetRecoilState } from "recoil";
 
 import * as networkingHooks from "src/networking/hooks";
 import { radiansToDegrees } from "src/utils";
@@ -14,6 +13,7 @@ import {
 import { objects } from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
+import * as globals from "src/globals";
 
 const handleKeys = (delta: number, gameObject: types.GameObject) => {
   const o = gameObject;
@@ -50,7 +50,7 @@ const handleCamera = (
   c.position.x = gameObject.object3D?.position.x || 0;
   c.position.y = gameObject.object3D?.position.y || 0;
   c.rotation.z = object3D.rotation.z;
-  c.translateY(2);
+  c.translateY(1);
 };
 
 const handleInfoBoxElement = (
@@ -75,21 +75,21 @@ const handleMovement = (
   object3D: THREE.Object3D
 ) => {
   const o = gameObject;
-  const forceUp = delta > 1 ? o.controlsUp : delta * o.controlsUp;
-  const forceDown = delta > 1 ? o.controlsDown : delta * o.controlsDown;
-  const forceLeft = delta > 1 ? o.controlsLeft : delta * o.controlsLeft;
-  const forceRight = delta > 1 ? o.controlsRight : delta * o.controlsRight;
-  o.speed += forceUp;
-  if (o.speed > maxSpeed) o.speed = maxSpeed;
-  o.speed -= forceDown;
-  if (o.speed < minSpeed) o.speed = minSpeed;
-  object3D.rotateZ(o.rotationSpeed * forceLeft);
-  object3D.rotateZ(-1 * o.rotationSpeed * forceRight);
+  const forceUp = o.controlsUp > delta ? delta : o.controlsUp;
+  const forceDown = o.controlsDown > delta ? delta : o.controlsDown;
+  const forceLeft = o.controlsLeft > delta ? delta : o.controlsLeft;
+  const forceRight = o.controlsRight > delta ? delta : o.controlsRight;
   o.controlsUp -= forceUp;
   o.controlsDown -= forceDown;
   o.controlsLeft -= forceLeft;
   o.controlsRight -= forceRight;
-  object3D.translateY(o.speed * delta);
+  o.speed += forceUp * o.acceleration;
+  if (o.speed > maxSpeed) o.speed = maxSpeed;
+  o.speed -= forceDown * o.acceleration;
+  if (o.speed < minSpeed) o.speed = minSpeed;
+  object3D.rotateZ(forceLeft * o.rotationSpeed);
+  object3D.rotateZ(-1 * forceRight * o.rotationSpeed);
+  object3D.translateY((o.speed * delta) / 100);
 };
 
 const gatherUpdateData = (
@@ -153,27 +153,22 @@ const interpolatePosition = (o: types.GameObject, object3D: THREE.Object3D) => {
   object3D.quaternion.slerp(o.backendQuaternion, interpolationAlpha);
 };
 
-export const useFrame = (camera: THREE.Camera) => {
-  console.log("--Loop");
-  const main = useRecoilValue(atoms.main);
-  const windowSize = useRecoilValue(atoms.windowSize);
-  const setScore = useSetRecoilState(atoms.score);
+const v = new THREE.Vector3();
+let nextSendTime = Date.now();
+let nextScoreTime = Date.now();
+const scoreTimeInteval = 9875;
 
+export const useFrame = (camera: THREE.Camera, main: boolean) => {
+  const setScore = useSetRecoilState(atoms.score);
   const { sendUnordered: sendUnorderedFromClient } =
     networkingHooks.useSendFromClient();
   const { sendUnordered: sendUnorderedFromMain } =
     networkingHooks.useSendFromMain();
 
-  const v = new THREE.Vector3();
-  const w = windowSize.width / 2;
-  const h = windowSize.height / 2;
-
-  let nextSendTime = Date.now();
-
-  let nextScoreTime = Date.now();
-  const scoreTimeInteval = 9875;
-
   const run = (delta: number) => {
+    const w = globals.windowSize.width / 2;
+    const h = globals.windowSize.height / 2;
+
     if (main) {
       // main
       const updateData: { [id: string]: types.UpdateObject } = {};

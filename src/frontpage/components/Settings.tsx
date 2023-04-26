@@ -10,8 +10,6 @@ import * as types from "../types";
 import * as hooks from "../hooks";
 
 const Settings = () => {
-  console.log("--Settings");
-
   const setUser = useSetRecoilState(atoms.user);
   const [validation, setValidation, resetValidation] = hooks.useValidation();
   const [username, setUsername] = useState("");
