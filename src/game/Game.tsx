@@ -2,12 +2,12 @@ import { useMemo, useRef, useEffect, memo, useCallback } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import _ from "lodash";
 
-import * as networkingHooks from "../networking/hooks";
 import UserInterface from "./components/UI";
+
+import * as networkingHooks from "../networking/hooks";
 import * as atoms from "../atoms";
 import * as hooks from "./hooks";
 import * as types from "../types";
-import * as globals from "src/globals";
 
 let initialized = false;
 
@@ -23,9 +23,6 @@ const Game = () => {
   hooks.useRendering(ref);
 
   const onResize = useCallback(() => {
-    console.log("--onresize");
-    globals.windowSize.width = window.innerWidth;
-    globals.windowSize.height = window.innerHeight;
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
   }, [setWindowSize]);
 

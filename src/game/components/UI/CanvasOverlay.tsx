@@ -15,14 +15,14 @@ import * as types from "src/types";
 const InfoTexts = () => (
   <>
     {globals.objects.reduce((acc: JSX.Element[], cur) => {
-      if (cur.id !== globals.state.ownId) {
+      if (cur.isMe) {
         acc.push(
           <div
             key={cur.id}
             ref={(element) => {
               cur.infoElement = element;
             }}
-            className="absolute text-red-400 text-xs -translate-x-1/2 translate-y-1/2"
+            className="absolute text-red-400 text-xs -translate-x-1/2"
           />
         );
       }
@@ -87,7 +87,6 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
     <div
       className="text-red-900 text-[40px] select-none"
       onTouchStart={onPressed}
-      onTouchEnd={onReleased}
       onMouseDown={onPressed}
       onMouseUp={onReleased}
       onContextMenu={onContextMenu}
@@ -97,16 +96,18 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
   );
 };
 
-const ControlButtons = () => (
-  <div className="landscape:hidden absolute left-0 right-0 bottom-8 flex flex-col items-center">
-    <ControlButton control={types.Keys.UP} />
-    <div className="w-full flex justify-evenly">
-      <ControlButton control={types.Keys.LEFT} />
-      <ControlButton control={types.Keys.RIGHT} />
+const ControlButtons = () => {
+  return (
+    <div className="landscape:hidden absolute left-0 right-0 bottom-8 flex flex-col items-center">
+      <ControlButton control={types.Keys.UP} />
+      <div className="w-full flex justify-evenly">
+        <ControlButton control={types.Keys.LEFT} />
+        <ControlButton control={types.Keys.RIGHT} />
+      </div>
+      <ControlButton control={types.Keys.DOWN} />
     </div>
-    <ControlButton control={types.Keys.DOWN} />
-  </div>
-);
+  );
+};
 
 const CanvasOverlay = () => {
   useRecoilValue(atoms.objectIds); // render when objectIds change

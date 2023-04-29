@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from "react";
-import { handlePressed, handleReleased } from "../controls";
+import { handlePressed, handleReleased, handleAllReleased } from "../controls";
 import * as types from "../../types";
 
 const convertKeyToControl = (key: string) => {
@@ -30,11 +30,13 @@ export const useControls = () => {
   }, []);
 
   useEffect(() => {
-    document.addEventListener("keyup", handleKeyUp);
-    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("touchend", handleAllReleased);
+    window.addEventListener("touchcancel", handleAllReleased);
     return () => {
-      document.removeEventListener("keyup", handleKeyUp);
-      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyUp, handleKeyDown]);
 };

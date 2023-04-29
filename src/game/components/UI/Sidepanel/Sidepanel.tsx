@@ -86,7 +86,7 @@ const Sidepanel = ({ quit }: { quit: () => void }) => {
             <div className="text-rose-900 font-bold select-none items-center">
               AO13
             </div>
-            <div className="flex gap-2 flex-wrap z-40">
+            <div className="flex gap-2 flex-wrap">
               <NumberBox
                 value={sidepanelGeometry.size}
                 min={100}

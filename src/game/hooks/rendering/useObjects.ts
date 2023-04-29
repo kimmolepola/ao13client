@@ -17,7 +17,6 @@ export const useObjects = (scene: THREE.Scene) => {
         if (obj && !obj.object3D) {
           scene.add(mesh);
           obj.object3D = mesh;
-          console.log("--obj:", obj);
         }
       } else {
         scene.add(mesh);

@@ -6,7 +6,7 @@ let loopId: number | undefined;
 let previousTimestamp = 0;
 
 export const useAnimation = (
-  camera: THREE.Camera,
+  camera: THREE.PerspectiveCamera,
   scene: THREE.Scene,
   renderer: THREE.Renderer,
   main: boolean

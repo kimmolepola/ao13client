@@ -42,7 +42,7 @@ const handleKeys = (delta: number, gameObject: types.GameObject) => {
 };
 
 const handleCamera = (
-  camera: THREE.Camera,
+  camera: THREE.PerspectiveCamera,
   gameObject: types.GameObject,
   object3D: THREE.Object3D
 ) => {
@@ -50,7 +50,6 @@ const handleCamera = (
   c.position.x = gameObject.object3D?.position.x || 0;
   c.position.y = gameObject.object3D?.position.y || 0;
   c.rotation.z = object3D.rotation.z;
-  c.translateY(1);
 };
 
 const handleInfoBoxElement = (
@@ -84,8 +83,8 @@ const handleMovement = (
   o.controlsLeft -= forceLeft;
   o.controlsRight -= forceRight;
   o.speed += forceUp * o.acceleration;
-  if (o.speed > maxSpeed) o.speed = maxSpeed;
   o.speed -= forceDown * o.acceleration;
+  if (o.speed > maxSpeed) o.speed = maxSpeed;
   if (o.speed < minSpeed) o.speed = minSpeed;
   object3D.rotateZ(forceLeft * o.rotationSpeed);
   object3D.rotateZ(-1 * forceRight * o.rotationSpeed);
@@ -126,18 +125,25 @@ const resetControlValues = (gameObject: types.GameObject) => {
 const handleInfoElement = (
   gameObject: types.GameObject,
   v: THREE.Vector3,
-  h: number,
-  w: number,
   object3D: THREE.Object3D,
-  camera: THREE.Camera
+  camera: THREE.PerspectiveCamera
 ) => {
   const o = gameObject;
+  const resolutionRelativeAddend =
+    ((globals.canvasSize.halfHeight * 2) / 25) *
+    (globals.canvasSize.halfWidth / globals.canvasSize.halfHeight);
   if (o.infoElement) {
     o.infoElement.textContent = o.username;
     v.copy(object3D.position);
     v.project(camera);
-    o.infoElement.style.top = `calc(${h * -v.y + h}px + 5%)`;
-    o.infoElement.style.left = `${w * v.x + w}px`;
+    o.infoElement.style.left = `${
+      globals.canvasSize.halfWidth * v.x + globals.canvasSize.halfWidth
+    }px`;
+    o.infoElement.style.top = `${
+      globals.canvasSize.halfHeight * -v.y +
+      globals.canvasSize.halfHeight +
+      resolutionRelativeAddend
+    }px`;
   }
 };
 
@@ -158,7 +164,7 @@ let nextSendTime = Date.now();
 let nextScoreTime = Date.now();
 const scoreTimeInteval = 9875;
 
-export const useFrame = (camera: THREE.Camera, main: boolean) => {
+export const useFrame = (camera: THREE.PerspectiveCamera, main: boolean) => {
   const setScore = useSetRecoilState(atoms.score);
   const { sendUnordered: sendUnorderedFromClient } =
     networkingHooks.useSendFromClient();
@@ -166,9 +172,6 @@ export const useFrame = (camera: THREE.Camera, main: boolean) => {
     networkingHooks.useSendFromMain();
 
   const run = (delta: number) => {
-    const w = globals.windowSize.width / 2;
-    const h = globals.windowSize.height / 2;
-
     if (main) {
       // main
       const updateData: { [id: string]: types.UpdateObject } = {};
@@ -185,7 +188,7 @@ export const useFrame = (camera: THREE.Camera, main: boolean) => {
             gatherUpdateData(updateData, o);
             resetControlValues(o);
           }
-          handleInfoElement(o, v, h, w, o.object3D, camera);
+          handleInfoElement(o, v, o.object3D, camera);
           // mock
           if (Date.now() > nextScoreTime) {
             nextScoreTime = Date.now() + scoreTimeInteval;
@@ -222,7 +225,7 @@ export const useFrame = (camera: THREE.Camera, main: boolean) => {
           }
           handleMovement(delta, o, o.object3D);
           interpolatePosition(o, o.object3D);
-          handleInfoElement(o, v, h, w, o.object3D, camera);
+          handleInfoElement(o, v, o.object3D, camera);
         }
       }
     }

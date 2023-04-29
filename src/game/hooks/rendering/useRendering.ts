@@ -5,6 +5,7 @@ import * as THREE from "three";
 import * as renderingHooks from ".";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
+import * as globals from "src/globals";
 
 export const useRendering = (ref: RefObject<HTMLDivElement>) => {
   const sidepanelGeometry = useRecoilValue(atoms.sidepanelGeometry);
@@ -32,6 +33,11 @@ export const useRendering = (ref: RefObject<HTMLDivElement>) => {
         };
     }
   }, [sidepanelGeometry, windowSize]);
+
+  useEffect(() => {
+    globals.canvasSize.halfWidth = size.width / 2;
+    globals.canvasSize.halfHeight = size.height / 2;
+  }, [size]);
 
   const camera = useMemo(
     () => new THREE.PerspectiveCamera(70, size.width / size.height, 1, 20),
