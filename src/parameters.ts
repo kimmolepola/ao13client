@@ -1,4 +1,4 @@
-export const acceleration = 0.00004;
+export const acceleration = 0.0004;
 export const rotationSpeed = 0.0006;
 export const speed = 0.03;
 export const maxSpeed = 1;
@@ -9,3 +9,6 @@ export const sendIntervalMain = 51;
 export const sendIntervalMainState = 10000;
 export const interpolationAlpha = 0.025;
 export const chatMessageTimeToLive = 60000;
+export const infoTextOffsetValue = 6;
+export const cameraDefaultZ = 20;
+export const sidepanelDefaultSize = 150;

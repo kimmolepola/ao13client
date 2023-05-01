@@ -27,6 +27,7 @@
     "JSX": "readonly"
   },
   "rules": {
+    "no-unsafe-optional-chaining": "off",
     "react/require-default-props": "off",
     "no-lonely-if": "off",
     "react/self-closing-comp": "off",

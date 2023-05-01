@@ -1,0 +1,40 @@
+import * as THREE from "three";
+
+import * as networkingHooks from "src/networking/hooks";
+import * as parameters from "src/parameters";
+import * as globals from "src/globals";
+import * as types from "src/types";
+import * as commonLogic from "src/Game/Common/logic";
+import * as logic from "../../logic";
+
+const v = new THREE.Vector3();
+let nextSendTime = Date.now();
+
+export const useFrame = (camera: THREE.PerspectiveCamera) => {
+  const { sendUnordered } = networkingHooks.useSendFromClient();
+
+  const runFrame = (delta: number) => {
+    for (let i = globals.objects.length - 1; i > -1; i--) {
+      const o = globals.objects[i];
+      if (o && o.object3D) {
+        if (o.isMe) {
+          commonLogic.handleKeys(delta, o);
+          commonLogic.handleCamera(camera, o, o.object3D);
+          commonLogic.handleInfoBoxElement(o, o.object3D);
+          if (Date.now() > nextSendTime) {
+            nextSendTime = Date.now() + parameters.sendIntervalClient;
+            sendUnordered({
+              type: types.NetDataType.CONTROLS,
+              data: logic.gatherControlsData(o),
+            });
+            commonLogic.resetControlValues(o);
+          }
+        }
+        commonLogic.handleMovement(delta, o, o.object3D);
+        logic.interpolatePosition(o, o.object3D);
+        commonLogic.handleInfoElement(o, v, o.object3D, camera);
+      }
+    }
+  };
+  return { runFrame };
+};

@@ -3,6 +3,7 @@ import { atom } from "recoil";
 import { Socket } from "socket.io-client";
 
 import * as types from "./types";
+import * as parameters from "./parameters";
 
 export const windowSize = atom<{ width: number; height: number }>({
   key: "windowSize",
@@ -14,13 +15,16 @@ export const sidepanelGeometry = atom<{
   size: number;
 }>({
   key: "sidepanelGeometry",
-  default: { position: types.Position.BOTTOM, size: 100 },
+  default: {
+    position: types.Position.BOTTOM,
+    size: parameters.sidepanelDefaultSize,
+  },
 });
 
-export const turnCredentials = atom<
-  { urls: string; username: string; credential: string } | undefined
+export const iceServers = atom<
+  { urls: string; username: string; credential: string }[] | undefined
 >({
-  key: "turnCredentials",
+  key: "iceServers",
   default: undefined,
 });
 

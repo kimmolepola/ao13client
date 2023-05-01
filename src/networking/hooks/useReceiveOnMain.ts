@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useSetRecoilState } from "recoil";
 
 import { chatMessageTimeToLive } from "src/parameters";
-import * as gameHooks from "src/game/hooks";
+import * as serverHooks from "src/Game/Server/hooks";
 import { objects } from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
@@ -11,7 +11,7 @@ import * as hooks from ".";
 export const useReceiveOnMain = () => {
   const { sendOrdered } = hooks.useSendFromMain();
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
-  const { handleReceiveControlsData } = gameHooks.useObjectsOnMain();
+  const { handleReceiveControlsData } = serverHooks.useObjects();
 
   const onReceive = useCallback(
     (remoteId: string, data: types.NetData) => {

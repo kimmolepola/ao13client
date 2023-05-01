@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useRecoilValue } from "recoil";
 
-import Game from "./game";
-import Frontpage from "./frontpage";
+import Game from "./Game";
+import Frontpage from "./Frontpage";
 
-import * as frontpageHooks from "./frontpage/hooks";
+import * as frontpageHooks from "./Frontpage/hooks";
 import * as atoms from "./atoms";
 
 const App = () => {

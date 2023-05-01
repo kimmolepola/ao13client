@@ -13,7 +13,7 @@ export const getGameObject = async (id: any) => {
   }
 };
 
-export const savePlayerData = async (
+export const saveGameState = async (
   data: { remoteId: string; score: number }[]
 ) => {
   try {

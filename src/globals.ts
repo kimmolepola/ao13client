@@ -6,7 +6,14 @@ export const state: { main: boolean; ownId: string | undefined } = {
   main: false,
   ownId: undefined,
 };
-export const canvasSize: { halfWidth: number; halfHeight: number } = {
-  halfWidth: window.innerWidth / 2,
-  halfHeight: window.innerHeight / 2,
+export const dimensions: {
+  windowWidth: number;
+  windowHeight: number;
+  canvasHalfWidth: number;
+  canvasHalfHeight: number;
+} = {
+  windowWidth: window.innerWidth,
+  windowHeight: window.innerHeight,
+  canvasHalfWidth: window.innerWidth / 2,
+  canvasHalfHeight: window.innerHeight / 2,
 };

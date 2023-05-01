@@ -15,7 +15,7 @@ const LoggedIn = () => {
   const location = useLocation();
   const user = useRecoilValue(atoms.user);
   const setPage = useSetRecoilState(atoms.page);
-  const setTurnCredentials = useSetRecoilState(atoms.turnCredentials);
+  const setIceServers = useSetRecoilState(atoms.iceServers);
   const { refreshUser } = networkingHooks.useUser();
 
   const [errorText, setErrorText] = useState<string>();
@@ -35,13 +35,13 @@ const LoggedIn = () => {
     if (!errorText) {
       const { data, error } = await checkOkToStart();
       if (data && data.success) {
-        const { data: credsData, error: credsError } =
+        const { data: turnCredentials, error: credentialsError } =
           await getTurnCredentials();
-        if (credsData) {
-          setTurnCredentials(credsData);
+        if (turnCredentials) {
+          setIceServers([turnCredentials]);
           setPage("game");
         } else {
-          setErrorText(credsError);
+          setErrorText(credentialsError);
           setTimeout(() => setErrorText(undefined), 5000);
         }
       } else {
@@ -49,7 +49,7 @@ const LoggedIn = () => {
         setTimeout(() => setErrorText(undefined), 5000);
       }
     }
-  }, [errorText, setErrorText, setTurnCredentials, setPage]);
+  }, [errorText, setErrorText, setIceServers, setPage]);
 
   return (
     <Routes>

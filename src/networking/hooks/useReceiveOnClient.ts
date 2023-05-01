@@ -5,13 +5,13 @@ import { chatMessageTimeToLive } from "src/parameters";
 import { objects } from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
-import * as gameHooks from "src/game/hooks";
+import * as clientHooks from "src/Game/Client/hooks";
 
 let mostRecentTimestamp = 0;
 
 export const useReceiveOnClient = () => {
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
-  const { handleUpdateData, handleStateData } = gameHooks.useObjectsOnClient();
+  const { handleUpdateData, handleStateData } = clientHooks.useObjects();
 
   const onReceive = useCallback(
     (data: types.NetData) => {
