@@ -1,1 +1,1 @@
-export { default } from "./Sidepanel";
+export { default } from "./SidePanel";
