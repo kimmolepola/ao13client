@@ -97,9 +97,15 @@ export const handleInfoElement = (
 ) => {
   const o = gameObject;
   const offset =
-    (globals.dimensions.canvasHalfHeight / 100) *
-    parameters.infoTextOffsetValue *
-    (globals.dimensions.canvasHalfWidth / globals.dimensions.canvasHalfHeight);
+    // maintain same (scaled) offset to object
+    // regardless of canvas or window size change
+    (screen.height / parameters.infoTextOffsetValue) *
+    ((Math.max(
+      globals.dimensions.canvasHalfWidth,
+      globals.dimensions.canvasHalfHeight
+    ) *
+      2) /
+      screen.width);
   if (o.infoElement) {
     o.infoElement.textContent = o.username;
     v.copy(object3D.position);
