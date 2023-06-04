@@ -107,7 +107,8 @@ export const handleInfoElement = (
       2) /
       screen.width);
   if (o.infoElement) {
-    o.infoElement.textContent = o.username;
+    //    o.infoElement.textContent = o.username;
+    o.infoElement.textContent = "" + screen.height;
     v.copy(object3D.position);
     v.project(camera);
 

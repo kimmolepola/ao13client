@@ -116,9 +116,11 @@ export const useConnection = () => {
         id: 1,
       });
       orderedChannel.onopen = () => {
+        console.log("--ordered open");
         unorderedChannel.readyState === "open" && handleChannelOpen(remoteId);
       };
       unorderedChannel.onopen = () => {
+        console.log("--unordered open");
         orderedChannel.readyState === "open" && handleChannelOpen(remoteId);
       };
       orderedChannel.onclose = () => {
@@ -136,9 +138,11 @@ export const useConnection = () => {
         state.main ? onReceiveOnMain(remoteId, d) : onReceiveOnClient(d);
       };
       peerConnection.onicecandidate = ({ candidate }) => {
+        console.log("--onicecandidate:", candidate);
         socket?.emit("signaling", { remoteId, candidate });
       };
       peerConnection.onnegotiationneeded = async () => {
+        console.log("--onnegotiationneeded");
         try {
           await peerConnection.setLocalDescription();
           socket?.emit("signaling", {
@@ -235,6 +239,7 @@ export const useConnection = () => {
     });
 
     socket?.on("init", (id: string) => {
+      console.log("--init");
       globals.state.ownId = id;
     });
 
@@ -246,6 +251,7 @@ export const useConnection = () => {
     });
 
     socket?.on("connectToMain", (remoteId: string) => {
+      console.log("--connect to main");
       peerConnections.forEach((x) => closePeerConnection(x));
       peerConnections.splice(0, peerConnections.length);
       createPeerConnection(remoteId);
@@ -262,6 +268,7 @@ export const useConnection = () => {
         description?: RTCSessionDescription;
         candidate?: RTCIceCandidate;
       }) => {
+        console.log("--signaling:", remoteId, description, candidate);
         !peerConnections.some((x) => x.remoteId === remoteId) &&
           createPeerConnection(remoteId);
         peerConnectionHandleSignaling(remoteId, description, candidate);

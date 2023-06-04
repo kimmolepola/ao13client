@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import clsx from "clsx";
 
-import { signup } from "src/networking/services/auth.service";
+import { signup, setToken } from "src/networking/services/auth.service";
 
 import * as theme from "src/theme";
 import * as atoms from "src/atoms";
@@ -50,6 +50,7 @@ const SignUp = () => {
       newValidation.create = error;
       newValidation.state = types.ValidationState.OPEN;
       if (!error) {
+        setToken(data.token);
         setUser(data);
       }
     }
