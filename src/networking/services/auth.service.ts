@@ -90,18 +90,36 @@ export const login = async ({
   }
 };
 
-export const signup = async ({
-  email,
-  password,
-}: {
-  email: string;
-  password: string;
-}) => {
+export const requestSignup = async ({ email }: { email: string }) => {
   try {
     const response = await axios.post(`${backendUrl}/api/v1/auth/signup`, {
       email,
-      password,
     });
+    return { data: response.data };
+  } catch (err: any) {
+    const error = err.response?.data ? err.response.data.error : err.toString();
+    return { error };
+  }
+};
+
+export const confirmSignup = async ({
+  email,
+  password,
+  token,
+}: {
+  email: string;
+  password: string;
+  token: string;
+}) => {
+  try {
+    const response = await axios.post(
+      `${backendUrl}/api/v1/auth/confirmSignup`,
+      {
+        email,
+        password,
+        token,
+      }
+    );
     return { data: response.data };
   } catch (err: any) {
     const error = err.response?.data ? err.response.data.error : err.toString();

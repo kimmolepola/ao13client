@@ -16,6 +16,7 @@ import LoggedIn from "./components/LoggedIn";
 import AppBar from "./components/AppBar";
 
 import * as atoms from "../atoms";
+import ConfirmSignup from "./components/ConfirmSignup";
 
 const Frontpage = () => {
   const user = useRecoilValue(atoms.user);
@@ -40,8 +41,9 @@ const Frontpage = () => {
         )}
 
         <Routes>
-          <Route path="/resetpassword" element={<ResetPassword />} />
-          <Route path="/forgottenpassword" element={<ForgottenPassword />} />
+          <Route path="/confirm-email" element={<ConfirmSignup />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/forgotten-password" element={<ForgottenPassword />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="*" element={!user ? <Login /> : <LoggedIn />} />
         </Routes>

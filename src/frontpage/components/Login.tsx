@@ -110,7 +110,7 @@ const Login = () => {
           Remember me
         </label>
       </form>
-      <Link to="/forgottenpassword">Forgotten password?</Link>
+      <Link to="/forgotten-password">Forgotten password?</Link>
       <button
         className={clsx(theme.cButton, "bg-orange-400")}
         type="button"
