@@ -76,7 +76,7 @@ const ConfirmSignUp = () => {
   return (
     <div className={theme.cContainer}>
       {validation.state !== types.ValidationState.LOADING
-        ? "Complete registration by giving a new password for your account"
+        ? "Complete registration by creating a password for your account"
         : "Creating..."}
       <form onSubmit={onSubmit} className={theme.cForm}>
         {validation.create && (

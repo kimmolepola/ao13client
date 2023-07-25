@@ -226,6 +226,7 @@ export const useConnection = () => {
   ]);
 
   const connect = useCallback(async () => {
+    await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
     await disconnect();
     socket = io(backendUrl, {
       auth: {
