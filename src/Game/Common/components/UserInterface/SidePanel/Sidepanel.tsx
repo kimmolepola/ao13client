@@ -1,4 +1,4 @@
-import { useMemo, memo } from "react";
+import { useState, useMemo, memo, useCallback } from "react";
 import { useRecoilValue } from "recoil";
 import clsx from "clsx";
 
@@ -9,12 +9,13 @@ import * as types from "src/types";
 import * as hooks from "../../../hooks";
 
 const SidePanel = ({
-  quit,
+  quit: onClickQuit,
   chatOnSubmit,
 }: {
   quit: () => void;
   chatOnSubmit: (value: string) => void;
 }) => {
+  const [move, setMove] = useState(false);
   const { onMouseDown, onTouchStart } = hooks.useResize();
   const windowSize = useRecoilValue(atoms.windowSize);
   const sidepanelGeometry = useRecoilValue(atoms.sidepanelGeometry);
@@ -53,19 +54,28 @@ const SidePanel = ({
     }
   }, [sidepanelGeometry.position]);
 
+  const onClickMove = useCallback(() => {
+    setMove((x) => !x);
+  }, []);
+
   return (
     <div
       className={clsx(
-        "absolute inset-0 bg-white flex cursor-move",
-        sidePanelClassName
+        "absolute inset-0 bg-white flex",
+        sidePanelClassName,
+        move && "cursor-move"
       )}
       style={sidePanelStyle}
-      onMouseDown={onMouseDown}
-      onTouchStart={onTouchStart}
+      onMouseDown={move ? onMouseDown : undefined}
+      onTouchStart={move ? onTouchStart : undefined}
     >
       <div className="w-full h-full bg-white border flex flex-col">
         <div className="flex flex-col">
-          <Header quit={quit} />
+          <Header
+            onClickQuit={onClickQuit}
+            onClickMove={onClickMove}
+            move={move}
+          />
           <div className="flex gap-1 flex-wrap text-xs p-0.5 border">
             <div>{user?.username} |</div>
             <div>{`Players: ${connectedAmount + 1} |`}</div>

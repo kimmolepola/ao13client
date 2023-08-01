@@ -105,6 +105,7 @@ export const useConnection = () => {
         state.main ? remoteId + " connecting..." : "Connecting to host..."
       );
       const peerConnection = new RTCPeerConnection({ iceServers });
+      peerConnection.addTransceiver("audio", { direction: "recvonly" });
       const orderedChannel = peerConnection.createDataChannel("ordered", {
         ordered: true,
         negotiated: true,
@@ -226,7 +227,13 @@ export const useConnection = () => {
   ]);
 
   const connect = useCallback(async () => {
-    await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    console.log("--await getUserMedia");
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    } catch (err) {
+      console.log("getUserMedia err:", err);
+    }
+    console.log("--await getUserMedia resolved");
     await disconnect();
     socket = io(backendUrl, {
       auth: {

@@ -10,7 +10,8 @@ export const useSendFromMain = () => {
       try {
         const dataString = JSON.stringify(data);
         peerConnections.forEach((x) => {
-          x.orderedChannel.send(dataString);
+          x.orderedChannel.readyState === "open" &&
+            x.orderedChannel.send(dataString);
         });
       } catch (error) {
         logError(error, data);
@@ -23,7 +24,8 @@ export const useSendFromMain = () => {
     const stringData = JSON.stringify(data);
     peerConnections.forEach((x) => {
       try {
-        x.unorderedChannel.send(stringData);
+        x.unorderedChannel.readyState === "open" &&
+          x.unorderedChannel.send(stringData);
       } catch (error) {
         logError(error, data);
       }
