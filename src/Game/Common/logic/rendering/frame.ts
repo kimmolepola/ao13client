@@ -97,19 +97,24 @@ export const handleInfoElement = (
 ) => {
   const o = gameObject;
   const offset =
-    // maintain same (scaled) offset to object
-    // regardless of canvas or window size change
-    (screen.height / parameters.infoTextOffsetValue) *
-    ((Math.max(
-      globals.dimensions.canvasHalfWidth,
-      globals.dimensions.canvasHalfHeight
-    ) *
-      2) /
-      screen.width);
+    parameters.infoTextOffsetValue *
+    Math.max(
+      1,
+      globals.dimensions.canvasHalfWidth / globals.dimensions.canvasHalfHeight
+    );
   if (o.infoElement) {
-    //    o.infoElement.textContent = o.username;
-    o.infoElement.textContent = "" + screen.height;
+    (object3D as THREE.Mesh).geometry.computeBoundingBox();
+
+    (object3D as THREE.Mesh).geometry.boundingBox?.getSize(v);
+
+    o.infoElement.textContent = v.toArray().toString();
+    // (object3D as THREE.Mesh).geometry.boundingBox?.getSize(v);
+    // v = (object3D as THREE.Mesh).position.clone();
+
     v.copy(object3D.position);
+    const v2 = new THREE.Vector3(0, 1, 0);
+    v2.applyQuaternion(camera.quaternion);
+    v.sub(v2);
     v.project(camera);
 
     o.infoElement.style.left = `${
@@ -118,8 +123,42 @@ export const handleInfoElement = (
     }px`;
     o.infoElement.style.top = `${
       globals.dimensions.canvasHalfHeight * -v.y +
-      globals.dimensions.canvasHalfHeight +
-      offset
+      globals.dimensions.canvasHalfHeight
     }px`;
   }
 };
+
+// export const handleInfoElement = (
+//   gameObject: types.GameObject,
+//   v: THREE.Vector3,
+//   object3D: THREE.Object3D,
+//   camera: THREE.PerspectiveCamera
+// ) => {
+//   const o = gameObject;
+//   const offset =
+//     // maintain same (scaled) offset to object
+//     // regardless of canvas or window size change
+//     (screen.height / parameters.infoTextOffsetValue) *
+//     ((Math.max(
+//       globals.dimensions.canvasHalfWidth,
+//       globals.dimensions.canvasHalfHeight
+//     ) *
+//       2) /
+//       screen.width);
+//   if (o.infoElement) {
+//     //    o.infoElement.textContent = o.username;
+//     o.infoElement.textContent = "" + screen.height;
+//     v.copy(object3D.position);
+//     v.project(camera);
+
+//     o.infoElement.style.left = `${
+//       globals.dimensions.canvasHalfWidth * v.x +
+//       globals.dimensions.canvasHalfWidth
+//     }px`;
+//     o.infoElement.style.top = `${
+//       globals.dimensions.canvasHalfHeight * -v.y +
+//       globals.dimensions.canvasHalfHeight +
+//       offset
+//     }px`;
+//   }
+// };
