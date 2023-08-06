@@ -92,6 +92,7 @@ export const resetControlValues = (gameObject: types.GameObject) => {
 export const handleInfoElement = (
   gameObject: types.GameObject,
   v: THREE.Vector3,
+  v2: THREE.Vector3,
   object3D: THREE.Object3D,
   camera: THREE.PerspectiveCamera
 ) => {
@@ -103,26 +104,39 @@ export const handleInfoElement = (
       globals.dimensions.canvasHalfWidth / globals.dimensions.canvasHalfHeight
     );
   if (o.infoElement) {
-    (object3D as THREE.Mesh).geometry.computeBoundingBox();
+    //(object3D as THREE.Mesh).geometry.computeBoundingBox();
 
     (object3D as THREE.Mesh).geometry.boundingBox?.getSize(v);
+    // const v3 = new THREE.Vector3();
+    // v3.copy(v);
+    // v3.applyQuaternion(camera.quaternion);
+    // v3.divideScalar(2);
 
-    o.infoElement.textContent = v.toArray().toString();
+    // o.infoElement.textContent =
+    //   v.toArray().toString() +
+    //   " --- " +
+    //   camera.quaternion.toArray().toString() +
+    //   " --- " +
+    //   v3.toArray().toString();
+
+    o.infoElement.textContent = "moi";
+
     // (object3D as THREE.Mesh).geometry.boundingBox?.getSize(v);
     // v = (object3D as THREE.Mesh).position.clone();
+    v.applyQuaternion((object3D as THREE.Mesh).quaternion);
+    v.applyQuaternion(camera.quaternion);
+    v.divideScalar(2);
 
-    v.copy(object3D.position);
-    const v2 = new THREE.Vector3(0, 1, 0);
-    v2.applyQuaternion(camera.quaternion);
-    v.sub(v2);
-    v.project(camera);
+    v2.copy(object3D.position);
+    v2.sub(new THREE.Vector3(0, v.y, 0));
+    v2.project(camera);
 
     o.infoElement.style.left = `${
-      globals.dimensions.canvasHalfWidth * v.x +
+      globals.dimensions.canvasHalfWidth * v2.x +
       globals.dimensions.canvasHalfWidth
     }px`;
     o.infoElement.style.top = `${
-      globals.dimensions.canvasHalfHeight * -v.y +
+      globals.dimensions.canvasHalfHeight * -v2.y +
       globals.dimensions.canvasHalfHeight
     }px`;
   }

@@ -10,6 +10,7 @@ import * as commonLogic from "src/Game/Common/logic";
 import * as logic from "../../logic";
 
 const v = new THREE.Vector3();
+const v2 = new THREE.Vector3();
 let nextSendTime = Date.now();
 let nextScoreTime = Date.now();
 const scoreTimeInteval = 9875;
@@ -33,7 +34,7 @@ export const useFrame = (camera: THREE.PerspectiveCamera) => {
           logic.gatherUpdateData(updateData, o);
           commonLogic.resetControlValues(o);
         }
-        commonLogic.handleInfoElement(o, v, o.object3D, camera);
+        commonLogic.handleInfoElement(o, v, v2, o.object3D, camera);
         // mock
         if (Date.now() > nextScoreTime) {
           nextScoreTime = Date.now() + scoreTimeInteval;

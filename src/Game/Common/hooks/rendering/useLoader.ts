@@ -17,10 +17,23 @@ export const useLoader = (scene: THREE.Scene) => {
         if (obj && !obj.object3D) {
           scene.add(mesh);
           obj.object3D = mesh;
+          mesh.geometry.computeBoundingBox();
         }
       } else {
         scene.add(mesh);
       }
+    },
+    [scene]
+  );
+
+  const remove = useCallback(
+    (objectsIndex: number) => {
+      const os = globals.objects;
+      const o = os[objectsIndex];
+      if (o.object3D) {
+        scene.remove(o.object3D);
+      }
+      os.splice(objectsIndex, 1);
     },
     [scene]
   );
@@ -38,13 +51,10 @@ export const useLoader = (scene: THREE.Scene) => {
           load(loadFighter, o.id);
         }
       } else {
-        if (o.object3D) {
-          scene.remove(o.object3D);
-        }
-        os.splice(i, 1);
+        remove(i);
       }
     }
-  }, [scene, objectIds, load, loadFighter]);
+  }, [objectIds, load, loadFighter, remove]);
 
   useEffect(() => {
     updateRenderedObjects();
