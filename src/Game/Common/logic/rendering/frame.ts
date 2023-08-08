@@ -91,88 +91,78 @@ export const resetControlValues = (gameObject: types.GameObject) => {
 
 export const handleInfoElement = (
   gameObject: types.GameObject,
-  v: THREE.Vector3,
+  v1: THREE.Vector3,
   v2: THREE.Vector3,
+  v3: THREE.Vector3,
+  q1: THREE.Quaternion,
+  q2: THREE.Quaternion,
+  q3: THREE.Quaternion,
   object3D: THREE.Object3D,
   camera: THREE.PerspectiveCamera
 ) => {
   const o = gameObject;
-  const offset =
-    parameters.infoTextOffsetValue *
-    Math.max(
-      1,
-      globals.dimensions.canvasHalfWidth / globals.dimensions.canvasHalfHeight
-    );
-  if (o.infoElement) {
-    //(object3D as THREE.Mesh).geometry.computeBoundingBox();
+  if (o.infoElement && gameObject.dimensions) {
+    v1.copy(object3D.position);
+    v2.set(0, -1, 0);
+    v3.copy(gameObject.dimensions);
+    q1.copy((object3D as THREE.Mesh).quaternion);
+    q2.copy((object3D as THREE.Mesh).quaternion);
+    q2.invert();
+    q3.copy(camera.quaternion);
 
-    (object3D as THREE.Mesh).geometry.boundingBox?.getSize(v);
-    // const v3 = new THREE.Vector3();
-    // v3.copy(v);
-    // v3.applyQuaternion(camera.quaternion);
-    // v3.divideScalar(2);
+    const infoElementPosition = v1;
+    const infoElementDirection = v2;
+    const gameObjectDimensions = v3;
+    const gameObjectRotation = q1;
+    const gameObjectRotationInverted = q2;
+    const cameraRotation = q3;
 
-    // o.infoElement.textContent =
-    //   v.toArray().toString() +
-    //   " --- " +
-    //   camera.quaternion.toArray().toString() +
-    //   " --- " +
-    //   v3.toArray().toString();
+    // let's calculate the position for the info text
 
-    o.infoElement.textContent = "moi";
+    // we want the text to show below the object by a certain offset
+    // let's first find the distance from the object center to the edge of the object
+    // this needs to be in the opposite direction of where camera is rotated
 
-    // (object3D as THREE.Mesh).geometry.boundingBox?.getSize(v);
-    // v = (object3D as THREE.Mesh).position.clone();
-    v.applyQuaternion((object3D as THREE.Mesh).quaternion);
-    v.applyQuaternion(camera.quaternion);
-    v.divideScalar(2);
+    // we need to take into account the rotation of the object and the rotation of the camera
+    // we apply camera rotation and inverse object rotation to a downwards pointing vector
+    infoElementDirection.applyQuaternion(gameObjectRotationInverted);
+    infoElementDirection.applyQuaternion(cameraRotation);
 
-    v2.copy(object3D.position);
-    v2.sub(new THREE.Vector3(0, v.y, 0));
-    v2.project(camera);
+    // we now have the direction where we want to calculate the distance
+    // from the center of the object to the edge of the object
+    // let's multiply the object dimensions with that direction vector
+    gameObjectDimensions.multiply(infoElementDirection);
 
+    // now we have the width of the object in that direction
+    const infoElementVector = gameObjectDimensions;
+
+    // let's divide it and have the distance from the center to the edge
+    infoElementVector.divideScalar(2);
+
+    // now we need to remove the object rotation from the vector
+    // and only regard the camera rotation for it to point to correct direction
+    infoElementVector.applyQuaternion(gameObjectRotation);
+
+    // let's add this vector to the position of the object
+    infoElementPosition.add(infoElementVector);
+
+    // now we have it positioned correctly on the bottom edge of the object
+    // when viewing from the direction of the camera
+    // let's project this position from the world space to the screen space
+    infoElementPosition.project(camera);
+
+    o.infoElement.textContent = gameObject.username;
+
+    // let's put the info element on the screen to that position
+    // with some offset to have it slightly below the object
     o.infoElement.style.left = `${
-      globals.dimensions.canvasHalfWidth * v2.x +
+      globals.dimensions.canvasHalfWidth * infoElementPosition.x +
       globals.dimensions.canvasHalfWidth
     }px`;
     o.infoElement.style.top = `${
-      globals.dimensions.canvasHalfHeight * -v2.y +
-      globals.dimensions.canvasHalfHeight
+      globals.dimensions.canvasHalfHeight * -infoElementPosition.y +
+      globals.dimensions.canvasHalfHeight +
+      parameters.infoTextOffsetValue
     }px`;
   }
 };
-
-// export const handleInfoElement = (
-//   gameObject: types.GameObject,
-//   v: THREE.Vector3,
-//   object3D: THREE.Object3D,
-//   camera: THREE.PerspectiveCamera
-// ) => {
-//   const o = gameObject;
-//   const offset =
-//     // maintain same (scaled) offset to object
-//     // regardless of canvas or window size change
-//     (screen.height / parameters.infoTextOffsetValue) *
-//     ((Math.max(
-//       globals.dimensions.canvasHalfWidth,
-//       globals.dimensions.canvasHalfHeight
-//     ) *
-//       2) /
-//       screen.width);
-//   if (o.infoElement) {
-//     //    o.infoElement.textContent = o.username;
-//     o.infoElement.textContent = "" + screen.height;
-//     v.copy(object3D.position);
-//     v.project(camera);
-
-//     o.infoElement.style.left = `${
-//       globals.dimensions.canvasHalfWidth * v.x +
-//       globals.dimensions.canvasHalfWidth
-//     }px`;
-//     o.infoElement.style.top = `${
-//       globals.dimensions.canvasHalfHeight * -v.y +
-//       globals.dimensions.canvasHalfHeight +
-//       offset
-//     }px`;
-//   }
-// };

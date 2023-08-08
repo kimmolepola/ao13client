@@ -81,6 +81,7 @@ export const useObjects = () => {
             infoElement: undefined,
             infoBoxElement: undefined,
             object3D: undefined,
+            dimensions: undefined,
           });
         }
       });

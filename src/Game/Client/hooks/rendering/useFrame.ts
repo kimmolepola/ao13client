@@ -7,8 +7,12 @@ import * as types from "src/types";
 import * as commonLogic from "src/Game/Common/logic";
 import * as logic from "../../logic";
 
-const v = new THREE.Vector3();
+const v1 = new THREE.Vector3();
 const v2 = new THREE.Vector3();
+const v3 = new THREE.Vector3();
+const q1 = new THREE.Quaternion();
+const q2 = new THREE.Quaternion();
+const q3 = new THREE.Quaternion();
 let nextSendTime = Date.now();
 
 export const useFrame = (camera: THREE.PerspectiveCamera) => {
@@ -33,7 +37,17 @@ export const useFrame = (camera: THREE.PerspectiveCamera) => {
         }
         commonLogic.handleMovement(delta, o, o.object3D);
         logic.interpolatePosition(o, o.object3D);
-        commonLogic.handleInfoElement(o, v, v2, o.object3D, camera);
+        commonLogic.handleInfoElement(
+          o,
+          v1,
+          v2,
+          v3,
+          q1,
+          q2,
+          q3,
+          o.object3D,
+          camera
+        );
       }
     }
   };

@@ -75,6 +75,7 @@ export type GameObject = {
   infoElement: HTMLDivElement | null | undefined;
   infoBoxElement: HTMLDivElement | null | undefined;
   object3D: THREE.Object3D | undefined;
+  dimensions: THREE.Vector3 | undefined;
 };
 
 export enum NetDataType {

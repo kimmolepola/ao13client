@@ -40,7 +40,7 @@ export const useMeshes = () => {
     async (color?: string) => {
       const createGeometry = (x: THREE.Texture) => {
         const width = Math.min(1, x.image.width / x.image.height);
-        const height = Math.min(1, x.image.height / x.image.width) * 4;
+        const height = Math.min(1, x.image.height / x.image.width);
         const depth = 0.01;
         return new THREE.BoxGeometry(width, height, depth);
       };

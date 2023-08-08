@@ -10,14 +10,20 @@ export const useLoader = (scene: THREE.Scene) => {
   const { loadFighter, loadBackground } = hooks.useMeshes();
 
   const load = useCallback(
-    async (meshLoadFn: () => Promise<THREE.Mesh>, id?: string) => {
-      const mesh = await meshLoadFn();
+    async (
+      meshLoadFn: (color?: string) => Promise<THREE.Mesh>,
+      id?: string
+    ) => {
+      const obj = globals.objects.find((x) => x.id === id);
+      const mesh = await meshLoadFn(obj?.isMe ? "#FFD700" : undefined);
       if (id) {
-        const obj = globals.objects.find((x) => x.id === id);
         if (obj && !obj.object3D) {
           scene.add(mesh);
           obj.object3D = mesh;
           mesh.geometry.computeBoundingBox();
+          const size = new THREE.Vector3();
+          mesh.geometry.boundingBox?.getSize(size);
+          obj.dimensions = size;
         }
       } else {
         scene.add(mesh);

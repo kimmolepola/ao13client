@@ -12,9 +12,7 @@ import * as atoms from "src/atoms";
 const InfoTexts = () => (
   <>
     {globals.objects.reduce((acc: JSX.Element[], cur) => {
-      if (cur.isMe) {
-        acc.push(<InfoText key={cur.id} gameObject={cur} />);
-      }
+      acc.push(<InfoText key={cur.id} gameObject={cur} />);
       return acc;
     }, [])}
   </>

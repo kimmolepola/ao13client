@@ -38,6 +38,7 @@ const addObject = async (id: string) => {
         infoElement: undefined,
         infoBoxElement: undefined,
         object3D: undefined,
+        dimensions: undefined,
       };
       globals.objects.push(gameObject);
     } else {
