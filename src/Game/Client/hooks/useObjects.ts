@@ -59,10 +59,12 @@ export const useObjects = () => {
             controlsDown: 0,
             controlsLeft: 0,
             controlsRight: 0,
+            controlsSpace: 0,
             controlsOverChannelsUp: 0,
             controlsOverChannelsDown: 0,
             controlsOverChannelsLeft: 0,
             controlsOverChannelsRight: 0,
+            controlsOverChannelsSpace: 0,
             acceleration: s.sAcceleration,
             rotationSpeed: s.sRotationSpeed,
             speed: s.sSpeed,
@@ -82,6 +84,7 @@ export const useObjects = () => {
             infoBoxElement: undefined,
             object3D: undefined,
             dimensions: undefined,
+            shotDelay: 0,
           });
         }
       });

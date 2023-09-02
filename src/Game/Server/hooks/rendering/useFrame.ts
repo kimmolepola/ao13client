@@ -19,7 +19,10 @@ let nextSendTime = Date.now();
 let nextScoreTime = Date.now();
 const scoreTimeInteval = 9875;
 
-export const useFrame = (camera: THREE.PerspectiveCamera) => {
+export const useFrame = (
+  camera: THREE.PerspectiveCamera,
+  gameEventHandler: types.GameEventHandler
+) => {
   const setScore = useSetRecoilState(atoms.score);
   const { sendUnordered } = networkingHooks.useSendFromMain();
 
@@ -34,6 +37,7 @@ export const useFrame = (camera: THREE.PerspectiveCamera) => {
           commonLogic.handleInfoBoxElement(o, o.object3D);
         }
         commonLogic.handleMovement(delta, o, o.object3D);
+        commonLogic.handleShot(delta, o, gameEventHandler);
         if (Date.now() > nextSendTime) {
           logic.gatherUpdateData(updateData, o);
           commonLogic.resetControlValues(o);

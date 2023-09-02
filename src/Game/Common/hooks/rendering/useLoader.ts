@@ -7,26 +7,19 @@ import * as globals from "src/globals";
 
 export const useLoader = (scene: THREE.Scene) => {
   const objectIds = useRecoilValue(atoms.objectIds);
-  const { loadFighter, loadBackground } = hooks.useMeshes();
+  const { loadFighter } = hooks.useMeshes();
 
   const load = useCallback(
-    async (
-      meshLoadFn: (color?: string) => Promise<THREE.Mesh>,
-      id?: string
-    ) => {
+    async (meshLoadFn: (color?: string) => Promise<THREE.Mesh>, id: string) => {
       const obj = globals.objects.find((x) => x.id === id);
       const mesh = await meshLoadFn(obj?.isMe ? "#FFD700" : undefined);
-      if (id) {
-        if (obj && !obj.object3D) {
-          scene.add(mesh);
-          obj.object3D = mesh;
-          mesh.geometry.computeBoundingBox();
-          const size = new THREE.Vector3();
-          mesh.geometry.boundingBox?.getSize(size);
-          obj.dimensions = size;
-        }
-      } else {
+      if (obj && !obj.object3D) {
         scene.add(mesh);
+        obj.object3D = mesh;
+        mesh.geometry.computeBoundingBox();
+        const size = new THREE.Vector3();
+        mesh.geometry.boundingBox?.getSize(size);
+        obj.dimensions = size;
       }
     },
     [scene]
@@ -43,10 +36,6 @@ export const useLoader = (scene: THREE.Scene) => {
     },
     [scene]
   );
-
-  useEffect(() => {
-    load(loadBackground);
-  }, [load, loadBackground]);
 
   const updateRenderedObjects = useCallback(() => {
     const os = globals.objects;

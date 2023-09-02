@@ -1,17 +1,26 @@
 import { RefObject, useEffect } from "react";
 import * as hooks from "..";
 import * as commonHooks from "src/Game/Common/hooks";
+import * as types from "src/types";
 
-export const useRendering = (ref: RefObject<HTMLDivElement>) => {
+export const useRendering = (
+  ref: RefObject<HTMLDivElement>,
+  gameEventHandler: types.GameEventHandler
+) => {
   const { scene, renderer, camera } = commonHooks.useSetup();
   commonHooks.useLoader(scene);
-  const { runFrame } = hooks.useFrame(camera);
+  const load = commonHooks.useLocalLoader(scene);
+  const { runFrame } = hooks.useFrame(camera, gameEventHandler);
   const { startAnimation, stopAnimation } = commonHooks.useAnimation(
     camera,
     scene,
     renderer,
     runFrame
   );
+
+  useEffect(() => {
+    load("background");
+  }, [load]);
 
   useEffect(() => {
     // Do not set useState-state here.

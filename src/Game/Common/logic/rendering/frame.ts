@@ -25,6 +25,10 @@ export const handleKeys = (delta: number, gameObject: types.GameObject) => {
         o.controlsRight += delta;
         o.controlsOverChannelsRight += delta;
         break;
+      case types.Keys.SPACE:
+        o.controlsSpace += delta;
+        o.controlsOverChannelsSpace += delta;
+        break;
       default:
         break;
     }
@@ -81,12 +85,33 @@ export const handleMovement = (
   object3D.translateY((o.speed * delta) / 100);
 };
 
+export const handleShot = (
+  delta: number,
+  gameObject: types.GameObject,
+  gameEventHandler: types.GameEventHandler
+) => {
+  const o = gameObject;
+  if (o.controlsSpace) {
+    const timeQuantity = o.controlsSpace > delta ? delta : o.controlsSpace;
+    o.controlsSpace -= timeQuantity;
+
+    //shooting
+    if (o.shotDelay - timeQuantity <= 0) {
+      // shoot
+      o.shotDelay += parameters.shotDelay;
+      gameEventHandler({ type: types.Event.SHOT });
+    }
+  }
+  o.shotDelay -= Math.min(delta, o.shotDelay);
+};
+
 export const resetControlValues = (gameObject: types.GameObject) => {
   const o = gameObject;
   o.controlsOverChannelsUp = 0;
   o.controlsOverChannelsDown = 0;
   o.controlsOverChannelsLeft = 0;
   o.controlsOverChannelsRight = 0;
+  o.controlsOverChannelsSpace = 0;
 };
 
 export const handleInfoElement = (

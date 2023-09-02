@@ -13,3 +13,4 @@ export const infoTextOffsetValue = 10;
 export const cameraDefaultZ = 20;
 export const sidepanelDefaultSize = 150;
 export const sidepanelMinimumSize = 90;
+export const shotDelay = 250;

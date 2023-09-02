@@ -5,4 +5,5 @@ export {
   handleMovement,
   handleInfoElement,
   resetControlValues,
+  handleShot,
 } from "./rendering/frame";

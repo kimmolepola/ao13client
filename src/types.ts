@@ -50,7 +50,13 @@ export enum Keys {
   DOWN = "down",
   LEFT = "left",
   RIGHT = "right",
+  SPACE = "space",
 }
+
+export type LocalGameObject = {
+  id: string;
+  object3d: THREE.Object3D | undefined;
+};
 
 export type GameObject = {
   id: string;
@@ -62,10 +68,12 @@ export type GameObject = {
   controlsDown: number;
   controlsLeft: number;
   controlsRight: number;
+  controlsSpace: number;
   controlsOverChannelsUp: number;
   controlsOverChannelsDown: number;
   controlsOverChannelsLeft: number;
   controlsOverChannelsRight: number;
+  controlsOverChannelsSpace: number;
   acceleration: number;
   rotationSpeed: number;
   speed: number;
@@ -76,6 +84,7 @@ export type GameObject = {
   infoBoxElement: HTMLDivElement | null | undefined;
   object3D: THREE.Object3D | undefined;
   dimensions: THREE.Vector3 | undefined;
+  shotDelay: number;
 };
 
 export enum NetDataType {
@@ -114,6 +123,7 @@ export type UpdateObject = {
   uControlsDown: number;
   uControlsLeft: number;
   uControlsRight: number;
+  uControlsSpace: number;
   uRotationSpeed: number;
   uSpeed: number;
   uPositionX: number;
@@ -177,3 +187,13 @@ export type InitialGameObject = {
   score: number;
   isPlayer: boolean;
 };
+
+export type Meshes = "bullet" | "background";
+
+export enum Event {
+  SHOT,
+}
+
+export type GameEvent = { type: Event.SHOT };
+
+export type GameEventHandler = (e: GameEvent) => void;

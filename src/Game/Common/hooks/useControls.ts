@@ -12,6 +12,8 @@ const convertKeyToControl = (key: string) => {
       return types.Keys.LEFT;
     case "ArrowRight":
       return types.Keys.RIGHT;
+    case "Space":
+      return types.Keys.SPACE;
     default:
       return null;
   }

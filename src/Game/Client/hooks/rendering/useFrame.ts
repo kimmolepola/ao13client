@@ -15,7 +15,10 @@ const q2 = new THREE.Quaternion();
 const q3 = new THREE.Quaternion();
 let nextSendTime = Date.now();
 
-export const useFrame = (camera: THREE.PerspectiveCamera) => {
+export const useFrame = (
+  camera: THREE.PerspectiveCamera,
+  gameEventHandler: types.GameEventHandler
+) => {
   const { sendUnordered } = networkingHooks.useSendFromClient();
 
   const runFrame = (delta: number) => {
@@ -36,6 +39,8 @@ export const useFrame = (camera: THREE.PerspectiveCamera) => {
           }
         }
         commonLogic.handleMovement(delta, o, o.object3D);
+        commonLogic.handleShot(delta, o, gameEventHandler);
+
         logic.interpolatePosition(o, o.object3D);
         commonLogic.handleInfoElement(
           o,

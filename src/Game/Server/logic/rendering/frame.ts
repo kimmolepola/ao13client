@@ -11,6 +11,7 @@ export const gatherUpdateData = (
     uControlsDown: o.controlsOverChannelsDown,
     uControlsLeft: o.controlsOverChannelsLeft,
     uControlsRight: o.controlsOverChannelsRight,
+    uControlsSpace: o.controlsOverChannelsSpace,
     uRotationSpeed: o.rotationSpeed,
     uSpeed: o.speed,
     uPositionX: o.object3D?.position.x || 0,

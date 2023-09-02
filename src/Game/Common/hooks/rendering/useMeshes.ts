@@ -22,6 +22,13 @@ export const useMeshes = () => {
     [textureLoader]
   );
 
+  const loadBullet = useCallback(async () => {
+    const createGeometry = () => new THREE.PlaneGeometry(10, 10);
+    const createMaterial = (x: THREE.Texture) =>
+      new THREE.MeshBasicMaterial({ map: x });
+    return load("bullet.jpeg", createGeometry, createMaterial);
+  }, [load]);
+
   const loadBackground = useCallback(async () => {
     const createGeometry = (x: THREE.Texture) =>
       new THREE.PlaneGeometry(x.image.width, x.image.height);
@@ -67,5 +74,5 @@ export const useMeshes = () => {
     [load]
   );
 
-  return { loadBackground, loadFighter };
+  return { loadBackground, loadFighter, loadBullet };
 };

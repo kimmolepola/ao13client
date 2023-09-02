@@ -25,10 +25,12 @@ const addObject = async (id: string) => {
         controlsDown: 0,
         controlsLeft: 0,
         controlsRight: 0,
+        controlsSpace: 0,
         controlsOverChannelsUp: 0,
         controlsOverChannelsDown: 0,
         controlsOverChannelsLeft: 0,
         controlsOverChannelsRight: 0,
+        controlsOverChannelsSpace: 0,
         acceleration: parameters.acceleration,
         rotationSpeed: parameters.rotationSpeed,
         speed: parameters.speed,
@@ -39,6 +41,7 @@ const addObject = async (id: string) => {
         infoBoxElement: undefined,
         object3D: undefined,
         dimensions: undefined,
+        shotDelay: 0,
       };
       globals.objects.push(gameObject);
     } else {
