@@ -8,6 +8,7 @@ import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as commonLogic from "src/Game/Common/logic";
 import * as logic from "../../logic";
+import { RefObject } from "react";
 
 const v1 = new THREE.Vector3();
 const v2 = new THREE.Vector3();
@@ -21,6 +22,7 @@ const scoreTimeInteval = 9875;
 
 export const useFrame = (
   camera: THREE.PerspectiveCamera,
+  infoBoxRef: RefObject<HTMLDivElement>,
   gameEventHandler: types.GameEventHandler
 ) => {
   const setScore = useSetRecoilState(atoms.score);
@@ -34,7 +36,7 @@ export const useFrame = (
         if (o.isMe) {
           commonLogic.handleKeys(delta, o);
           commonLogic.handleCamera(camera, o, o.object3D);
-          commonLogic.handleInfoBoxElement(o, o.object3D);
+          commonLogic.handleInfoBoxElement(o, o.object3D, infoBoxRef);
         }
         commonLogic.handleMovement(delta, o, o.object3D);
         commonLogic.handleShot(delta, o, gameEventHandler);

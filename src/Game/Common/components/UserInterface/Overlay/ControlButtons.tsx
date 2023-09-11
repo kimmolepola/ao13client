@@ -6,7 +6,7 @@ import {
   TfiArrowCircleDown,
 } from "react-icons/tfi";
 
-import { handlePressed, handleReleased } from "../../../controls";
+import { handlePressed, handleReleased } from "../../../logic/controls";
 import * as types from "src/types";
 
 const ControlButton = ({ control }: { control: types.Keys }) => {

@@ -1,18 +1,24 @@
-import { memo, useCallback } from "react";
-
+import { useRef, memo } from "react";
 import UserInterface from "./UserInterface";
 import Canvas from "./Canvas";
-import * as types from "src/types";
+import * as commonHooks from "src/Game/Common/hooks";
 
 const Server = ({ style, quit }: { style: Object; quit: () => void }) => {
-  const gameEventHandler = useCallback((gameEvent: types.GameEvent) => {
-    console.log("--event:", gameEvent);
-  }, []);
+  const infoBoxRef = useRef(null);
+  const { scene, renderer, camera } = commonHooks.useSetup();
+  const { gameEventHandler } = commonHooks.useGameLogic(scene);
 
   return (
     <div className="w-full h-full bg-rose-50">
-      <Canvas style={style} gameEventHandler={gameEventHandler} />
-      <UserInterface style={style} quit={quit} />
+      <Canvas
+        camera={camera}
+        scene={scene}
+        renderer={renderer}
+        style={style}
+        infoBoxRef={infoBoxRef}
+        gameEventHandler={gameEventHandler}
+      />
+      <UserInterface style={style} infoBoxRef={infoBoxRef} quit={quit} />
     </div>
   );
 };

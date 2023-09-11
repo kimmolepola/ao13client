@@ -1,8 +1,8 @@
-import { memo } from "react";
+import { RefObject, memo } from "react";
 import { useRecoilValue } from "recoil";
 
 import {
-  InfoBox as InfoBoxDiv,
+  InfoBox,
   InfoText,
   ControlButtons,
 } from "src/Game/Common/components/UserInterface/Overlay";
@@ -18,18 +18,19 @@ const InfoTexts = () => (
   </>
 );
 
-const InfoBox = () => {
-  const gameObject = globals.objects.find((x) => x.isMe);
-  return gameObject ? <InfoBoxDiv gameObject={gameObject} /> : null;
-};
-
-const Overlay = ({ style }: { style: Object }) => {
+const Overlay = ({
+  style,
+  infoBoxRef,
+}: {
+  style: Object;
+  infoBoxRef: RefObject<HTMLDivElement>;
+}) => {
   useRecoilValue(atoms.objectIds); // rerender when objectIds change
 
   return (
     <div className="absolute inset-0 z-1" style={style}>
       <InfoTexts />
-      <InfoBox />
+      <InfoBox infoBoxRef={infoBoxRef} />
       <ControlButtons />
     </div>
   );

@@ -81,7 +81,6 @@ export const useObjects = () => {
             ),
             keyDowns: [],
             infoElement: undefined,
-            infoBoxElement: undefined,
             object3D: undefined,
             dimensions: undefined,
             shotDelay: 0,

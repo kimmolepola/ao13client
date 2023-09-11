@@ -1,5 +1,9 @@
 import { useEffect, useCallback } from "react";
-import { handlePressed, handleReleased, handleAllReleased } from "../controls";
+import {
+  handlePressed,
+  handleReleased,
+  handleAllReleased,
+} from "../logic/controls";
 import * as types from "src/types";
 
 const convertKeyToControl = (key: string) => {

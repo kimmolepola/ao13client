@@ -110,7 +110,7 @@
     "react/prefer-stateless-function": "off",
     "react/no-did-update-set-state": "warn",
     "camelcase": "off",
-    "prefer-destructuring": "warn",
+    "prefer-destructuring": "off",
     "no-await-in-loop": "warn",
     "no-restricted-globals": "off",
     "no-bitwise": "off",

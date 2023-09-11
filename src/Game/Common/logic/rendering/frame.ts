@@ -4,6 +4,7 @@ import * as utils from "src/utils";
 import * as parameters from "src/parameters";
 import * as types from "src/types";
 import * as globals from "src/globals";
+import { RefObject } from "react";
 
 export const handleKeys = (delta: number, gameObject: types.GameObject) => {
   const o = gameObject;
@@ -48,13 +49,13 @@ export const handleCamera = (
 
 export const handleInfoBoxElement = (
   gameObject: types.GameObject,
-  object3D: THREE.Object3D
+  object3D: THREE.Object3D,
+  infoBoxRef: RefObject<HTMLDivElement>
 ) => {
-  const o = gameObject;
-  if (o.infoBoxElement) {
+  if (infoBoxRef.current) {
     const degree = Math.round(utils.radiansToDegrees(-object3D.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
-    o.infoBoxElement.textContent = `x: ${object3D.position.x.toFixed(0)}
+    infoBoxRef.current.textContent = `x: ${object3D.position.x.toFixed(0)}
     y: ${object3D.position.y.toFixed(0)}
     z: ${object3D.position.z.toFixed(0)}
     heading: ${heading}
@@ -99,7 +100,11 @@ export const handleShot = (
     if (o.shotDelay - timeQuantity <= 0) {
       // shoot
       o.shotDelay += parameters.shotDelay;
-      gameEventHandler({ type: types.Event.SHOT });
+      o.object3D &&
+        gameEventHandler({
+          type: types.Event.SHOT,
+          data: { object3d: o.object3D, speed: o.speed },
+        });
     }
   }
   o.shotDelay -= Math.min(delta, o.shotDelay);

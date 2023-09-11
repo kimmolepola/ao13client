@@ -55,7 +55,9 @@ export enum Keys {
 
 export type LocalGameObject = {
   id: string;
+  speed: number;
   object3d: THREE.Object3D | undefined;
+  dimensions: THREE.Vector3 | undefined;
 };
 
 export type GameObject = {
@@ -81,7 +83,6 @@ export type GameObject = {
   backendQuaternion: THREE.Quaternion;
   keyDowns: Keys[];
   infoElement: HTMLDivElement | null | undefined;
-  infoBoxElement: HTMLDivElement | null | undefined;
   object3D: THREE.Object3D | undefined;
   dimensions: THREE.Vector3 | undefined;
   shotDelay: number;
@@ -194,6 +195,9 @@ export enum Event {
   SHOT,
 }
 
-export type GameEvent = { type: Event.SHOT };
+export type GameEvent = {
+  type: Event.SHOT;
+  data: { object3d: THREE.Object3D; speed: number };
+};
 
 export type GameEventHandler = (e: GameEvent) => void;
