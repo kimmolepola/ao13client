@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { useRecoilState, useSetRecoilState, useRecoilValue } from "recoil";
 
@@ -12,9 +12,12 @@ import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as globals from "src/globals";
 
-let socket: (Socket & { auth: { [key: string]: any } }) | undefined;
+// let socket: (Socket & { auth: { [key: string]: any } }) | undefined;
 
 export const useConnection = () => {
+  const socketRef = useRef<
+    (Socket & { auth: { [key: string]: any } }) | undefined
+  >();
   const user = useRecoilValue(atoms.user);
   const iceServers = useRecoilValue(atoms.iceServers);
   const [main, setMain] = useRecoilState(atoms.main);
@@ -140,12 +143,14 @@ export const useConnection = () => {
       };
       peerConnection.onicecandidate = ({ candidate }) => {
         console.log("--onicecandidate:", candidate);
+        const socket = socketRef.current;
         socket?.emit("signaling", { remoteId, candidate });
       };
       peerConnection.onnegotiationneeded = async () => {
         console.log("--onnegotiationneeded");
         try {
           await peerConnection.setLocalDescription();
+          const socket = socketRef.current;
           socket?.emit("signaling", {
             remoteId,
             description: peerConnection.localDescription,
@@ -186,6 +191,7 @@ export const useConnection = () => {
             await peerConnection.setRemoteDescription(description);
             if (description.type === "offer") {
               await peerConnection.setLocalDescription();
+              const socket = socketRef.current;
               socket?.emit("signaling", {
                 remoteId,
                 description: peerConnection.localDescription,
@@ -207,6 +213,7 @@ export const useConnection = () => {
       ? await handleQuitForObjectsOnMain()
       : handleQuitForObjectsOnClient();
     state.main = false;
+    const socket = socketRef.current;
     socket?.disconnect();
     socket?.off("connect");
     socket?.off("disconnect");
@@ -214,7 +221,7 @@ export const useConnection = () => {
     socket?.off("main");
     socket?.off("connectToMain");
     socket?.off("signaling");
-    socket = undefined;
+    socketRef.current = undefined;
     peerConnections.forEach((x) => closePeerConnection(x));
     peerConnections.splice(0, peerConnections.length);
     globals.state.ownId = undefined;
@@ -235,11 +242,13 @@ export const useConnection = () => {
     }
     console.log("--await getUserMedia resolved");
     await disconnect();
-    socket = io(backendUrl, {
+    socketRef.current = io(backendUrl, {
       auth: {
         token: `${user?.token}`,
       },
     });
+
+    const socket = socketRef.current;
 
     socket?.on("connect", () => {
       setConnectionMessage("Connected to signaling server");

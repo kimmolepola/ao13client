@@ -6,4 +6,5 @@ export {
   handleInfoElement,
   resetControlValues,
   handleShot,
+  handleLocalObject,
 } from "./rendering/frame";

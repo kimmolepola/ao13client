@@ -23,7 +23,23 @@ export const useFrame = (
 ) => {
   const { sendUnordered } = networkingHooks.useSendFromClient();
 
-  const runFrame = (delta: number) => {
+  const handleLocalObjects = (delta: number) => {
+    const localObjectsRemoveIndexes = [];
+    for (let i = globals.localObjects.length - 1; i > -1; i--) {
+      const o = globals.localObjects[i];
+      if (o && o.object3d) {
+        const remove = commonLogic.handleLocalObject(delta, o, o.object3d);
+        remove && localObjectsRemoveIndexes.push(i);
+      }
+    }
+    gameEventHandler({
+      type: types.Event.REMOVE_LOCAL_OBJECT_INDEXES,
+      data: localObjectsRemoveIndexes,
+    });
+    localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
+  };
+
+  const handleObjects = (delta: number) => {
     for (let i = globals.objects.length - 1; i > -1; i--) {
       const o = globals.objects[i];
       if (o && o.object3D) {
@@ -57,6 +73,11 @@ export const useFrame = (
         );
       }
     }
+  };
+
+  const runFrame = (delta: number) => {
+    handleLocalObjects(delta);
+    handleObjects(delta);
   };
   return { runFrame };
 };

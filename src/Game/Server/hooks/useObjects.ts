@@ -31,8 +31,7 @@ const addObject = async (id: string) => {
         controlsOverChannelsLeft: 0,
         controlsOverChannelsRight: 0,
         controlsOverChannelsSpace: 0,
-        acceleration: parameters.acceleration,
-        rotationSpeed: parameters.rotationSpeed,
+        rotationSpeed: 0,
         speed: parameters.speed,
         backendPosition: new THREE.Vector3(),
         backendQuaternion: new THREE.Quaternion(),
@@ -72,7 +71,6 @@ const handleSendState = (sendOrdered: (data: types.State) => void) => {
           sIsPlayer: cur.isPlayer,
           sUsername: cur.username,
           sScore: cur.score,
-          sAcceleration: cur.acceleration,
           sRotationSpeed: cur.rotationSpeed,
           sSpeed: cur.speed,
           sPositionX: cur.object3D?.position.x || 0,
@@ -150,10 +148,12 @@ export const useObjects = (startInterval?: boolean) => {
         o.controlsDown += data.data.down || 0;
         o.controlsLeft += data.data.left || 0;
         o.controlsRight += data.data.right || 0;
+        o.controlsSpace += data.data.space || 0;
         o.controlsOverChannelsUp += data.data.up || 0;
         o.controlsOverChannelsDown += data.data.down || 0;
         o.controlsOverChannelsLeft += data.data.left || 0;
         o.controlsOverChannelsRight += data.data.right || 0;
+        o.controlsOverChannelsSpace += data.data.space || 0;
       }
     },
     []

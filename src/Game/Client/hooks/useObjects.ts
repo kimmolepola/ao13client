@@ -29,6 +29,7 @@ export const useObjects = () => {
           o.controlsDown += u.uControlsDown || 0;
           o.controlsLeft += u.uControlsLeft || 0;
           o.controlsUp += u.uControlsUp || 0;
+          o.controlsSpace += u.uControlsSpace || 0;
         }
       }
     }
@@ -65,7 +66,6 @@ export const useObjects = () => {
             controlsOverChannelsLeft: 0,
             controlsOverChannelsRight: 0,
             controlsOverChannelsSpace: 0,
-            acceleration: s.sAcceleration,
             rotationSpeed: s.sRotationSpeed,
             speed: s.sSpeed,
             backendPosition: new THREE.Vector3(

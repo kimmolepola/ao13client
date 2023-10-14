@@ -8,6 +8,7 @@ export const gatherControlsData = (o: types.GameObject) => ({
   down: o.controlsOverChannelsDown,
   left: o.controlsOverChannelsLeft,
   right: o.controlsOverChannelsRight,
+  space: o.controlsOverChannelsSpace,
 });
 
 export const interpolatePosition = (

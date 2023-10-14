@@ -14,7 +14,10 @@ export const useMeshes = () => {
         const onLoad = (x: THREE.Texture) => {
           resolve(new THREE.Mesh(createGeometry(x), createMaterial(x)));
         };
-        const onError = () => reject(new Error("Load error"));
+        const onError = (err: ErrorEvent) => {
+          console.error("onLoad error:", err);
+          return reject(new Error("Load error"));
+        };
         textureLoader.load(filename, onLoad, undefined, onError);
       });
       return result as THREE.Mesh;
@@ -23,10 +26,11 @@ export const useMeshes = () => {
   );
 
   const loadBullet = useCallback(async () => {
-    const createGeometry = () => new THREE.PlaneGeometry(10, 10);
+    console.log("--bullzzzzz");
+    const createGeometry = () => new THREE.PlaneGeometry(0.12, 0.12);
     const createMaterial = (x: THREE.Texture) =>
-      new THREE.MeshBasicMaterial({ map: x });
-    return load("bullet.jpeg", createGeometry, createMaterial);
+      new THREE.MeshBasicMaterial({ map: x, transparent: true });
+    return load("bullet.png", createGeometry, createMaterial);
   }, [load]);
 
   const loadBackground = useCallback(async () => {

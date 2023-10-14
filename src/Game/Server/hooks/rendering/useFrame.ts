@@ -28,8 +28,26 @@ export const useFrame = (
   const setScore = useSetRecoilState(atoms.score);
   const { sendUnordered } = networkingHooks.useSendFromMain();
 
-  const runFrame = (delta: number) => {
-    const updateData: { [id: string]: types.UpdateObject } = {};
+  const handleLocalObjects = (delta: number) => {
+    const localObjectsRemoveIndexes = [];
+    for (let i = globals.localObjects.length - 1; i > -1; i--) {
+      const o = globals.localObjects[i];
+      if (o && o.object3d) {
+        const remove = commonLogic.handleLocalObject(delta, o, o.object3d);
+        remove && localObjectsRemoveIndexes.push(i);
+      }
+    }
+    gameEventHandler({
+      type: types.Event.REMOVE_LOCAL_OBJECT_INDEXES,
+      data: localObjectsRemoveIndexes,
+    });
+    localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
+  };
+
+  const handleObjects = (
+    delta: number,
+    updateData: { [id: string]: types.UpdateObject }
+  ) => {
     for (let i = globals.objects.length - 1; i > -1; i--) {
       const o = globals.objects[i];
       if (o && o.object3D) {
@@ -63,6 +81,14 @@ export const useFrame = (
         }
       }
     }
+  };
+
+  const runFrame = (delta: number) => {
+    const updateData: { [id: string]: types.UpdateObject } = {};
+
+    handleLocalObjects(delta);
+    handleObjects(delta, updateData);
+
     if (Date.now() > nextSendTime) {
       nextSendTime = Date.now() + parameters.sendIntervalMain;
       sendUnordered({

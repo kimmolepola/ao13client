@@ -63,6 +63,18 @@ export const handleInfoBoxElement = (
   }
 };
 
+export const handleLocalObject = (
+  delta: number,
+  gameObject: types.LocalGameObject,
+  object3D: THREE.Object3D
+) => {
+  const o = gameObject;
+  object3D.translateY((o.speed * delta) / 100);
+  o.speed *= 0.97;
+  o.timeToLive -= delta;
+  return o.timeToLive < 0;
+};
+
 export const handleMovement = (
   delta: number,
   gameObject: types.GameObject,
@@ -77,13 +89,30 @@ export const handleMovement = (
   o.controlsDown -= forceDown;
   o.controlsLeft -= forceLeft;
   o.controlsRight -= forceRight;
-  o.speed += forceUp * o.acceleration;
-  o.speed -= forceDown * o.acceleration;
-  if (o.speed > parameters.maxSpeed) o.speed = parameters.maxSpeed;
-  if (o.speed < parameters.minSpeed) o.speed = parameters.minSpeed;
-  object3D.rotateZ(forceLeft * o.rotationSpeed);
-  object3D.rotateZ(-1 * forceRight * o.rotationSpeed);
+  o.speed += forceUp * parameters.acceleration;
+  o.speed -= forceDown * parameters.acceleration;
+  o.rotationSpeed += forceLeft * parameters.rotationAcceleration;
+  o.rotationSpeed -= forceRight * parameters.rotationAcceleration;
+  if (o.speed > parameters.maxSpeed) {
+    o.speed = parameters.maxSpeed;
+  }
+  if (o.speed < parameters.minSpeed) {
+    o.speed = parameters.minSpeed;
+  }
+  if (o.rotationSpeed > parameters.maxRotationSpeed) {
+    o.rotationSpeed = parameters.maxRotationSpeed;
+  }
+  if (o.rotationSpeed < -parameters.maxRotationSpeed) {
+    o.rotationSpeed = -parameters.maxRotationSpeed;
+  }
+  object3D.rotateZ(o.rotationSpeed * delta);
   object3D.translateY((o.speed * delta) / 100);
+  if (!forceLeft && !forceRight && o.rotationSpeed) {
+    if (Math.abs(o.rotationSpeed) < 0.00001) {
+      o.rotationSpeed = 0;
+    }
+    o.rotationSpeed *= 0.99;
+  }
 };
 
 export const handleShot = (

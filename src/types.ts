@@ -53,11 +53,17 @@ export enum Keys {
   SPACE = "space",
 }
 
+export enum GameObjectType {
+  BULLET,
+}
+
 export type LocalGameObject = {
   id: string;
+  type: GameObjectType;
   speed: number;
   object3d: THREE.Object3D | undefined;
   dimensions: THREE.Vector3 | undefined;
+  timeToLive: number;
 };
 
 export type GameObject = {
@@ -76,7 +82,6 @@ export type GameObject = {
   controlsOverChannelsLeft: number;
   controlsOverChannelsRight: number;
   controlsOverChannelsSpace: number;
-  acceleration: number;
   rotationSpeed: number;
   speed: number;
   backendPosition: THREE.Vector3;
@@ -115,6 +120,7 @@ export type Controls = {
     down: number;
     left: number;
     right: number;
+    space: number;
   };
 };
 
@@ -141,7 +147,6 @@ export type StateObject = {
   sIsPlayer: boolean;
   sUsername: string;
   sScore: number;
-  sAcceleration: number;
   sRotationSpeed: number;
   sSpeed: number;
   sPositionX: number;
@@ -193,11 +198,14 @@ export type Meshes = "bullet" | "background";
 
 export enum Event {
   SHOT,
+  REMOVE_LOCAL_OBJECT_INDEXES,
 }
 
-export type GameEvent = {
-  type: Event.SHOT;
-  data: { object3d: THREE.Object3D; speed: number };
-};
+export type GameEvent =
+  | {
+      type: Event.SHOT;
+      data: { object3d: THREE.Object3D; speed: number };
+    }
+  | { type: Event.REMOVE_LOCAL_OBJECT_INDEXES; data: number[] };
 
 export type GameEventHandler = (e: GameEvent) => void;
