@@ -6,7 +6,14 @@ import * as types from "src/types";
 import * as globals from "src/globals";
 import { RefObject } from "react";
 
-export const handleKeys = (delta: number, gameObject: types.GameObject) => {
+export const detectCollision = (
+  gameObject: types.RemoteGameObject | types.LocalGameObject
+) => {};
+
+export const handleKeys = (
+  delta: number,
+  gameObject: types.RemoteGameObject
+) => {
   const o = gameObject;
   o.keyDowns.forEach((key) => {
     switch (key) {
@@ -38,17 +45,17 @@ export const handleKeys = (delta: number, gameObject: types.GameObject) => {
 
 export const handleCamera = (
   camera: THREE.PerspectiveCamera,
-  gameObject: types.GameObject,
+  gameObject: types.RemoteGameObject,
   object3D: THREE.Object3D
 ) => {
   const c = camera;
-  c.position.x = gameObject.object3D?.position.x || 0;
-  c.position.y = gameObject.object3D?.position.y || 0;
+  c.position.x = gameObject.object3d?.position.x || 0;
+  c.position.y = gameObject.object3d?.position.y || 0;
   c.rotation.z = object3D.rotation.z;
 };
 
 export const handleInfoBoxElement = (
-  gameObject: types.GameObject,
+  gameObject: types.RemoteGameObject,
   object3D: THREE.Object3D,
   infoBoxRef: RefObject<HTMLDivElement>
 ) => {
@@ -77,7 +84,7 @@ export const handleLocalObject = (
 
 export const handleMovement = (
   delta: number,
-  gameObject: types.GameObject,
+  gameObject: types.RemoteGameObject,
   object3D: THREE.Object3D
 ) => {
   const o = gameObject;
@@ -117,7 +124,7 @@ export const handleMovement = (
 
 export const handleShot = (
   delta: number,
-  gameObject: types.GameObject,
+  gameObject: types.RemoteGameObject,
   gameEventHandler: types.GameEventHandler
 ) => {
   const o = gameObject;
@@ -129,17 +136,17 @@ export const handleShot = (
     if (o.shotDelay - timeQuantity <= 0) {
       // shoot
       o.shotDelay += parameters.shotDelay;
-      o.object3D &&
+      o.object3d &&
         gameEventHandler({
           type: types.Event.SHOT,
-          data: { object3d: o.object3D, speed: o.speed },
+          data: { object3d: o.object3d, speed: o.speed },
         });
     }
   }
   o.shotDelay -= Math.min(delta, o.shotDelay);
 };
 
-export const resetControlValues = (gameObject: types.GameObject) => {
+export const resetControlValues = (gameObject: types.RemoteGameObject) => {
   const o = gameObject;
   o.controlsOverChannelsUp = 0;
   o.controlsOverChannelsDown = 0;
@@ -149,7 +156,7 @@ export const resetControlValues = (gameObject: types.GameObject) => {
 };
 
 export const handleInfoElement = (
-  gameObject: types.GameObject,
+  gameObject: types.RemoteGameObject,
   v1: THREE.Vector3,
   v2: THREE.Vector3,
   v3: THREE.Vector3,

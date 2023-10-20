@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { interpolationAlpha } from "src/parameters";
 import * as types from "src/types";
 
-export const gatherControlsData = (o: types.GameObject) => ({
+export const gatherControlsData = (o: types.RemoteGameObject) => ({
   up: o.controlsOverChannelsUp,
   down: o.controlsOverChannelsDown,
   left: o.controlsOverChannelsLeft,
@@ -12,7 +12,7 @@ export const gatherControlsData = (o: types.GameObject) => ({
 });
 
 export const interpolatePosition = (
-  o: types.GameObject,
+  o: types.RemoteGameObject,
   object3D: THREE.Object3D
 ) => {
   object3D.position.lerp(o.backendPosition, interpolationAlpha);

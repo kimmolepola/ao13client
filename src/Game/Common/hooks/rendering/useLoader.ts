@@ -13,12 +13,12 @@ export const useLoader = (scene: THREE.Scene) => {
   const load = useCallback(
     async (
       meshLoadFn: (color?: string) => Promise<THREE.Mesh>,
-      o: types.GameObject
+      o: types.RemoteGameObject
     ) => {
       const mesh = await meshLoadFn(o?.isMe ? "#FFD700" : undefined);
-      o.object3D && scene.remove(o.object3D);
+      o.object3d && scene.remove(o.object3d);
       scene.add(mesh);
-      o.object3D = mesh;
+      o.object3d = mesh;
       mesh.geometry.computeBoundingBox();
       const size = new THREE.Vector3();
       mesh.geometry.boundingBox?.getSize(size);
@@ -31,8 +31,8 @@ export const useLoader = (scene: THREE.Scene) => {
     (objectsIndex: number) => {
       const os = globals.objects;
       const o = os[objectsIndex];
-      if (o.object3D) {
-        scene.remove(o.object3D);
+      if (o.object3d) {
+        scene.remove(o.object3d);
       }
       os.splice(objectsIndex, 1);
     },

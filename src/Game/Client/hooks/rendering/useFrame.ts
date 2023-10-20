@@ -42,11 +42,11 @@ export const useFrame = (
   const handleObjects = (delta: number) => {
     for (let i = globals.objects.length - 1; i > -1; i--) {
       const o = globals.objects[i];
-      if (o && o.object3D) {
+      if (o && o.object3d) {
         if (o.isMe) {
           commonLogic.handleKeys(delta, o);
-          commonLogic.handleCamera(camera, o, o.object3D);
-          commonLogic.handleInfoBoxElement(o, o.object3D, infoBoxRef);
+          commonLogic.handleCamera(camera, o, o.object3d);
+          commonLogic.handleInfoBoxElement(o, o.object3d, infoBoxRef);
           if (Date.now() > nextSendTime) {
             nextSendTime = Date.now() + parameters.sendIntervalClient;
             sendUnordered({
@@ -56,10 +56,10 @@ export const useFrame = (
             commonLogic.resetControlValues(o);
           }
         }
-        commonLogic.handleMovement(delta, o, o.object3D);
+        commonLogic.handleMovement(delta, o, o.object3d);
         commonLogic.handleShot(delta, o, gameEventHandler);
 
-        logic.interpolatePosition(o, o.object3D);
+        logic.interpolatePosition(o, o.object3d);
         commonLogic.handleInfoElement(
           o,
           v1,
@@ -68,7 +68,7 @@ export const useFrame = (
           q1,
           q2,
           q3,
-          o.object3D,
+          o.object3d,
           camera
         );
       }

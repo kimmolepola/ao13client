@@ -53,6 +53,7 @@ export const useObjects = () => {
           globals.objects.push({
             id: s.sId,
             isMe: s.sId === globals.state.ownId,
+            type: types.GameObjectType.VEHICLE,
             isPlayer: s.sIsPlayer,
             username: s.sUsername,
             score: s.sScore,
@@ -81,7 +82,7 @@ export const useObjects = () => {
             ),
             keyDowns: [],
             infoElement: undefined,
-            object3D: undefined,
+            object3d: undefined,
             dimensions: undefined,
             shotDelay: 0,
           });

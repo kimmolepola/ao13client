@@ -54,20 +54,23 @@ export enum Keys {
 }
 
 export enum GameObjectType {
+  VEHICLE,
   BULLET,
 }
 
-export type LocalGameObject = {
+export type GameObject = {
   id: string;
   type: GameObjectType;
   speed: number;
   object3d: THREE.Object3D | undefined;
   dimensions: THREE.Vector3 | undefined;
+};
+
+export type LocalGameObject = GameObject & {
   timeToLive: number;
 };
 
-export type GameObject = {
-  id: string;
+export type RemoteGameObject = GameObject & {
   isMe: boolean;
   isPlayer: boolean;
   username: string;
@@ -83,13 +86,10 @@ export type GameObject = {
   controlsOverChannelsRight: number;
   controlsOverChannelsSpace: number;
   rotationSpeed: number;
-  speed: number;
   backendPosition: THREE.Vector3;
   backendQuaternion: THREE.Quaternion;
   keyDowns: Keys[];
   infoElement: HTMLDivElement | null | undefined;
-  object3D: THREE.Object3D | undefined;
-  dimensions: THREE.Vector3 | undefined;
   shotDelay: number;
 };
 
