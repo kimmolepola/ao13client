@@ -53,24 +53,35 @@ export enum Keys {
   SPACE = "space",
 }
 
-export enum GameObjectType {
-  VEHICLE,
+export enum Mesh {
   BULLET,
+  BACKGROUND,
+  FIGHTER,
 }
 
-export type GameObject = {
+export enum GameObjectType {
+  BULLET,
+  VEHICLE,
+}
+
+interface GameObject {
   id: string;
   type: GameObjectType;
   speed: number;
   object3d: THREE.Object3D | undefined;
   dimensions: THREE.Vector3 | undefined;
-};
+  collisions: { [gameObjectId: string]: { time: number; collision: boolean } };
+}
 
-export type LocalGameObject = GameObject & {
+export interface LocalGameObject extends GameObject {
+  type: GameObjectType.BULLET;
+  object3d: THREE.Mesh<THREE.PlaneGeometry, THREE.Material> | undefined;
   timeToLive: number;
-};
+}
 
-export type RemoteGameObject = GameObject & {
+export interface RemoteGameObject extends GameObject {
+  type: GameObjectType.VEHICLE;
+  object3d: THREE.Mesh<THREE.BoxGeometry, THREE.Material[]> | undefined;
   isMe: boolean;
   isPlayer: boolean;
   username: string;
@@ -91,7 +102,7 @@ export type RemoteGameObject = GameObject & {
   keyDowns: Keys[];
   infoElement: HTMLDivElement | null | undefined;
   shotDelay: number;
-};
+}
 
 export enum NetDataType {
   CHATMESSAGE_CLIENT,
@@ -194,18 +205,24 @@ export type InitialGameObject = {
   isPlayer: boolean;
 };
 
-export type Meshes = "bullet" | "background";
-
 export enum Event {
   SHOT,
   REMOVE_LOCAL_OBJECT_INDEXES,
+  COLLISION,
 }
 
 export type GameEvent =
   | {
       type: Event.SHOT;
-      data: { object3d: THREE.Object3D; speed: number };
+      data: { object3d: THREE.Mesh; speed: number };
     }
-  | { type: Event.REMOVE_LOCAL_OBJECT_INDEXES; data: number[] };
+  | { type: Event.REMOVE_LOCAL_OBJECT_INDEXES; data: number[] }
+  | {
+      type: Event.COLLISION;
+      data: {
+        object: RemoteGameObject;
+        otherObjects: (RemoteGameObject | LocalGameObject)[];
+      };
+    };
 
 export type GameEventHandler = (e: GameEvent) => void;

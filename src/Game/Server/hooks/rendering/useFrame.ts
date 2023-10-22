@@ -44,13 +44,15 @@ export const useFrame = (
     localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
   };
 
-  const handleObjects = (
+  const handleRemoteObjects = (
     delta: number,
-    updateData: { [id: string]: types.UpdateObject }
+    updateData: { [id: string]: types.UpdateObject },
+    time: number
   ) => {
-    for (let i = globals.objects.length - 1; i > -1; i--) {
-      const o = globals.objects[i];
+    for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+      const o = globals.remoteObjects[i];
       if (o && o.object3d) {
+        logic.detectCollision(o, time, gameEventHandler);
         if (o.isMe) {
           commonLogic.handleKeys(delta, o);
           commonLogic.handleCamera(camera, o, o.object3d);
@@ -84,15 +86,16 @@ export const useFrame = (
   };
 
   const runFrame = (delta: number) => {
+    const time = Date.now();
     const updateData: { [id: string]: types.UpdateObject } = {};
 
     handleLocalObjects(delta);
-    handleObjects(delta, updateData);
+    handleRemoteObjects(delta, updateData, time);
 
-    if (Date.now() > nextSendTime) {
-      nextSendTime = Date.now() + parameters.sendIntervalMain;
+    if (time > nextSendTime) {
+      nextSendTime = time + parameters.sendIntervalMain;
       sendUnordered({
-        timestamp: Date.now(),
+        timestamp: time,
         type: types.NetDataType.UPDATE,
         data: updateData,
       });

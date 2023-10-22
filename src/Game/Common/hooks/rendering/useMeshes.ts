@@ -5,14 +5,21 @@ export const useMeshes = () => {
   const textureLoader = useMemo(() => new THREE.TextureLoader(), []);
 
   const load = useCallback(
-    async (
+    async <
+      G extends THREE.BoxGeometry | THREE.PlaneGeometry,
+      M extends THREE.Material | THREE.Material[]
+    >(
       filename: string,
-      createGeometry: (x: THREE.Texture) => THREE.BufferGeometry,
-      createMaterial: (x: THREE.Texture) => THREE.Material | THREE.Material[]
+      createGeometry: (x: THREE.Texture) => G,
+      createMaterial: (x: THREE.Texture) => M
     ) => {
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<THREE.Mesh<G, M>>((resolve, reject) => {
         const onLoad = (x: THREE.Texture) => {
-          resolve(new THREE.Mesh(createGeometry(x), createMaterial(x)));
+          const m = new THREE.Mesh(
+            createGeometry(x),
+            createMaterial(x)
+          ) as THREE.Mesh<G, M>;
+          resolve(m);
         };
         const onError = (err: ErrorEvent) => {
           console.error("onLoad error:", err);
@@ -20,17 +27,20 @@ export const useMeshes = () => {
         };
         textureLoader.load(filename, onLoad, undefined, onError);
       });
-      return result as THREE.Mesh;
+      return result;
     },
     [textureLoader]
   );
 
   const loadBullet = useCallback(async () => {
-    console.log("--bullzzzzz");
     const createGeometry = () => new THREE.PlaneGeometry(0.12, 0.12);
     const createMaterial = (x: THREE.Texture) =>
       new THREE.MeshBasicMaterial({ map: x, transparent: true });
-    return load("bullet.png", createGeometry, createMaterial);
+    return load<THREE.PlaneGeometry, THREE.Material>(
+      "bullet.png",
+      createGeometry,
+      createMaterial
+    );
   }, [load]);
 
   const loadBackground = useCallback(async () => {
@@ -44,7 +54,11 @@ export const useMeshes = () => {
         map: x,
       });
     };
-    return load("image1.jpeg", createGeometry, createMaterial);
+    return load<THREE.PlaneGeometry, THREE.Material>(
+      "image1.jpeg",
+      createGeometry,
+      createMaterial
+    );
   }, [load]);
 
   const loadFighter = useCallback(
@@ -73,7 +87,11 @@ export const useMeshes = () => {
           empty,
         ];
       };
-      return load("fighter.png", createGeometry, createMaterial);
+      return load<THREE.BoxGeometry, THREE.Material[]>(
+        "fighter.png",
+        createGeometry,
+        createMaterial
+      );
     },
     [load]
   );

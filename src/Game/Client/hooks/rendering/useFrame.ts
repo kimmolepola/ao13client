@@ -40,8 +40,8 @@ export const useFrame = (
   };
 
   const handleObjects = (delta: number) => {
-    for (let i = globals.objects.length - 1; i > -1; i--) {
-      const o = globals.objects[i];
+    for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+      const o = globals.remoteObjects[i];
       if (o && o.object3d) {
         if (o.isMe) {
           commonLogic.handleKeys(delta, o);

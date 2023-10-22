@@ -12,7 +12,9 @@ export const useLoader = (scene: THREE.Scene) => {
 
   const load = useCallback(
     async (
-      meshLoadFn: (color?: string) => Promise<THREE.Mesh>,
+      meshLoadFn: (
+        color?: string
+      ) => Promise<THREE.Mesh<THREE.BoxGeometry, THREE.Material[]>>,
       o: types.RemoteGameObject
     ) => {
       const mesh = await meshLoadFn(o?.isMe ? "#FFD700" : undefined);
@@ -29,7 +31,7 @@ export const useLoader = (scene: THREE.Scene) => {
 
   const remove = useCallback(
     (objectsIndex: number) => {
-      const os = globals.objects;
+      const os = globals.remoteObjects;
       const o = os[objectsIndex];
       if (o.object3d) {
         scene.remove(o.object3d);
@@ -40,7 +42,7 @@ export const useLoader = (scene: THREE.Scene) => {
   );
 
   const updateRenderedObjects = useCallback(() => {
-    const os = globals.objects;
+    const os = globals.remoteObjects;
     for (let i = os.length - 1; i >= 0; i--) {
       const o = os[i];
       if (objectIds.includes(o.id)) {

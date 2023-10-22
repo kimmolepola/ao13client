@@ -10,8 +10,8 @@ export const useObjects = () => {
   const setObjectIds = useSetRecoilState(atoms.objectIds);
 
   const handleUpdateData = useCallback((data: types.Update) => {
-    for (let i = globals.objects.length - 1; i > -1; i--) {
-      const o = globals.objects[i];
+    for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+      const o = globals.remoteObjects[i];
       const u = o && data.data[o.id];
       if (u) {
         o.score = u.uScore;
@@ -38,8 +38,8 @@ export const useObjects = () => {
   const handleStateData = useCallback(
     (data: types.State) => {
       let objectIdsChanged = false;
-      for (let i = globals.objects.length - 1; i > -1; i--) {
-        const o = globals.objects[i];
+      for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+        const o = globals.remoteObjects[i];
         const s = o && data.data[o.id];
         if (!s) {
           objectIdsChanged = true;
@@ -48,9 +48,9 @@ export const useObjects = () => {
         }
       }
       Object.values(data.data).forEach((s) => {
-        if (!globals.objects.some((x) => x.id === s.sId)) {
+        if (!globals.remoteObjects.some((x) => x.id === s.sId)) {
           objectIdsChanged = true;
-          globals.objects.push({
+          globals.remoteObjects.push({
             id: s.sId,
             isMe: s.sId === globals.state.ownId,
             type: types.GameObjectType.VEHICLE,
@@ -85,6 +85,7 @@ export const useObjects = () => {
             object3d: undefined,
             dimensions: undefined,
             shotDelay: 0,
+            collisions: {},
           });
         }
       });
@@ -97,15 +98,17 @@ export const useObjects = () => {
   );
 
   const handleQuit = useCallback(() => {
-    globals.objects.splice(0, globals.objects.length);
+    globals.remoteObjects.splice(0, globals.remoteObjects.length);
     setObjectIds([]);
   }, [setObjectIds]);
 
   const handleRemoveId = useCallback(
     (remoteId: string) => {
-      const indexToRemove = globals.objects.findIndex((x) => x.id === remoteId);
-      indexToRemove !== -1 && globals.objects.splice(indexToRemove, 1);
-      const newIds = globals.objects.map((x) => x.id);
+      const indexToRemove = globals.remoteObjects.findIndex(
+        (x) => x.id === remoteId
+      );
+      indexToRemove !== -1 && globals.remoteObjects.splice(indexToRemove, 1);
+      const newIds = globals.remoteObjects.map((x) => x.id);
       setObjectIds(newIds);
     },
     [setObjectIds]

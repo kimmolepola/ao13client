@@ -21,7 +21,7 @@ const Container = ({ quit }: { quit: () => void }) => {
           text: value,
           userId: globals.state.ownId,
           username:
-            globals.objects.find((xx) => xx.id === globals.state.ownId)
+            globals.remoteObjects.find((xx) => xx.id === globals.state.ownId)
               ?.username || "",
         };
         sendOrdered({

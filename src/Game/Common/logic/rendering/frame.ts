@@ -6,10 +6,6 @@ import * as types from "src/types";
 import * as globals from "src/globals";
 import { RefObject } from "react";
 
-export const detectCollision = (
-  gameObject: types.RemoteGameObject | types.LocalGameObject
-) => {};
-
 export const handleKeys = (
   delta: number,
   gameObject: types.RemoteGameObject

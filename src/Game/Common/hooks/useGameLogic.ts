@@ -10,7 +10,7 @@ export const useGameLogic = (scene: THREE.Scene) => {
   const { load, remove } = hooks.useLocalLoader(scene);
 
   useEffect(() => {
-    load("background");
+    load(types.Mesh.BACKGROUND);
   }, [load]);
 
   const gameEventHandler = useCallback(
@@ -23,10 +23,12 @@ export const useGameLogic = (scene: THREE.Scene) => {
         case types.Event.SHOT: {
           const id = uuidv4();
           const speed = gameEvent.data.speed + 2.5;
-          const type = types.GameObjectType.BULLET;
-          const object3d = await load("bullet");
+          const type = types.GameObjectType
+            .BULLET as types.GameObjectType.BULLET;
+          const object3d = await load(types.Mesh.BULLET);
           const dimensions = new THREE.Vector3();
           const timeToLive = 1500;
+          const collisions = {};
           object3d?.geometry.computeBoundingBox();
           object3d?.geometry.boundingBox?.getSize(dimensions);
           object3d?.position.copy(gameEvent.data.object3d.position);
@@ -38,6 +40,7 @@ export const useGameLogic = (scene: THREE.Scene) => {
             object3d,
             dimensions,
             timeToLive,
+            collisions,
           });
           break;
         }

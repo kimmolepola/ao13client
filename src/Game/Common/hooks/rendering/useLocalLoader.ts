@@ -8,7 +8,9 @@ export const useLocalLoader = (scene: THREE.Scene) => {
   const { loadBackground, loadBullet } = hooks.useMeshes();
 
   const loadMesh = useCallback(
-    async (meshLoadFn: () => Promise<THREE.Mesh>) => {
+    async (
+      meshLoadFn: () => Promise<THREE.Mesh<THREE.PlaneGeometry, THREE.Material>>
+    ) => {
       const mesh = await meshLoadFn();
       scene.add(mesh);
       return mesh;
@@ -17,11 +19,11 @@ export const useLocalLoader = (scene: THREE.Scene) => {
   );
 
   const load = useCallback(
-    (meshName: types.Meshes) => {
+    (meshName: types.Mesh) => {
       switch (meshName) {
-        case "bullet":
+        case types.Mesh.BULLET:
           return loadMesh(loadBullet);
-        case "background":
+        case types.Mesh.BACKGROUND:
           return loadMesh(loadBackground);
         default:
           break;

@@ -11,7 +11,7 @@ import * as atoms from "src/atoms";
 
 const InfoTexts = () => (
   <>
-    {globals.objects.reduce((acc: JSX.Element[], cur) => {
+    {globals.remoteObjects.reduce((acc: JSX.Element[], cur) => {
       acc.push(<InfoText key={cur.id} gameObject={cur} />);
       return acc;
     }, [])}
