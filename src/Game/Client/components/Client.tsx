@@ -1,12 +1,14 @@
-import { useRef, memo } from "react";
+import { RefObject, useRef, memo } from "react";
 import UserInterface from "./UserInterface";
 import Canvas from "./Canvas";
 import * as commonHooks from "src/Game/Common/hooks";
 
 const Client = ({ style, quit }: { style: Object; quit: () => void }) => {
   const infoBoxRef = useRef(null);
+  const radarBoxRef = useRef<{ [id: string]: RefObject<HTMLDivElement> }>({});
   const { scene, renderer, camera } = commonHooks.useSetup();
-  const { gameEventHandler } = commonHooks.useGameLogic(scene);
+  const { gameEventHandler: commonGameEventHandler } =
+    commonHooks.useGameLogic(scene);
 
   return (
     <div className="w-full h-full bg-rose-50">
@@ -16,9 +18,15 @@ const Client = ({ style, quit }: { style: Object; quit: () => void }) => {
         renderer={renderer}
         style={style}
         infoBoxRef={infoBoxRef}
-        gameEventHandler={gameEventHandler}
+        radarBoxRef={radarBoxRef}
+        commonGameEventHandler={commonGameEventHandler}
       />
-      <UserInterface style={style} infoBoxRef={infoBoxRef} quit={quit} />
+      <UserInterface
+        style={style}
+        infoBoxRef={infoBoxRef}
+        radarBoxRef={radarBoxRef}
+        quit={quit}
+      />
     </div>
   );
 };

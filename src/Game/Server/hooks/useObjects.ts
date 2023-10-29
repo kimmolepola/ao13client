@@ -21,8 +21,7 @@ const addObject = async (id: string) => {
         ...initialGameObject,
         id,
         isMe: id === globals.state.ownId,
-        type: types.GameObjectType.VEHICLE as types.GameObjectType.VEHICLE,
-        mesh: types.Mesh.FIGHTER,
+        type: types.GameObjectType.FIGHTER as types.GameObjectType.FIGHTER,
         controlsUp: 0,
         controlsDown: 0,
         controlsLeft: 0,
@@ -38,12 +37,17 @@ const addObject = async (id: string) => {
         backendPosition: new THREE.Vector3(),
         backendQuaternion: new THREE.Quaternion(),
         keyDowns: [],
-        infoElement: undefined,
+        infoElement: {
+          containerRef: undefined,
+          row1Ref: undefined,
+          row2Ref: undefined,
+        },
         infoBoxElement: undefined,
         object3d: undefined,
         dimensions: undefined,
         shotDelay: 0,
         collisions: {},
+        health: 100,
       };
       globals.remoteObjects.push(gameObject);
     } else {

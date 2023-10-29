@@ -32,16 +32,24 @@ export const useMeshes = () => {
     [textureLoader]
   );
 
-  const loadBullet = useCallback(async () => {
-    const createGeometry = () => new THREE.PlaneGeometry(0.12, 0.12);
-    const createMaterial = (x: THREE.Texture) =>
-      new THREE.MeshBasicMaterial({ map: x, transparent: true });
-    return load<THREE.PlaneGeometry, THREE.Material>(
-      "bullet.png",
-      createGeometry,
-      createMaterial
-    );
-  }, [load]);
+  const loadPlane = useCallback(
+    async (fileName?: string, size?: [number, number, number]) => {
+      const width = size?.[0] || 1;
+      const height = size?.[1] || 1;
+      const createGeometry = () => new THREE.PlaneGeometry(width, height);
+      const createMaterial = (x: THREE.Texture) =>
+        new THREE.MeshBasicMaterial({
+          map: x,
+          transparent: true,
+        });
+      return load<THREE.PlaneGeometry, THREE.Material>(
+        fileName || "default.png",
+        createGeometry,
+        createMaterial
+      );
+    },
+    [load]
+  );
 
   const loadBackground = useCallback(async () => {
     const createGeometry = (x: THREE.Texture) =>
@@ -96,5 +104,5 @@ export const useMeshes = () => {
     [load]
   );
 
-  return { loadBackground, loadFighter, loadBullet };
+  return { loadBackground, loadFighter, loadPlane };
 };

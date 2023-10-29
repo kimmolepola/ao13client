@@ -5,13 +5,18 @@ import * as types from "src/types";
 import * as globals from "src/globals";
 
 export const useLocalLoader = (scene: THREE.Scene) => {
-  const { loadBackground, loadBullet } = hooks.useMeshes();
+  const { loadBackground, loadPlane } = hooks.useMeshes();
 
   const loadMesh = useCallback(
     async (
-      meshLoadFn: () => Promise<THREE.Mesh<THREE.PlaneGeometry, THREE.Material>>
+      meshLoadFn: (
+        fileName?: string,
+        size?: [number, number, number]
+      ) => Promise<THREE.Mesh<THREE.PlaneGeometry, THREE.Material>>,
+      fileName?: string,
+      size?: [number, number, number]
     ) => {
-      const mesh = await meshLoadFn();
+      const mesh = await meshLoadFn(fileName, size);
       scene.add(mesh);
       return mesh;
     },
@@ -19,17 +24,19 @@ export const useLocalLoader = (scene: THREE.Scene) => {
   );
 
   const load = useCallback(
-    (meshName: types.Mesh) => {
+    (meshName: types.GameObjectType) => {
       switch (meshName) {
-        case types.Mesh.BULLET:
-          return loadMesh(loadBullet);
-        case types.Mesh.BACKGROUND:
+        case types.GameObjectType.EXPLOSION:
+          return loadMesh(loadPlane, "explosion.png");
+        case types.GameObjectType.BULLET:
+          return loadMesh(loadPlane, "bullet.png", [0.12, 0.12, 0]);
+        case types.GameObjectType.BACKGROUND:
           return loadMesh(loadBackground);
         default:
           break;
       }
     },
-    [loadMesh, loadBullet, loadBackground]
+    [loadMesh, loadBackground, loadPlane]
   );
 
   const remove = useCallback(

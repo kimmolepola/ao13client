@@ -6,39 +6,6 @@ import * as types from "src/types";
 import * as globals from "src/globals";
 import { RefObject } from "react";
 
-export const handleKeys = (
-  delta: number,
-  gameObject: types.RemoteGameObject
-) => {
-  const o = gameObject;
-  o.keyDowns.forEach((key) => {
-    switch (key) {
-      case types.Keys.UP:
-        o.controlsUp += delta;
-        o.controlsOverChannelsUp += delta;
-        break;
-      case types.Keys.DOWN:
-        o.controlsDown += delta;
-        o.controlsOverChannelsDown += delta;
-        break;
-      case types.Keys.LEFT:
-        o.controlsLeft += delta;
-        o.controlsOverChannelsLeft += delta;
-        break;
-      case types.Keys.RIGHT:
-        o.controlsRight += delta;
-        o.controlsOverChannelsRight += delta;
-        break;
-      case types.Keys.SPACE:
-        o.controlsSpace += delta;
-        o.controlsOverChannelsSpace += delta;
-        break;
-      default:
-        break;
-    }
-  });
-};
-
 export const handleCamera = (
   camera: THREE.PerspectiveCamera,
   gameObject: types.RemoteGameObject,
@@ -50,7 +17,27 @@ export const handleCamera = (
   c.rotation.z = object3D.rotation.z;
 };
 
-export const handleInfoBoxElement = (
+export const handleRadarBox = (
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>
+) => {
+  if (radarBoxRef.current) {
+    globals.remoteObjects.forEach((x) => {
+      const radarItemStyle = radarBoxRef.current?.[x.id]?.current?.style;
+      const objectPosition = x.object3d?.position;
+      if (radarItemStyle && objectPosition) {
+        radarItemStyle.left = `${objectPosition.x / 20 + 50}px`;
+        radarItemStyle.bottom = `${objectPosition.y / 20 + 50}px`;
+        if (x.isMe && radarItemStyle.backgroundColor !== "orange") {
+          radarItemStyle.backgroundColor = "orange";
+        } else if (!x.isMe && radarItemStyle.zIndex !== "2") {
+          radarItemStyle.zIndex = "2";
+        }
+      }
+    });
+  }
+};
+
+export const handleInfoBox = (
   gameObject: types.RemoteGameObject,
   object3D: THREE.Object3D,
   infoBoxRef: RefObject<HTMLDivElement>
@@ -62,7 +49,8 @@ export const handleInfoBoxElement = (
     y: ${object3D.position.y.toFixed(0)}
     z: ${object3D.position.z.toFixed(0)}
     heading: ${heading}
-    speed: ${gameObject.speed.toFixed(1)}`;
+    speed: ${gameObject.speed.toFixed(1)}
+    health: ${gameObject.health.toFixed(0)}`;
   }
 };
 
@@ -73,7 +61,8 @@ export const handleLocalObject = (
 ) => {
   const o = gameObject;
   object3D.translateY((o.speed * delta) / 100);
-  o.speed *= 0.97;
+  object3D.position.setZ(0.1);
+  o.speed *= 0.98;
   o.timeToLive -= delta;
   return o.timeToLive < 0;
 };
@@ -118,40 +107,7 @@ export const handleMovement = (
   }
 };
 
-export const handleShot = (
-  delta: number,
-  gameObject: types.RemoteGameObject,
-  gameEventHandler: types.GameEventHandler
-) => {
-  const o = gameObject;
-  if (o.controlsSpace) {
-    const timeQuantity = o.controlsSpace > delta ? delta : o.controlsSpace;
-    o.controlsSpace -= timeQuantity;
-
-    //shooting
-    if (o.shotDelay - timeQuantity <= 0) {
-      // shoot
-      o.shotDelay += parameters.shotDelay;
-      o.object3d &&
-        gameEventHandler({
-          type: types.Event.SHOT,
-          data: { object3d: o.object3d, speed: o.speed },
-        });
-    }
-  }
-  o.shotDelay -= Math.min(delta, o.shotDelay);
-};
-
-export const resetControlValues = (gameObject: types.RemoteGameObject) => {
-  const o = gameObject;
-  o.controlsOverChannelsUp = 0;
-  o.controlsOverChannelsDown = 0;
-  o.controlsOverChannelsLeft = 0;
-  o.controlsOverChannelsRight = 0;
-  o.controlsOverChannelsSpace = 0;
-};
-
-export const handleInfoElement = (
+export const handleDataBlock = (
   gameObject: types.RemoteGameObject,
   v1: THREE.Vector3,
   v2: THREE.Vector3,
@@ -213,18 +169,23 @@ export const handleInfoElement = (
     // let's project this position from the world space to the screen space
     infoElementPosition.project(camera);
 
-    o.infoElement.textContent = gameObject.username;
-
-    // let's put the info element on the screen to that position
-    // with some offset to have it slightly below the object
-    o.infoElement.style.left = `${
-      globals.dimensions.canvasHalfWidth * infoElementPosition.x +
-      globals.dimensions.canvasHalfWidth
-    }px`;
-    o.infoElement.style.top = `${
-      globals.dimensions.canvasHalfHeight * -infoElementPosition.y +
-      globals.dimensions.canvasHalfHeight +
-      parameters.infoTextOffsetValue
-    }px`;
+    const container = o.infoElement.containerRef?.current;
+    const row1 = o.infoElement.row1Ref?.current;
+    const row2 = o.infoElement.row2Ref?.current;
+    if (container && row1 && row2) {
+      row1.textContent = gameObject.username;
+      row2.textContent = gameObject.health.toFixed(0);
+      // let's put the info element on the screen to that position
+      // with some offset to have it slightly below the object
+      container.style.left = `${
+        globals.dimensions.canvasHalfWidth * infoElementPosition.x +
+        globals.dimensions.canvasHalfWidth
+      }px`;
+      container.style.top = `${
+        globals.dimensions.canvasHalfHeight * -infoElementPosition.y +
+        globals.dimensions.canvasHalfHeight +
+        parameters.infoTextOffsetValue
+      }px`;
+    }
   }
 };

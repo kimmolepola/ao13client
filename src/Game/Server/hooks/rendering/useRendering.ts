@@ -10,9 +10,17 @@ export const useRendering = (
   renderer: THREE.Renderer,
   ref: RefObject<HTMLDivElement>,
   infoBoxRef: RefObject<HTMLDivElement>,
-  gameEventHandler: types.GameEventHandler
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  gameEventHandler: types.ServerGameEventHandler,
+  commonGameEventHandler: types.CommonGameEventHandler
 ) => {
-  const { runFrame } = hooks.useFrame(camera, infoBoxRef, gameEventHandler);
+  const { runFrame } = hooks.useFrame(
+    camera,
+    infoBoxRef,
+    radarBoxRef,
+    gameEventHandler,
+    commonGameEventHandler
+  );
   const { startAnimation, stopAnimation } = commonHooks.useAnimation(
     camera,
     scene,

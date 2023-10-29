@@ -6,6 +6,7 @@ import {
   InfoBox,
   InfoText,
   ControlButtons,
+  RadarBox,
 } from "src/Game/Common/components/UserInterface/Overlay";
 import * as globals from "src/globals";
 import * as atoms from "src/atoms";
@@ -25,9 +26,11 @@ const ConnectingBox = ({ visible }: { visible: boolean }) =>
 const CanvasOverlay = ({
   style,
   infoBoxRef,
+  radarBoxRef,
 }: {
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
 }) => {
   useRecoilValue(atoms.objectIds); // rerender when objectIds change
   const isConnected = Boolean(useRecoilValue(atoms.connectedAmount));
@@ -38,6 +41,7 @@ const CanvasOverlay = ({
       <ConnectingBox visible={!isConnected} />
       {isConnected && <InfoBox infoBoxRef={infoBoxRef} />}
       <ControlButtons />
+      <RadarBox radarBoxRef={radarBoxRef} />
     </div>
   );
 };

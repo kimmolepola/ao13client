@@ -9,14 +9,16 @@ const Canvas = ({
   renderer,
   style,
   infoBoxRef,
-  gameEventHandler,
+  radarBoxRef,
+  commonGameEventHandler,
 }: {
   camera: THREE.PerspectiveCamera;
   scene: THREE.Scene;
   renderer: THREE.Renderer;
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
-  gameEventHandler: types.GameEventHandler;
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
+  commonGameEventHandler: types.CommonGameEventHandler;
 }) => {
   const ref = useRef(null);
   hooks.useRendering(
@@ -25,7 +27,8 @@ const Canvas = ({
     renderer,
     ref,
     infoBoxRef,
-    gameEventHandler
+    radarBoxRef,
+    commonGameEventHandler
   );
 
   return <div ref={ref} className="absolute inset-0" style={style} />;

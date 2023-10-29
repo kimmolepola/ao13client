@@ -1,1 +1,1 @@
-export { detectCollision, gatherUpdateData } from "./rendering/frame";
+export { detectCollision, gatherUpdateData } from "./logic";

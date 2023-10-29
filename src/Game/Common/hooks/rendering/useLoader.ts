@@ -18,13 +18,14 @@ export const useLoader = (scene: THREE.Scene) => {
       o: types.RemoteGameObject
     ) => {
       const mesh = await meshLoadFn(o?.isMe ? "#FFD700" : undefined);
-      o.object3d && scene.remove(o.object3d);
       scene.add(mesh);
       o.object3d = mesh;
       mesh.geometry.computeBoundingBox();
       const size = new THREE.Vector3();
       mesh.geometry.boundingBox?.getSize(size);
       o.dimensions = size;
+      mesh.position.x = Math.random() * 500;
+      mesh.position.y = Math.random() * 500;
     },
     [scene]
   );
@@ -46,7 +47,7 @@ export const useLoader = (scene: THREE.Scene) => {
     for (let i = os.length - 1; i >= 0; i--) {
       const o = os[i];
       if (objectIds.includes(o.id)) {
-        load(loadFighter, o);
+        !o.object3d && load(loadFighter, o);
       } else {
         remove(i);
       }

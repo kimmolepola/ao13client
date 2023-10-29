@@ -15,6 +15,7 @@ export const useObjects = () => {
       const u = o && data.data[o.id];
       if (u) {
         o.score = u.uScore;
+        o.health = u.uHealth;
         o.rotationSpeed = u.uRotationSpeed || 0;
         o.speed = u.uSpeed || 0;
         o.backendPosition.set(u.uPositionX, u.uPositionY, u.uPositionZ);
@@ -53,7 +54,7 @@ export const useObjects = () => {
           globals.remoteObjects.push({
             id: s.sId,
             isMe: s.sId === globals.state.ownId,
-            type: types.GameObjectType.VEHICLE,
+            type: types.GameObjectType.FIGHTER,
             isPlayer: s.sIsPlayer,
             username: s.sUsername,
             score: s.sScore,
@@ -81,11 +82,16 @@ export const useObjects = () => {
               s.sQuaternionW
             ),
             keyDowns: [],
-            infoElement: undefined,
+            infoElement: {
+              containerRef: undefined,
+              row1Ref: undefined,
+              row2Ref: undefined,
+            },
             object3d: undefined,
             dimensions: undefined,
             shotDelay: 0,
             collisions: {},
+            health: 100,
           });
         }
       });

@@ -4,11 +4,26 @@ import * as globals from "src/globals";
 export const detectCollision = (
   remoteGameObject: types.RemoteGameObject,
   time: number,
-  gameEventHandler: types.GameEventHandler
+  gameEventHandler: types.ServerGameEventHandler
 ) => {
-  const collisions: types.RemoteGameObject[] = [];
+  const collisions: types.GameObject[] = [];
+  globals.localObjects.forEach((x) => {
+    if (remoteGameObject.object3d && x.object3d) {
+      const collision =
+        remoteGameObject.object3d.position.x - 0.5 < x.object3d.position.x &&
+        remoteGameObject.object3d.position.x + 0.5 > x.object3d.position.x &&
+        remoteGameObject.object3d.position.y - 0.5 < x.object3d.position.y &&
+        remoteGameObject.object3d.position.y + 0.5 > x.object3d.position.y;
+
+      collision && collisions.push(x);
+    }
+  });
   globals.remoteObjects.forEach((x) => {
-    if (remoteGameObject.id !== x.id) {
+    if (
+      remoteGameObject.object3d &&
+      remoteGameObject.id !== x.id &&
+      x.object3d?.visible
+    ) {
       // get collision info from the other object
       // if it has already calculated collision between it and this object
       const collisionInfo = x.collisions[remoteGameObject.id];
@@ -17,9 +32,13 @@ export const detectCollision = (
       } else {
         // if no collision info from the other object
         // let's calculate if there is a collision
-        const thisBb = remoteGameObject.object3d?.geometry.boundingBox;
-        const otherBb = x.object3d?.geometry.boundingBox;
-        const collision = Boolean(otherBb && thisBb?.intersectsBox(otherBb));
+
+        const collision =
+          remoteGameObject.object3d.position.x - 0.5 < x.object3d.position.x &&
+          remoteGameObject.object3d.position.x + 0.5 > x.object3d.position.x &&
+          remoteGameObject.object3d.position.y - 0.5 < x.object3d.position.y &&
+          remoteGameObject.object3d.position.y + 0.5 > x.object3d.position.y;
+
         collision && collisions.push(x);
         // let's add the result to this object's collision info
         // so that the other object can use it and we will not calculate it twice
@@ -30,7 +49,7 @@ export const detectCollision = (
   // let's handle the possible collisions between this and other objects
   collisions.length &&
     gameEventHandler({
-      type: types.Event.COLLISION,
+      type: types.EventType.COLLISION,
       data: { object: remoteGameObject, otherObjects: collisions },
     });
 };
@@ -42,6 +61,7 @@ export const gatherUpdateData = (
   const data = updateData;
   data[o.id] = {
     uScore: o.score,
+    uHealth: o.health,
     uControlsUp: o.controlsOverChannelsUp,
     uControlsDown: o.controlsOverChannelsDown,
     uControlsLeft: o.controlsOverChannelsLeft,

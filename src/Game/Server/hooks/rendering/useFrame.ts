@@ -23,7 +23,9 @@ const scoreTimeInteval = 9875;
 export const useFrame = (
   camera: THREE.PerspectiveCamera,
   infoBoxRef: RefObject<HTMLDivElement>,
-  gameEventHandler: types.GameEventHandler
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  gameEventHandler: types.ServerGameEventHandler,
+  commonGameEventHandler: types.CommonGameEventHandler
 ) => {
   const setScore = useSetRecoilState(atoms.score);
   const { sendUnordered } = networkingHooks.useSendFromMain();
@@ -37,8 +39,8 @@ export const useFrame = (
         remove && localObjectsRemoveIndexes.push(i);
       }
     }
-    gameEventHandler({
-      type: types.Event.REMOVE_LOCAL_OBJECT_INDEXES,
+    commonGameEventHandler({
+      type: types.EventType.REMOVE_LOCAL_OBJECT_INDEXES,
       data: localObjectsRemoveIndexes,
     });
     localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
@@ -52,19 +54,28 @@ export const useFrame = (
     for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
       const o = globals.remoteObjects[i];
       if (o && o.object3d) {
-        logic.detectCollision(o, time, gameEventHandler);
-        if (o.isMe) {
-          commonLogic.handleKeys(delta, o);
-          commonLogic.handleCamera(camera, o, o.object3d);
-          commonLogic.handleInfoBoxElement(o, o.object3d, infoBoxRef);
+        if (o.object3d.visible) {
+          commonLogic.checkHealth(o, commonGameEventHandler);
+          logic.detectCollision(o, time, gameEventHandler);
+          if (o.isMe) {
+            commonLogic.handleKeys(delta, o);
+            commonLogic.handleCamera(camera, o, o.object3d);
+            commonLogic.handleInfoBox(o, o.object3d, infoBoxRef);
+          }
+          commonLogic.handleMovement(delta, o, o.object3d);
+          commonLogic.handleShot(delta, o, commonGameEventHandler);
+          // mock
+          if (Date.now() > nextScoreTime) {
+            nextScoreTime = Date.now() + scoreTimeInteval;
+            o.score += 1;
+            setScore(o.score);
+          }
         }
-        commonLogic.handleMovement(delta, o, o.object3d);
-        commonLogic.handleShot(delta, o, gameEventHandler);
         if (Date.now() > nextSendTime) {
           logic.gatherUpdateData(updateData, o);
           commonLogic.resetControlValues(o);
         }
-        commonLogic.handleInfoElement(
+        commonLogic.handleDataBlock(
           o,
           v1,
           v2,
@@ -75,12 +86,6 @@ export const useFrame = (
           o.object3d,
           camera
         );
-        // mock
-        if (Date.now() > nextScoreTime) {
-          nextScoreTime = Date.now() + scoreTimeInteval;
-          o.score += 1;
-          setScore(o.score);
-        }
       }
     }
   };
@@ -91,6 +96,7 @@ export const useFrame = (
 
     handleLocalObjects(delta);
     handleRemoteObjects(delta, updateData, time);
+    commonLogic.handleRadarBox(radarBoxRef);
 
     if (time > nextSendTime) {
       nextSendTime = time + parameters.sendIntervalMain;

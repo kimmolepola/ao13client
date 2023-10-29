@@ -19,7 +19,8 @@ let nextSendTime = Date.now();
 export const useFrame = (
   camera: THREE.PerspectiveCamera,
   infoBoxRef: RefObject<HTMLDivElement>,
-  gameEventHandler: types.GameEventHandler
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  commonGameEventHandler: types.CommonGameEventHandler
 ) => {
   const { sendUnordered } = networkingHooks.useSendFromClient();
 
@@ -32,8 +33,8 @@ export const useFrame = (
         remove && localObjectsRemoveIndexes.push(i);
       }
     }
-    gameEventHandler({
-      type: types.Event.REMOVE_LOCAL_OBJECT_INDEXES,
+    commonGameEventHandler({
+      type: types.EventType.REMOVE_LOCAL_OBJECT_INDEXES,
       data: localObjectsRemoveIndexes,
     });
     localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
@@ -43,24 +44,26 @@ export const useFrame = (
     for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
       const o = globals.remoteObjects[i];
       if (o && o.object3d) {
-        if (o.isMe) {
-          commonLogic.handleKeys(delta, o);
-          commonLogic.handleCamera(camera, o, o.object3d);
-          commonLogic.handleInfoBoxElement(o, o.object3d, infoBoxRef);
-          if (Date.now() > nextSendTime) {
-            nextSendTime = Date.now() + parameters.sendIntervalClient;
-            sendUnordered({
-              type: types.NetDataType.CONTROLS,
-              data: logic.gatherControlsData(o),
-            });
-            commonLogic.resetControlValues(o);
+        if (o.object3d.visible) {
+          commonLogic.checkHealth(o, commonGameEventHandler);
+          if (o.isMe) {
+            commonLogic.handleKeys(delta, o);
+            commonLogic.handleCamera(camera, o, o.object3d);
+            commonLogic.handleInfoBox(o, o.object3d, infoBoxRef);
+            if (Date.now() > nextSendTime) {
+              nextSendTime = Date.now() + parameters.sendIntervalClient;
+              sendUnordered({
+                type: types.NetDataType.CONTROLS,
+                data: logic.gatherControlsData(o),
+              });
+              commonLogic.resetControlValues(o);
+            }
           }
+          commonLogic.handleMovement(delta, o, o.object3d);
+          commonLogic.handleShot(delta, o, commonGameEventHandler);
         }
-        commonLogic.handleMovement(delta, o, o.object3d);
-        commonLogic.handleShot(delta, o, gameEventHandler);
-
         logic.interpolatePosition(o, o.object3d);
-        commonLogic.handleInfoElement(
+        commonLogic.handleDataBlock(
           o,
           v1,
           v2,
@@ -78,6 +81,7 @@ export const useFrame = (
   const runFrame = (delta: number) => {
     handleLocalObjects(delta);
     handleObjects(delta);
+    commonLogic.handleRadarBox(radarBoxRef);
   };
   return { runFrame };
 };

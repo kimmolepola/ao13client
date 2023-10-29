@@ -4,6 +4,7 @@ import {
   TfiArrowCircleRight,
   TfiArrowCircleUp,
   TfiArrowCircleDown,
+  TfiTarget,
 } from "react-icons/tfi";
 
 import { handlePressed, handleReleased } from "../../../logic/controls";
@@ -24,6 +25,8 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
 
   const symbol = useMemo(() => {
     switch (control) {
+      case types.Keys.SPACE:
+        return <TfiTarget />;
       case types.Keys.LEFT:
         return <TfiArrowCircleLeft />;
       case types.Keys.RIGHT:
@@ -52,10 +55,11 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
 
 const ControlButtons = () => {
   return (
-    <div className="landscape:hidden absolute left-0 right-0 bottom-8 flex flex-col items-center">
+    <div className="landscape:hidden absolute left-0 right-0 bottom-8 flex flex-col gap-4 items-center">
       <ControlButton control={types.Keys.UP} />
       <div className="w-full flex justify-evenly">
         <ControlButton control={types.Keys.LEFT} />
+        <ControlButton control={types.Keys.SPACE} />
         <ControlButton control={types.Keys.RIGHT} />
       </div>
       <ControlButton control={types.Keys.DOWN} />
