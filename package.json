@@ -16,6 +16,7 @@
     "@types/uuid": "^9.0.3",
     "axios": "^0.27.2",
     "clsx": "^1.2.1",
+    "cross-env": "^7.0.3",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",
     "lodash": "^4.17.21",
@@ -39,7 +40,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "remote": "cross-env REACT_APP_REMOTE=true react-scripts start",
+    "https": "HTTPS=true react-scripts start"
   },
   "browserslist": {
     "production": [

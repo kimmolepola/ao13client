@@ -38,13 +38,13 @@ const ResetPassword = () => {
       newValidation.state = types.ValidationState.LOADING;
       setValidation(newValidation);
       const token = query.get("token");
-      const userId = query.get("id");
+      const email = query.get("email");
       let err;
-      if (token && userId) {
+      if (token && email) {
         const { error } = await resetPassword({
           password,
           token,
-          userId,
+          email,
         });
         err = error;
       } else {

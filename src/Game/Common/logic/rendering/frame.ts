@@ -61,7 +61,6 @@ export const handleLocalObject = (
 ) => {
   const o = gameObject;
   object3D.translateY((o.speed * delta) / 100);
-  object3D.position.setZ(0.1);
   o.speed *= 0.98;
   o.timeToLive -= delta;
   return o.timeToLive < 0;

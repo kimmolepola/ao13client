@@ -32,6 +32,38 @@ export const useMeshes = () => {
     [textureLoader]
   );
 
+  const loadBox = useCallback(
+    async (fileName?: string, size?: [number, number, number]) => {
+      const width = size?.[0] || 1;
+      const height = size?.[1] || 1;
+      const depth = size?.[2] || 1;
+      const createGeometry = () => new THREE.BoxGeometry(width, height, depth);
+      const createMaterial = (x: THREE.Texture) => {
+        const empty = new THREE.MeshBasicMaterial({
+          transparent: true,
+          opacity: 0,
+        });
+        return [
+          empty,
+          empty,
+          empty,
+          empty,
+          new THREE.MeshBasicMaterial({
+            map: x,
+            transparent: true,
+          }),
+          empty,
+        ];
+      };
+      return load<THREE.BoxGeometry, THREE.Material[]>(
+        fileName || "default.png",
+        createGeometry,
+        createMaterial
+      );
+    },
+    [load]
+  );
+
   const loadPlane = useCallback(
     async (fileName?: string, size?: [number, number, number]) => {
       const width = size?.[0] || 1;
@@ -104,5 +136,5 @@ export const useMeshes = () => {
     [load]
   );
 
-  return { loadBackground, loadFighter, loadPlane };
+  return { loadBackground, loadFighter, loadPlane, loadBox };
 };

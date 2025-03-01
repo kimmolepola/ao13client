@@ -5,14 +5,16 @@ import * as types from "src/types";
 import * as globals from "src/globals";
 
 export const useLocalLoader = (scene: THREE.Scene) => {
-  const { loadBackground, loadPlane } = hooks.useMeshes();
+  const { loadBackground, loadPlane, loadBox } = hooks.useMeshes();
 
   const loadMesh = useCallback(
     async (
       meshLoadFn: (
         fileName?: string,
         size?: [number, number, number]
-      ) => Promise<THREE.Mesh<THREE.PlaneGeometry, THREE.Material>>,
+      ) => Promise<
+        THREE.Mesh<THREE.PlaneGeometry, THREE.Material | THREE.Material[]>
+      >,
       fileName?: string,
       size?: [number, number, number]
     ) => {
@@ -29,14 +31,14 @@ export const useLocalLoader = (scene: THREE.Scene) => {
         case types.GameObjectType.EXPLOSION:
           return loadMesh(loadPlane, "explosion.png");
         case types.GameObjectType.BULLET:
-          return loadMesh(loadPlane, "bullet.png", [0.12, 0.12, 0]);
+          return loadMesh(loadBox, "bullet.png", [0.12, 0.12, 0.12]);
         case types.GameObjectType.BACKGROUND:
           return loadMesh(loadBackground);
         default:
           break;
       }
     },
-    [loadMesh, loadBackground, loadPlane]
+    [loadMesh, loadBackground, loadPlane, loadBox]
   );
 
   const remove = useCallback(

@@ -71,7 +71,9 @@ export interface GameObject {
 
 export interface LocalGameObject extends GameObject {
   type: GameObjectType.BULLET | GameObjectType.EXPLOSION;
-  object3d: THREE.Mesh<THREE.PlaneGeometry, THREE.Material> | undefined;
+  object3d:
+    | THREE.Mesh<THREE.PlaneGeometry, THREE.Material | THREE.Material[]>
+    | undefined;
   timeToLive: number;
 }
 

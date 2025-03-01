@@ -29,11 +29,11 @@ export const logout = async () => {
 
 export const resetPassword = async ({
   token,
-  userId,
+  email,
   password,
 }: {
   token: string;
-  userId: string;
+  email: string;
   password: string;
 }) => {
   try {
@@ -41,7 +41,7 @@ export const resetPassword = async ({
       `${backendUrl}/api/v1/auth/resetpassword`,
       {
         token,
-        userId,
+        email,
         password,
       }
     );
@@ -83,8 +83,12 @@ export const login = async ({
       username,
       password,
     });
+    console.log("--response:", response);
     return { data: response.data };
   } catch (err: any) {
+    if (err.response?.status === 401) {
+      return { error: "Invalid username, email or password" };
+    }
     const error = err.response?.data ? err.response.data.error : err.toString();
     return { error };
   }
@@ -95,8 +99,10 @@ export const requestSignup = async ({ email }: { email: string }) => {
     const response = await axios.post(`${backendUrl}/api/v1/auth/signup`, {
       email,
     });
+    console.log("--response:", response);
     return { data: response.data };
   } catch (err: any) {
+    console.log("--err:", err);
     const error = err.response?.data ? err.response.data.error : err.toString();
     return { error };
   }

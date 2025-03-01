@@ -32,12 +32,19 @@ const Login = () => {
     if (!newValidation.username && !newValidation.password) {
       newValidation.state = types.ValidationState.LOADING;
       setValidation(newValidation);
-      const { data, error } = await login({ username, password });
+      const { data: fullData, error } = await login({ username, password });
+      const data = {
+        token: fullData?.token,
+        username: fullData?.username,
+        score: fullData?.score,
+      };
+      console.log("--data:", data);
+      console.log("--error:", error);
       newValidation.login = error;
       newValidation.state = types.ValidationState.OPEN;
       if (!error) {
         setUser(data);
-        setToken(data.token);
+        setToken(data?.token);
         setUsername("");
         if (rememberMe) {
           localStorage.setItem("user", JSON.stringify(data));

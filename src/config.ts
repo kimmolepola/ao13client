@@ -1,4 +1,5 @@
 export const backendUrl =
-  process.env.NODE_ENV === "production"
+  process.env.NODE_ENV === "production" ||
+  process.env.REACT_APP_REMOTE === "true"
     ? `https://${process.env.REACT_APP_BACKEND}`
-    : `http://${window.location.hostname}:${process.env.REACT_APP_BACKEND_DEV_PORT}`;
+    : `${process.env.REACT_APP_DEV_PROTOCOL}://${window.location.hostname}:${process.env.REACT_APP_BACKEND_DEV_PORT}`;
