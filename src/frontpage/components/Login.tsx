@@ -39,7 +39,7 @@ const Login = () => {
         score: fullData?.score,
       };
       console.log("--data:", data);
-      console.log("--error:", error);
+      error && console.log("--error:", error);
       newValidation.login = error;
       newValidation.state = types.ValidationState.OPEN;
       if (!error) {

@@ -38,6 +38,7 @@ const LoggedIn = () => {
         const { data: turnCredentials, error: credentialsError } =
           await getTurnCredentials();
         if (turnCredentials) {
+          console.log("--turn credentials: ", turnCredentials);
           setIceServers([turnCredentials]);
           setPage("game");
         } else {
