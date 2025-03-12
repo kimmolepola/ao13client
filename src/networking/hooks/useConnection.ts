@@ -308,11 +308,11 @@ export const useConnection = () => {
     socket?.on(
       "signaling",
       ({
-        remoteId,
+        id: remoteId,
         description,
         candidate,
       }: {
-        remoteId: string;
+        id: string;
         description?: RTCSessionDescription;
         candidate?: RTCIceCandidate;
       }) => {
