@@ -47,7 +47,7 @@ const Settings = () => {
         ? types.ValidationState.OPEN
         : types.ValidationState.SUCCESS;
       if (!error) {
-        setUser(data);
+        setUser((u) => (u ? { ...u, username: data.username } : undefined));
         setUsername("");
       }
     }

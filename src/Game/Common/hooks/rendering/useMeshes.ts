@@ -5,21 +5,82 @@ export const useMeshes = () => {
   const textureLoader = useMemo(() => new THREE.TextureLoader(), []);
 
   const load = useCallback(
-    async (
+    async <
+      G extends THREE.BoxGeometry | THREE.PlaneGeometry,
+      M extends THREE.Material | THREE.Material[]
+    >(
       filename: string,
-      createGeometry: (x: THREE.Texture) => THREE.BufferGeometry,
-      createMaterial: (x: THREE.Texture) => THREE.Material | THREE.Material[]
+      createGeometry: (x: THREE.Texture) => G,
+      createMaterial: (x: THREE.Texture) => M
     ) => {
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<THREE.Mesh<G, M>>((resolve, reject) => {
         const onLoad = (x: THREE.Texture) => {
-          resolve(new THREE.Mesh(createGeometry(x), createMaterial(x)));
+          const m = new THREE.Mesh(
+            createGeometry(x),
+            createMaterial(x)
+          ) as THREE.Mesh<G, M>;
+          resolve(m);
         };
-        const onError = () => reject(new Error("Load error"));
+        const onError = (err: ErrorEvent) => {
+          console.error("onLoad error:", err);
+          return reject(new Error("Load error"));
+        };
         textureLoader.load(filename, onLoad, undefined, onError);
       });
-      return result as THREE.Mesh;
+      return result;
     },
     [textureLoader]
+  );
+
+  const loadBox = useCallback(
+    async (fileName?: string, size?: [number, number, number]) => {
+      const width = size?.[0] || 1;
+      const height = size?.[1] || 1;
+      const depth = size?.[2] || 1;
+      const createGeometry = () => new THREE.BoxGeometry(width, height, depth);
+      const createMaterial = (x: THREE.Texture) => {
+        const empty = new THREE.MeshBasicMaterial({
+          transparent: true,
+          opacity: 0,
+        });
+        return [
+          empty,
+          empty,
+          empty,
+          empty,
+          new THREE.MeshBasicMaterial({
+            map: x,
+            transparent: true,
+          }),
+          empty,
+        ];
+      };
+      return load<THREE.BoxGeometry, THREE.Material[]>(
+        fileName || "default.png",
+        createGeometry,
+        createMaterial
+      );
+    },
+    [load]
+  );
+
+  const loadPlane = useCallback(
+    async (fileName?: string, size?: [number, number, number]) => {
+      const width = size?.[0] || 1;
+      const height = size?.[1] || 1;
+      const createGeometry = () => new THREE.PlaneGeometry(width, height);
+      const createMaterial = (x: THREE.Texture) =>
+        new THREE.MeshBasicMaterial({
+          map: x,
+          transparent: true,
+        });
+      return load<THREE.PlaneGeometry, THREE.Material>(
+        fileName || "default.png",
+        createGeometry,
+        createMaterial
+      );
+    },
+    [load]
   );
 
   const loadBackground = useCallback(async () => {
@@ -33,7 +94,11 @@ export const useMeshes = () => {
         map: x,
       });
     };
-    return load("image1.jpeg", createGeometry, createMaterial);
+    return load<THREE.PlaneGeometry, THREE.Material>(
+      "image1.jpeg",
+      createGeometry,
+      createMaterial
+    );
   }, [load]);
 
   const loadFighter = useCallback(
@@ -62,10 +127,14 @@ export const useMeshes = () => {
           empty,
         ];
       };
-      return load("fighter.png", createGeometry, createMaterial);
+      return load<THREE.BoxGeometry, THREE.Material[]>(
+        "fighter.png",
+        createGeometry,
+        createMaterial
+      );
     },
     [load]
   );
 
-  return { loadBackground, loadFighter };
+  return { loadBackground, loadFighter, loadPlane, loadBox };
 };

@@ -10,11 +10,12 @@ export const useObjects = () => {
   const setObjectIds = useSetRecoilState(atoms.objectIds);
 
   const handleUpdateData = useCallback((data: types.Update) => {
-    for (let i = globals.objects.length - 1; i > -1; i--) {
-      const o = globals.objects[i];
+    for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+      const o = globals.remoteObjects[i];
       const u = o && data.data[o.id];
       if (u) {
         o.score = u.uScore;
+        o.health = u.uHealth;
         o.rotationSpeed = u.uRotationSpeed || 0;
         o.speed = u.uSpeed || 0;
         o.backendPosition.set(u.uPositionX, u.uPositionY, u.uPositionZ);
@@ -29,6 +30,7 @@ export const useObjects = () => {
           o.controlsDown += u.uControlsDown || 0;
           o.controlsLeft += u.uControlsLeft || 0;
           o.controlsUp += u.uControlsUp || 0;
+          o.controlsSpace += u.uControlsSpace || 0;
         }
       }
     }
@@ -37,8 +39,8 @@ export const useObjects = () => {
   const handleStateData = useCallback(
     (data: types.State) => {
       let objectIdsChanged = false;
-      for (let i = globals.objects.length - 1; i > -1; i--) {
-        const o = globals.objects[i];
+      for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+        const o = globals.remoteObjects[i];
         const s = o && data.data[o.id];
         if (!s) {
           objectIdsChanged = true;
@@ -47,11 +49,12 @@ export const useObjects = () => {
         }
       }
       Object.values(data.data).forEach((s) => {
-        if (!globals.objects.some((x) => x.id === s.sId)) {
+        if (!globals.remoteObjects.some((x) => x.id === s.sId)) {
           objectIdsChanged = true;
-          globals.objects.push({
+          globals.remoteObjects.push({
             id: s.sId,
             isMe: s.sId === globals.state.ownId,
+            type: types.GameObjectType.FIGHTER,
             isPlayer: s.sIsPlayer,
             username: s.sUsername,
             score: s.sScore,
@@ -59,11 +62,12 @@ export const useObjects = () => {
             controlsDown: 0,
             controlsLeft: 0,
             controlsRight: 0,
+            controlsSpace: 0,
             controlsOverChannelsUp: 0,
             controlsOverChannelsDown: 0,
             controlsOverChannelsLeft: 0,
             controlsOverChannelsRight: 0,
-            acceleration: s.sAcceleration,
+            controlsOverChannelsSpace: 0,
             rotationSpeed: s.sRotationSpeed,
             speed: s.sSpeed,
             backendPosition: new THREE.Vector3(
@@ -78,10 +82,16 @@ export const useObjects = () => {
               s.sQuaternionW
             ),
             keyDowns: [],
-            infoElement: undefined,
-            infoBoxElement: undefined,
-            object3D: undefined,
+            infoElement: {
+              containerRef: undefined,
+              row1Ref: undefined,
+              row2Ref: undefined,
+            },
+            object3d: undefined,
             dimensions: undefined,
+            shotDelay: 0,
+            collisions: {},
+            health: 100,
           });
         }
       });
@@ -94,15 +104,17 @@ export const useObjects = () => {
   );
 
   const handleQuit = useCallback(() => {
-    globals.objects.splice(0, globals.objects.length);
+    globals.remoteObjects.splice(0, globals.remoteObjects.length);
     setObjectIds([]);
   }, [setObjectIds]);
 
   const handleRemoveId = useCallback(
     (remoteId: string) => {
-      const indexToRemove = globals.objects.findIndex((x) => x.id === remoteId);
-      indexToRemove !== -1 && globals.objects.splice(indexToRemove, 1);
-      const newIds = globals.objects.map((x) => x.id);
+      const indexToRemove = globals.remoteObjects.findIndex(
+        (x) => x.id === remoteId
+      );
+      indexToRemove !== -1 && globals.remoteObjects.splice(indexToRemove, 1);
+      const newIds = globals.remoteObjects.map((x) => x.id);
       setObjectIds(newIds);
     },
     [setObjectIds]

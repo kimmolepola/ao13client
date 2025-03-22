@@ -3,7 +3,7 @@ import { useSetRecoilState } from "recoil";
 
 import { chatMessageTimeToLive } from "src/parameters";
 import * as serverHooks from "src/Game/Server/hooks";
-import { objects } from "src/globals";
+import { remoteObjects } from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as hooks from ".";
@@ -25,7 +25,8 @@ export const useReceiveOnMain = () => {
             id: remoteId + Date.now().toString(),
             text: data.text,
             userId: remoteId,
-            username: objects.find((x) => x.id === remoteId)?.username || "",
+            username:
+              remoteObjects.find((x) => x.id === remoteId)?.username || "",
           };
           sendOrdered({ ...message, type: types.NetDataType.CHATMESSAGE_MAIN });
           setChatMessages((x) => [message, ...x]);

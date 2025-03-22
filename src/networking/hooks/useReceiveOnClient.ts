@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useSetRecoilState } from "recoil";
 
 import { chatMessageTimeToLive } from "src/parameters";
-import { objects } from "src/globals";
+import { remoteObjects } from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as clientHooks from "src/Game/Client/hooks";
@@ -30,7 +30,8 @@ export const useReceiveOnClient = () => {
         case types.NetDataType.CHATMESSAGE_MAIN: {
           const message = {
             ...data,
-            username: objects.find((x) => x.id === data.userId)?.username || "",
+            username:
+              remoteObjects.find((x) => x.id === data.userId)?.username || "",
           };
           setChatMessages((x) => [message, ...x]);
           setTimeout(

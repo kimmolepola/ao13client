@@ -50,10 +50,37 @@ export enum Keys {
   DOWN = "down",
   LEFT = "left",
   RIGHT = "right",
+  SPACE = "space",
 }
 
-export type GameObject = {
+export enum GameObjectType {
+  EXPLOSION,
+  BULLET,
+  FIGHTER,
+  BACKGROUND,
+}
+
+export interface GameObject {
   id: string;
+  type: GameObjectType;
+  speed: number;
+  object3d: THREE.Object3D | undefined;
+  dimensions?: THREE.Vector3 | undefined;
+  collisions: { [gameObjectId: string]: { time: number; collision: boolean } };
+}
+
+export interface LocalGameObject extends GameObject {
+  type: GameObjectType.BULLET | GameObjectType.EXPLOSION;
+  object3d:
+    | THREE.Mesh<THREE.PlaneGeometry, THREE.Material | THREE.Material[]>
+    | undefined;
+  timeToLive: number;
+}
+
+export interface RemoteGameObject extends GameObject {
+  health: number;
+  type: GameObjectType.FIGHTER;
+  object3d: THREE.Mesh<THREE.BoxGeometry, THREE.Material[]> | undefined;
   isMe: boolean;
   isPlayer: boolean;
   username: string;
@@ -62,21 +89,24 @@ export type GameObject = {
   controlsDown: number;
   controlsLeft: number;
   controlsRight: number;
+  controlsSpace: number;
   controlsOverChannelsUp: number;
   controlsOverChannelsDown: number;
   controlsOverChannelsLeft: number;
   controlsOverChannelsRight: number;
-  acceleration: number;
+  controlsOverChannelsSpace: number;
   rotationSpeed: number;
-  speed: number;
   backendPosition: THREE.Vector3;
   backendQuaternion: THREE.Quaternion;
   keyDowns: Keys[];
-  infoElement: HTMLDivElement | null | undefined;
-  infoBoxElement: HTMLDivElement | null | undefined;
-  object3D: THREE.Object3D | undefined;
-  dimensions: THREE.Vector3 | undefined;
-};
+  infoElement: {
+    containerRef: RefObject<HTMLDivElement> | undefined;
+    row1Ref: RefObject<HTMLDivElement> | undefined;
+    row2Ref: RefObject<HTMLDivElement> | undefined;
+  };
+
+  shotDelay: number;
+}
 
 export enum NetDataType {
   CHATMESSAGE_CLIENT,
@@ -105,15 +135,18 @@ export type Controls = {
     down: number;
     left: number;
     right: number;
+    space: number;
   };
 };
 
 export type UpdateObject = {
   uScore: number;
+  uHealth: number;
   uControlsUp: number;
   uControlsDown: number;
   uControlsLeft: number;
   uControlsRight: number;
+  uControlsSpace: number;
   uRotationSpeed: number;
   uSpeed: number;
   uPositionX: number;
@@ -130,7 +163,6 @@ export type StateObject = {
   sIsPlayer: boolean;
   sUsername: string;
   sScore: number;
-  sAcceleration: number;
   sRotationSpeed: number;
   sSpeed: number;
   sPositionX: number;
@@ -177,3 +209,32 @@ export type InitialGameObject = {
   score: number;
   isPlayer: boolean;
 };
+
+export enum EventType {
+  HEALTH_ZERO,
+  COLLISION,
+  SHOT,
+  REMOVE_LOCAL_OBJECT_INDEXES,
+}
+
+export type ServerGameEvent = {
+  type: EventType.COLLISION;
+  data: {
+    object: RemoteGameObject;
+    otherObjects: GameObject[];
+  };
+};
+
+export type CommonGameEvent =
+  | {
+      type: EventType.HEALTH_ZERO;
+      data: RemoteGameObject;
+    }
+  | {
+      type: EventType.SHOT;
+      data: { object3d: THREE.Mesh; speed: number };
+    }
+  | { type: EventType.REMOVE_LOCAL_OBJECT_INDEXES; data: number[] };
+
+export type ServerGameEventHandler = (e: ServerGameEvent) => void;
+export type CommonGameEventHandler = (e: CommonGameEvent) => void;

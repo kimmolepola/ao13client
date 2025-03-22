@@ -1,6 +1,7 @@
 import * as types from "./types";
 
-export const objects: types.GameObject[] = [];
+export const remoteObjects: types.RemoteGameObject[] = [];
+export const localObjects: types.LocalGameObject[] = [];
 export const peerConnections: types.PeerConnection[] = [];
 export const state: { main: boolean; ownId: string | undefined } = {
   main: false,

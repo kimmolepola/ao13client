@@ -1,5 +1,9 @@
 import { useEffect, useCallback } from "react";
-import { handlePressed, handleReleased, handleAllReleased } from "../controls";
+import {
+  handlePressed,
+  handleReleased,
+  handleAllReleased,
+} from "../logic/controls";
 import * as types from "src/types";
 
 const convertKeyToControl = (key: string) => {
@@ -12,6 +16,8 @@ const convertKeyToControl = (key: string) => {
       return types.Keys.LEFT;
     case "ArrowRight":
       return types.Keys.RIGHT;
+    case "Space":
+      return types.Keys.SPACE;
     default:
       return null;
   }

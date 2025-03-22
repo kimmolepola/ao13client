@@ -34,10 +34,12 @@ const LoggedIn = () => {
   const onClickPlay = useCallback(async () => {
     if (!errorText) {
       const { data, error } = await checkOkToStart();
+      console.log("--checkoktostart:", data, error);
       if (data && data.success) {
         const { data: turnCredentials, error: credentialsError } =
           await getTurnCredentials();
         if (turnCredentials) {
+          console.log("--turn credentials: ", turnCredentials);
           setIceServers([turnCredentials]);
           setPage("game");
         } else {
@@ -45,7 +47,7 @@ const LoggedIn = () => {
           setTimeout(() => setErrorText(undefined), 5000);
         }
       } else {
-        setErrorText(error || data.reason);
+        setErrorText(error);
         setTimeout(() => setErrorText(undefined), 5000);
       }
     }

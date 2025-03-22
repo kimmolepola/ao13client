@@ -8,6 +8,7 @@ import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as commonLogic from "src/Game/Common/logic";
 import * as logic from "../../logic";
+import { RefObject } from "react";
 
 const v1 = new THREE.Vector3();
 const v2 = new THREE.Vector3();
@@ -19,26 +20,62 @@ let nextSendTime = Date.now();
 let nextScoreTime = Date.now();
 const scoreTimeInteval = 9875;
 
-export const useFrame = (camera: THREE.PerspectiveCamera) => {
+export const useFrame = (
+  camera: THREE.PerspectiveCamera,
+  infoBoxRef: RefObject<HTMLDivElement>,
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  gameEventHandler: types.ServerGameEventHandler,
+  commonGameEventHandler: types.CommonGameEventHandler
+) => {
   const setScore = useSetRecoilState(atoms.score);
   const { sendUnordered } = networkingHooks.useSendFromMain();
 
-  const runFrame = (delta: number) => {
-    const updateData: { [id: string]: types.UpdateObject } = {};
-    for (let i = globals.objects.length - 1; i > -1; i--) {
-      const o = globals.objects[i];
-      if (o && o.object3D) {
-        if (o.isMe) {
-          commonLogic.handleKeys(delta, o);
-          commonLogic.handleCamera(camera, o, o.object3D);
-          commonLogic.handleInfoBoxElement(o, o.object3D);
+  const handleLocalObjects = (delta: number) => {
+    const localObjectsRemoveIndexes = [];
+    for (let i = globals.localObjects.length - 1; i > -1; i--) {
+      const o = globals.localObjects[i];
+      if (o && o.object3d) {
+        const remove = commonLogic.handleLocalObject(delta, o, o.object3d);
+        remove && localObjectsRemoveIndexes.push(i);
+      }
+    }
+    commonGameEventHandler({
+      type: types.EventType.REMOVE_LOCAL_OBJECT_INDEXES,
+      data: localObjectsRemoveIndexes,
+    });
+    localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
+  };
+
+  const handleRemoteObjects = (
+    delta: number,
+    updateData: { [id: string]: types.UpdateObject },
+    time: number
+  ) => {
+    for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+      const o = globals.remoteObjects[i];
+      if (o && o.object3d) {
+        if (o.object3d.visible) {
+          commonLogic.checkHealth(o, commonGameEventHandler);
+          logic.detectCollision(o, time, gameEventHandler);
+          if (o.isMe) {
+            commonLogic.handleKeys(delta, o);
+            commonLogic.handleCamera(camera, o, o.object3d);
+            commonLogic.handleInfoBox(o, o.object3d, infoBoxRef);
+          }
+          commonLogic.handleMovement(delta, o, o.object3d);
+          commonLogic.handleShot(delta, o, commonGameEventHandler);
+          // mock
+          if (Date.now() > nextScoreTime) {
+            nextScoreTime = Date.now() + scoreTimeInteval;
+            o.score += 1;
+            setScore(o.score);
+          }
         }
-        commonLogic.handleMovement(delta, o, o.object3D);
         if (Date.now() > nextSendTime) {
           logic.gatherUpdateData(updateData, o);
           commonLogic.resetControlValues(o);
         }
-        commonLogic.handleInfoElement(
+        commonLogic.handleDataBlock(
           o,
           v1,
           v2,
@@ -46,21 +83,25 @@ export const useFrame = (camera: THREE.PerspectiveCamera) => {
           q1,
           q2,
           q3,
-          o.object3D,
+          o.object3d,
           camera
         );
-        // mock
-        if (Date.now() > nextScoreTime) {
-          nextScoreTime = Date.now() + scoreTimeInteval;
-          o.score += 1;
-          setScore(o.score);
-        }
       }
     }
-    if (Date.now() > nextSendTime) {
-      nextSendTime = Date.now() + parameters.sendIntervalMain;
+  };
+
+  const runFrame = (delta: number) => {
+    const time = Date.now();
+    const updateData: { [id: string]: types.UpdateObject } = {};
+
+    handleLocalObjects(delta);
+    handleRemoteObjects(delta, updateData, time);
+    commonLogic.handleRadarBox(radarBoxRef);
+
+    if (time > nextSendTime) {
+      nextSendTime = time + parameters.sendIntervalMain;
       sendUnordered({
-        timestamp: Date.now(),
+        timestamp: time,
         type: types.NetDataType.UPDATE,
         data: updateData,
       });

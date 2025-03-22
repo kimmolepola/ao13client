@@ -14,43 +14,52 @@ import * as atoms from "src/atoms";
 import * as types from "src/types";
 
 const addObject = async (id: string) => {
-  if (!globals.objects.some((x) => x.id === id)) {
+  if (!globals.remoteObjects.some((x) => x.id === id)) {
     const initialGameObject = (await getGameObject(id)).data;
     if (initialGameObject) {
       const gameObject = {
         ...initialGameObject,
         id,
         isMe: id === globals.state.ownId,
+        type: types.GameObjectType.FIGHTER as types.GameObjectType.FIGHTER,
         controlsUp: 0,
         controlsDown: 0,
         controlsLeft: 0,
         controlsRight: 0,
+        controlsSpace: 0,
         controlsOverChannelsUp: 0,
         controlsOverChannelsDown: 0,
         controlsOverChannelsLeft: 0,
         controlsOverChannelsRight: 0,
-        acceleration: parameters.acceleration,
-        rotationSpeed: parameters.rotationSpeed,
+        controlsOverChannelsSpace: 0,
+        rotationSpeed: 0,
         speed: parameters.speed,
         backendPosition: new THREE.Vector3(),
         backendQuaternion: new THREE.Quaternion(),
         keyDowns: [],
-        infoElement: undefined,
+        infoElement: {
+          containerRef: undefined,
+          row1Ref: undefined,
+          row2Ref: undefined,
+        },
         infoBoxElement: undefined,
-        object3D: undefined,
+        object3d: undefined,
         dimensions: undefined,
+        shotDelay: 0,
+        collisions: {},
+        health: 100,
       };
-      globals.objects.push(gameObject);
+      globals.remoteObjects.push(gameObject);
     } else {
       console.error("Failed to add new object, no initialGameObject");
     }
   }
-  return globals.objects.map((x) => x.id);
+  return globals.remoteObjects.map((x) => x.id);
 };
 
 const savePlayerData = async () => {
   const data =
-    globals.objects.reduce((acc: types.PlayerState[], cur) => {
+    globals.remoteObjects.reduce((acc: types.PlayerState[], cur) => {
       if (cur.isPlayer) {
         acc.push({ remoteId: cur.id, score: cur.score });
       }
@@ -62,23 +71,22 @@ const savePlayerData = async () => {
 const handleSendState = (sendOrdered: (data: types.State) => void) => {
   sendOrdered({
     type: types.NetDataType.STATE,
-    data: globals.objects.reduce(
+    data: globals.remoteObjects.reduce(
       (acc: { [id: string]: types.StateObject }, cur) => {
         acc[cur.id] = {
           sId: cur.id,
           sIsPlayer: cur.isPlayer,
           sUsername: cur.username,
           sScore: cur.score,
-          sAcceleration: cur.acceleration,
           sRotationSpeed: cur.rotationSpeed,
           sSpeed: cur.speed,
-          sPositionX: cur.object3D?.position.x || 0,
-          sPositionY: cur.object3D?.position.y || 0,
-          sPositionZ: cur.object3D?.position.z || 0,
-          sQuaternionX: cur.object3D?.quaternion.x || 0,
-          sQuaternionY: cur.object3D?.quaternion.y || 0,
-          sQuaternionZ: cur.object3D?.quaternion.z || 0,
-          sQuaternionW: cur.object3D?.quaternion.w || 0,
+          sPositionX: cur.object3d?.position.x || 0,
+          sPositionY: cur.object3d?.position.y || 0,
+          sPositionZ: cur.object3d?.position.z || 0,
+          sQuaternionX: cur.object3d?.quaternion.x || 0,
+          sQuaternionY: cur.object3d?.quaternion.y || 0,
+          sQuaternionZ: cur.object3d?.quaternion.z || 0,
+          sQuaternionW: cur.object3d?.quaternion.w || 0,
         };
         return acc;
       },
@@ -104,11 +112,11 @@ export const useObjects = (startInterval?: boolean) => {
   const handleRemoveId = useCallback(
     (idToRemove: string) => {
       savePlayerData();
-      const indexToRemove = globals.objects.findIndex(
+      const indexToRemove = globals.remoteObjects.findIndex(
         (x) => x.id === idToRemove
       );
-      indexToRemove !== -1 && globals.objects.splice(indexToRemove, 1);
-      const ids = globals.objects.map((x) => x.id);
+      indexToRemove !== -1 && globals.remoteObjects.splice(indexToRemove, 1);
+      const ids = globals.remoteObjects.map((x) => x.id);
       setObjectIds(ids);
       handleSendState(sendOrdered);
     },
@@ -135,22 +143,24 @@ export const useObjects = (startInterval?: boolean) => {
 
   const handleQuitForObjects = useCallback(async () => {
     await savePlayerData();
-    globals.objects.splice(0, globals.objects.length);
+    globals.remoteObjects.splice(0, globals.remoteObjects.length);
     setObjectIds([]);
   }, [setObjectIds]);
 
   const handleReceiveControlsData = useCallback(
     (data: types.Controls, remoteId: string) => {
-      const o = globals.objects.find((x) => x.id === remoteId);
+      const o = globals.remoteObjects.find((x) => x.id === remoteId);
       if (o) {
         o.controlsUp += data.data.up || 0;
         o.controlsDown += data.data.down || 0;
         o.controlsLeft += data.data.left || 0;
         o.controlsRight += data.data.right || 0;
+        o.controlsSpace += data.data.space || 0;
         o.controlsOverChannelsUp += data.data.up || 0;
         o.controlsOverChannelsDown += data.data.down || 0;
         o.controlsOverChannelsLeft += data.data.left || 0;
         o.controlsOverChannelsRight += data.data.right || 0;
+        o.controlsOverChannelsSpace += data.data.space || 0;
       }
     },
     []

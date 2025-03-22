@@ -45,8 +45,8 @@ const Common = () => {
   }, [connect, iceServers, user?.token]);
 
   const style = useMemo(() => {
-    const { size } = sidepanelGeometry;
-    switch (sidepanelGeometry.position) {
+    const { size, position } = sidepanelGeometry;
+    switch (position) {
       case types.Position.BOTTOM:
         return { bottom: size };
       case types.Position.LEFT:

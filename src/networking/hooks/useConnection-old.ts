@@ -1,6 +1,5 @@
 import { useRef, useCallback } from "react";
-import { HubConnectionBuilder, HubConnection } from "@microsoft/signalr";
-// import { io, Socket } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { useRecoilState, useSetRecoilState, useRecoilValue } from "recoil";
 
 import { backendUrl } from "src/config";
@@ -16,10 +15,9 @@ import * as globals from "src/globals";
 // let socket: (Socket & { auth: { [key: string]: any } }) | undefined;
 
 export const useConnection = () => {
-  // const socketRef = useRef<
-  //   (Socket & { auth: { [key: string]: any } }) | undefined
-  // >();
-  const socketRef = useRef<HubConnection | undefined>();
+  const socketRef = useRef<
+    (Socket & { auth: { [key: string]: any } }) | undefined
+  >();
   const user = useRecoilValue(atoms.user);
   const iceServers = useRecoilValue(atoms.iceServers);
   const [main, setMain] = useRecoilState(atoms.main);
@@ -146,25 +144,17 @@ export const useConnection = () => {
       peerConnection.onicecandidate = ({ candidate }) => {
         console.log("--onicecandidate:", candidate);
         const socket = socketRef.current;
-        socket?.send("signaling", { remoteId, candidate });
-        socket?.send("signalingx", "peerConnection.onicecandidate");
-        console.log("--signalingx", "peerConnection.onicecandidate", remoteId);
+        socket?.emit("signaling", { remoteId, candidate });
       };
       peerConnection.onnegotiationneeded = async () => {
         console.log("--onnegotiationneeded");
         try {
           await peerConnection.setLocalDescription();
           const socket = socketRef.current;
-          socket?.send("signaling", {
+          socket?.emit("signaling", {
             remoteId,
             description: peerConnection.localDescription,
           });
-          socket?.send("signalingx", "peerConnection.onnegotiationneeded");
-          console.log(
-            "--signalingx",
-            "peerConnection.onnegotiationneeded",
-            remoteId
-          );
         } catch (err) {
           console.error(err);
         }
@@ -202,16 +192,10 @@ export const useConnection = () => {
             if (description.type === "offer") {
               await peerConnection.setLocalDescription();
               const socket = socketRef.current;
-              socket?.send("signaling", {
+              socket?.emit("signaling", {
                 remoteId,
                 description: peerConnection.localDescription,
               });
-              socket?.send("signalingx", "peerConnection.setRemoteDescription");
-              console.log(
-                "--signalingx",
-                "peerConnection.setRemoteDescription",
-                remoteId
-              );
             }
           } else if (candidate) {
             await peerConnection.addIceCandidate(candidate);
@@ -230,29 +214,23 @@ export const useConnection = () => {
       : handleQuitForObjectsOnClient();
     state.main = false;
     const socket = socketRef.current;
-    // socket?.send("DisconnectClient");
-
-    await socket?.stop();
+    socket?.disconnect();
     socket?.off("connect");
     socket?.off("disconnect");
     socket?.off("init");
     socket?.off("main");
     socket?.off("connectToMain");
     socket?.off("signaling");
-    socket?.off("signalingx");
     socketRef.current = undefined;
     peerConnections.forEach((x) => closePeerConnection(x));
     peerConnections.splice(0, peerConnections.length);
     globals.state.ownId = undefined;
     setMain(false);
-    setConnectionMessage("Disconnected from signaling server");
-    console.log("Signaling socket disconnected");
   }, [
     closePeerConnection,
     handleQuitForObjectsOnClient,
     handleQuitForObjectsOnMain,
     setMain,
-    setConnectionMessage,
   ]);
 
   const connect = useCallback(async () => {
@@ -263,22 +241,14 @@ export const useConnection = () => {
       console.log("getUserMedia err:", err);
     }
     console.log("--await getUserMedia resolved");
-    // await disconnect(true);
-    // socketRef.current = io(backendUrl, {
-    //   auth: {
-    //     token: `${user?.token}`,
-    //   },
-    // });
-    console.log("--user?.token:", user?.token);
-    socketRef.current = new HubConnectionBuilder()
-      .withUrl(backendUrl + "/api/v1/hub", {
-        accessTokenFactory: () => user?.token || "",
-      })
-      .build();
+    await disconnect();
+    socketRef.current = io(backendUrl, {
+      auth: {
+        token: `${user?.token}`,
+      },
+    });
 
     const socket = socketRef.current;
-
-    socket?.start().catch((err) => document.write(err));
 
     socket?.on("connect", () => {
       setConnectionMessage("Connected to signaling server");
@@ -291,7 +261,6 @@ export const useConnection = () => {
     });
 
     socket?.on("main", (id: string) => {
-      console.log("--main");
       setConnectionMessage("You are the game host");
       state.main = true;
       setMain(true);
@@ -299,7 +268,7 @@ export const useConnection = () => {
     });
 
     socket?.on("connectToMain", (remoteId: string) => {
-      console.log("--connect to main. main: ", remoteId);
+      console.log("--connect to main");
       peerConnections.forEach((x) => closePeerConnection(x));
       peerConnections.splice(0, peerConnections.length);
       createPeerConnection(remoteId);
@@ -316,7 +285,7 @@ export const useConnection = () => {
         description?: RTCSessionDescription;
         candidate?: RTCIceCandidate;
       }) => {
-        console.log("--signaling received:", remoteId, description, candidate);
+        console.log("--signaling:", remoteId, description, candidate);
         !peerConnections.some((x) => x.remoteId === remoteId) &&
           createPeerConnection(remoteId);
         peerConnectionHandleSignaling(remoteId, description, candidate);
@@ -324,8 +293,8 @@ export const useConnection = () => {
     );
 
     socket?.on("disconnect", () => {
-      setConnectionMessage("Disconnecting from signaling server");
-      console.log("Signaling socket disconnecting");
+      setConnectionMessage("Disconnected from signaling server");
+      console.log("Signaling socket disconnected");
       disconnect();
     });
   }, [

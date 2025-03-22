@@ -1,11 +1,26 @@
 import { RefObject, useEffect } from "react";
+import * as THREE from "three";
 import * as hooks from "..";
 import * as commonHooks from "src/Game/Common/hooks";
+import * as types from "src/types";
 
-export const useRendering = (ref: RefObject<HTMLDivElement>) => {
-  const { scene, renderer, camera } = commonHooks.useSetup();
-  commonHooks.useLoader(scene);
-  const { runFrame } = hooks.useFrame(camera);
+export const useRendering = (
+  camera: THREE.PerspectiveCamera,
+  scene: THREE.Scene,
+  renderer: THREE.Renderer,
+  ref: RefObject<HTMLDivElement>,
+  infoBoxRef: RefObject<HTMLDivElement>,
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  gameEventHandler: types.ServerGameEventHandler,
+  commonGameEventHandler: types.CommonGameEventHandler
+) => {
+  const { runFrame } = hooks.useFrame(
+    camera,
+    infoBoxRef,
+    radarBoxRef,
+    gameEventHandler,
+    commonGameEventHandler
+  );
   const { startAnimation, stopAnimation } = commonHooks.useAnimation(
     camera,
     scene,

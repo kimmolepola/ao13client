@@ -1,1 +1,2 @@
-export { gatherControlsData, interpolatePosition } from "./rendering/frame";
+export { interpolatePosition } from "./rendering/frame";
+export { gatherControlsData } from "./logic";
