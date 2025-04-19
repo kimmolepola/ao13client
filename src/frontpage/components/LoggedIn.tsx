@@ -40,7 +40,17 @@ const LoggedIn = () => {
           await getTurnCredentials();
         if (turnCredentials) {
           console.log("--turn credentials: ", turnCredentials);
-          setIceServers([turnCredentials]);
+          const iceServer = {
+            urls:
+              "turns:" +
+              turnCredentials.hostname +
+              ":" +
+              turnCredentials.port +
+              "?transport=tcp",
+            username: turnCredentials.username,
+            credential: turnCredentials.password,
+          };
+          setIceServers([iceServer]);
           setPage("game");
         } else {
           setErrorText(credentialsError);

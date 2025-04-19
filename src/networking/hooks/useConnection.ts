@@ -146,7 +146,16 @@ export const useConnection = () => {
       peerConnection.onicecandidate = ({ candidate }) => {
         console.log("--onicecandidate:", candidate);
         const socket = socketRef.current;
-        socket?.send("signaling", { remoteId, candidate });
+        // socket?.send("signaling", { remoteId, candidate });
+        candidate &&
+          socket?.send("signaling", {
+            // remoteId,
+            // candidate,
+            id: remoteId,
+            type: "candidate",
+            candidate: candidate.candidate,
+            mid: candidate.sdpMid,
+          });
         socket?.send("signalingx", "peerConnection.onicecandidate");
         console.log("--signalingx", "peerConnection.onicecandidate", remoteId);
       };
@@ -156,8 +165,11 @@ export const useConnection = () => {
           await peerConnection.setLocalDescription();
           const socket = socketRef.current;
           socket?.send("signaling", {
-            remoteId,
-            description: peerConnection.localDescription,
+            // remoteId,
+            // description: peerConnection.localDescription,
+            id: remoteId,
+            type: peerConnection.localDescription?.type,
+            description: peerConnection.localDescription?.sdp,
           });
           socket?.send("signalingx", "peerConnection.onnegotiationneeded");
           console.log(
@@ -186,43 +198,63 @@ export const useConnection = () => {
     ]
   );
 
-  const peerConnectionHandleSignaling = useCallback(
-    async (
-      remoteId: string,
-      description: RTCSessionDescription | undefined,
-      candidate: RTCIceCandidate | undefined
-    ) => {
-      const peerConnection = peerConnections.find(
-        (x) => x.remoteId === remoteId
-      )?.peerConnection;
-      if (peerConnection) {
-        try {
-          if (description) {
-            await peerConnection.setRemoteDescription(description);
-            if (description.type === "offer") {
-              await peerConnection.setLocalDescription();
-              const socket = socketRef.current;
-              socket?.send("signaling", {
-                remoteId,
-                description: peerConnection.localDescription,
-              });
-              socket?.send("signalingx", "peerConnection.setRemoteDescription");
-              console.log(
-                "--signalingx",
-                "peerConnection.setRemoteDescription",
-                remoteId
-              );
-            }
-          } else if (candidate) {
-            await peerConnection.addIceCandidate(candidate);
-          }
-        } catch (err) {
-          console.error(err);
-        }
+  type RTCSdpType = "answer" | "offer" | "pranswer" | "rollback";
+  type Msg =
+    | {
+        id: string;
+        type: RTCSdpType;
+        description: string;
       }
-    },
-    []
-  );
+    | {
+        id: string;
+        type: "candidate";
+        candidate: string;
+        mid: string;
+      };
+
+  const peerConnectionHandleSignaling = useCallback(async (msg: Msg) => {
+    const { id, type } = msg;
+    const peerConnection = peerConnections.find(
+      (x) => x.remoteId === id
+    )?.peerConnection;
+    if (peerConnection) {
+      try {
+        if (type !== "candidate") {
+          await peerConnection.setRemoteDescription({
+            // sdp: description.sdp,
+            sdp: msg.description,
+            type,
+          });
+          if (type === "offer") {
+            await peerConnection.setLocalDescription();
+            const socket = socketRef.current;
+            socket?.send("signaling", {
+              // remoteId: idx,
+              // description: peerConnection.localDescription,
+              id,
+              type: peerConnection.localDescription?.type,
+              description: peerConnection.localDescription?.sdp,
+            });
+            socket?.send("signalingx", "peerConnection.setRemoteDescription");
+            console.log(
+              "--signalingx",
+              "peerConnection.setRemoteDescription",
+              id
+            );
+          }
+        } else if (type === "candidate") {
+          await peerConnection.addIceCandidate({
+            // candidate: candidate.candidate,
+            candidate: msg.candidate,
+            // sdpMid: candidate.sdpMid,
+            sdpMid: msg.mid,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }, []);
 
   const disconnect = useCallback(async () => {
     state.main
@@ -305,23 +337,13 @@ export const useConnection = () => {
       createPeerConnection(remoteId);
     });
 
-    socket?.on(
-      "signaling",
-      ({
-        id: remoteId,
-        description,
-        candidate,
-      }: {
-        id: string;
-        description?: RTCSessionDescription;
-        candidate?: RTCIceCandidate;
-      }) => {
-        console.log("--signaling received:", remoteId, description, candidate);
-        !peerConnections.some((x) => x.remoteId === remoteId) &&
-          createPeerConnection(remoteId);
-        peerConnectionHandleSignaling(remoteId, description, candidate);
-      }
-    );
+    socket?.on("signaling", (msg: Msg) => {
+      console.log("--signaling received:", msg.id, msg.type);
+      msg.id &&
+        !peerConnections.some((x) => x.remoteId === msg.id) &&
+        createPeerConnection(msg.id);
+      peerConnectionHandleSignaling(msg);
+    });
 
     socket?.on("disconnect", () => {
       setConnectionMessage("Disconnecting from signaling server");
