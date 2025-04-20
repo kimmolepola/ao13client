@@ -109,7 +109,10 @@ export const useConnection = () => {
       setConnectionMessage(
         state.main ? remoteId + " connecting..." : "Connecting to host..."
       );
-      const peerConnection = new RTCPeerConnection({ iceServers });
+      const peerConnection = new RTCPeerConnection({
+        iceServers,
+        iceTransportPolicy: "relay",
+      });
       peerConnection.addTransceiver("audio", { direction: "recvonly" });
       const orderedChannel = peerConnection.createDataChannel("ordered", {
         ordered: true,
