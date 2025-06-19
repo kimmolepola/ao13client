@@ -39,8 +39,8 @@ export const useConnection = () => {
 
   const closePeerConnection = useCallback(
     (peerConnection: types.PeerConnection) => {
-      peerConnection.orderedChannel.close();
-      peerConnection.unorderedChannel.close();
+      peerConnection.orderedChannel?.close();
+      peerConnection.unorderedChannel?.close();
       peerConnection.peerConnection.close();
     },
     []
@@ -61,8 +61,8 @@ export const useConnection = () => {
     setConnectedAmount(
       peerConnections.reduce(
         (acc, cur) =>
-          cur.orderedChannel.readyState === "open" &&
-          cur.unorderedChannel.readyState === "open"
+          cur.orderedChannel?.readyState === "open" &&
+          cur.unorderedChannel?.readyState === "open"
             ? acc + 1
             : acc,
         0
@@ -114,38 +114,60 @@ export const useConnection = () => {
         iceTransportPolicy: "relay",
       });
       peerConnection.addTransceiver("audio", { direction: "recvonly" });
+
+      peerConnection.onconnectionstatechange = (ev: Event) => {
+        console.log("Connection state change:", peerConnection.connectionState);
+      };
+
+      peerConnection.ondatachannel = (event: RTCDataChannelEvent) => {
+        console.log("--ondatachannel", event.channel.label);
+      };
+
       const orderedChannel = peerConnection.createDataChannel("ordered", {
         ordered: true,
-        negotiated: true,
+        // negotiated: true,
         id: 0,
       });
       const unorderedChannel = peerConnection.createDataChannel("unordered", {
         ordered: false,
-        negotiated: true,
+        // negotiated: true,
         id: 1,
       });
+
       orderedChannel.onopen = () => {
         console.log("--ordered open");
         unorderedChannel.readyState === "open" && handleChannelOpen(remoteId);
+        setInterval(() => {
+          if (orderedChannel.readyState === "open") {
+            console.log("--ping orderedChannel");
+            orderedChannel.send("ping");
+          }
+        }, 30000);
       };
       unorderedChannel.onopen = () => {
         console.log("--unordered open");
         orderedChannel.readyState === "open" && handleChannelOpen(remoteId);
       };
       orderedChannel.onclose = () => {
+        console.log("--ordered close");
         handleChannelClosed(remoteId);
       };
       unorderedChannel.onclose = () => {
         handleChannelClosed(remoteId);
       };
       orderedChannel.onmessage = ({ data }: { data: string }) => {
-        const d = JSON.parse(data);
-        state.main ? onReceiveOnMain(remoteId, d) : onReceiveOnClient(d);
+        try {
+          const d = JSON.parse(data);
+          state.main ? onReceiveOnMain(remoteId, d) : onReceiveOnClient(d);
+        } catch (err) {
+          console.log("--catch:", data);
+        }
       };
       unorderedChannel.onmessage = ({ data }: { data: string }) => {
         const d = JSON.parse(data);
         state.main ? onReceiveOnMain(remoteId, d) : onReceiveOnClient(d);
       };
+
       peerConnection.onicecandidate = ({ candidate }) => {
         console.log("--onicecandidate:", candidate);
         const socket = socketRef.current;
@@ -315,30 +337,33 @@ export const useConnection = () => {
 
     socket?.start().catch((err) => document.write(err));
 
-    socket?.on("connect", () => {
-      setConnectionMessage("Connected to signaling server");
-      console.log("Signaling socket connected");
+    socket?.on("serverError", () => {
+      setConnectionMessage("Server error. Disconnecting...");
+      console.log("Server error. Disconnecting...");
+      disconnect();
     });
 
     socket?.on("init", (id: string) => {
-      console.log("--init");
+      setConnectionMessage("Connected to signaling server");
+      console.log("Signaling socket connected");
       globals.state.ownId = id;
+      createPeerConnection("server");
     });
 
-    socket?.on("main", (id: string) => {
-      console.log("--main");
-      setConnectionMessage("You are the game host");
-      state.main = true;
-      setMain(true);
-      handleNewIdOnMain(id);
-    });
+    // socket?.on("main", (id: string) => {
+    //   console.log("--main");
+    //   setConnectionMessage("You are the game host");
+    //   state.main = true;
+    //   setMain(true);
+    //   handleNewIdOnMain(id);
+    // });
 
-    socket?.on("connectToMain", (remoteId: string) => {
-      console.log("--connect to main. main: ", remoteId);
-      peerConnections.forEach((x) => closePeerConnection(x));
-      peerConnections.splice(0, peerConnections.length);
-      createPeerConnection(remoteId);
-    });
+    // socket?.on("connectToMain", (remoteId: string) => {
+    //   console.log("--connect to main. main: ", remoteId);
+    //   peerConnections.forEach((x) => closePeerConnection(x));
+    //   peerConnections.splice(0, peerConnections.length);
+    //   createPeerConnection(remoteId);
+    // });
 
     socket?.on("signaling", (msg: Msg) => {
       console.log("--signaling received:", msg.id, msg.type);
@@ -355,13 +380,10 @@ export const useConnection = () => {
     });
   }, [
     user?.token,
-    closePeerConnection,
     createPeerConnection,
     disconnect,
-    handleNewIdOnMain,
     peerConnectionHandleSignaling,
     setConnectionMessage,
-    setMain,
   ]);
 
   return { connect, disconnect };

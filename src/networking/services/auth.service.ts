@@ -7,7 +7,7 @@ export const setToken = (token: string) => {
 
 export const getTurnCredentials = async () => {
   try {
-    const response = await axios.post(
+    const response = await axios.get(
       `${backendUrl}/api/v1/auth/getTurnCredentials`
     );
     return { data: response.data };

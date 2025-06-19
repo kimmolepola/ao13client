@@ -17,8 +17,8 @@ export type Three = {
 export type PeerConnection = {
   remoteId: string;
   peerConnection: RTCPeerConnection;
-  orderedChannel: RTCDataChannel;
-  unorderedChannel: RTCDataChannel;
+  orderedChannel?: RTCDataChannel;
+  unorderedChannel?: RTCDataChannel;
 };
 
 export type PeerConnectionsDictionary = {

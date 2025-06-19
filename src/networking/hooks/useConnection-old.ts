@@ -37,8 +37,8 @@ export const useConnection = () => {
 
   const closePeerConnection = useCallback(
     (peerConnection: types.PeerConnection) => {
-      peerConnection.orderedChannel.close();
-      peerConnection.unorderedChannel.close();
+      peerConnection.orderedChannel?.close();
+      peerConnection.unorderedChannel?.close();
       peerConnection.peerConnection.close();
     },
     []
@@ -59,8 +59,8 @@ export const useConnection = () => {
     setConnectedAmount(
       peerConnections.reduce(
         (acc, cur) =>
-          cur.orderedChannel.readyState === "open" &&
-          cur.unorderedChannel.readyState === "open"
+          cur.orderedChannel?.readyState === "open" &&
+          cur.unorderedChannel?.readyState === "open"
             ? acc + 1
             : acc,
         0
