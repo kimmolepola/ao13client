@@ -70,7 +70,7 @@ const savePlayerData = async () => {
 
 const handleSendState = (sendOrdered: (data: types.State) => void) => {
   sendOrdered({
-    type: types.NetDataType.STATE,
+    type: types.ServerDataType.State,
     data: globals.remoteObjects.reduce(
       (acc: { [id: string]: types.StateObject }, cur) => {
         acc[cur.id] = {

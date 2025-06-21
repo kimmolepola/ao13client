@@ -52,11 +52,14 @@ export const useFrame = (
             commonLogic.handleInfoBox(o, o.object3d, infoBoxRef);
             if (Date.now() > nextSendTime) {
               nextSendTime = Date.now() + parameters.sendIntervalClient;
-              sendUnordered({
-                type: types.NetDataType.CONTROLS,
-                data: logic.gatherControlsData(o),
-              });
-              commonLogic.resetControlValues(o);
+              const controlsData = logic.gatherControlsData(o);
+              if (controlsData) {
+                sendUnordered({
+                  type: types.ClientDataType.Controls,
+                  data: controlsData,
+                });
+                commonLogic.resetControlValues(o);
+              }
             }
           }
           commonLogic.handleMovement(delta, o, o.object3d);

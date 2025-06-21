@@ -10,6 +10,8 @@ export const useLoader = (scene: THREE.Scene) => {
   const objectIds = useRecoilValue(atoms.objectIds);
   const { loadFighter } = hooks.useMeshes();
 
+  console.log("--objectIds:", objectIds);
+
   const load = useCallback(
     async (
       meshLoadFn: (

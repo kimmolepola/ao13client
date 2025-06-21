@@ -108,28 +108,31 @@ export interface RemoteGameObject extends GameObject {
   shotDelay: number;
 }
 
-export enum NetDataType {
-  CHATMESSAGE_CLIENT,
-  CHATMESSAGE_MAIN,
-  CONTROLS,
-  UPDATE,
-  STATE,
+export enum ClientDataType {
+  ChatMessage_Client,
+  Controls,
+}
+
+export enum ServerDataType {
+  ChatMessage_Server,
+  Update,
+  State,
 }
 
 export type ChatMessageFromClient = {
-  type: NetDataType.CHATMESSAGE_CLIENT;
+  type: ClientDataType.ChatMessage_Client;
   text: string;
 };
 
 export type ChatMessageFromMain = {
-  type: NetDataType.CHATMESSAGE_MAIN;
+  type: ServerDataType.ChatMessage_Server;
   id: string;
   text: string;
   userId: string;
 };
 
 export type Controls = {
-  type: NetDataType.CONTROLS;
+  type: ClientDataType.Controls;
   data: {
     up: number;
     down: number;
@@ -176,14 +179,14 @@ export type StateObject = {
 
 export type Update = {
   timestamp: number;
-  type: NetDataType.UPDATE;
+  type: ServerDataType.Update;
   data: {
     [id: string]: UpdateObject;
   };
 };
 
 export type State = {
-  type: NetDataType.STATE;
+  type: ServerDataType.State;
   data: { [id: string]: StateObject };
 };
 

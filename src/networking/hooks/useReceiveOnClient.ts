@@ -15,19 +15,20 @@ export const useReceiveOnClient = () => {
 
   const onReceive = useCallback(
     (data: types.NetData) => {
+      console.log("--receive:", data);
       switch (data.type) {
-        case types.NetDataType.STATE: {
+        case types.ServerDataType.State: {
           handleStateData(data);
           break;
         }
-        case types.NetDataType.UPDATE: {
+        case types.ServerDataType.Update: {
           if (data.timestamp > mostRecentTimestamp) {
             mostRecentTimestamp = data.timestamp;
             handleUpdateData(data);
           }
           break;
         }
-        case types.NetDataType.CHATMESSAGE_MAIN: {
+        case types.ServerDataType.ChatMessage_Server: {
           const message = {
             ...data,
             username:

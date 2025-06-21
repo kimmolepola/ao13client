@@ -16,11 +16,11 @@ export const useReceiveOnMain = () => {
   const onReceive = useCallback(
     (remoteId: string, data: types.NetData) => {
       switch (data.type) {
-        case types.NetDataType.CONTROLS: {
+        case types.ClientDataType.Controls: {
           handleReceiveControlsData(data, remoteId);
           break;
         }
-        case types.NetDataType.CHATMESSAGE_CLIENT: {
+        case types.ClientDataType.ChatMessage_Client: {
           const message = {
             id: remoteId + Date.now().toString(),
             text: data.text,
@@ -28,7 +28,10 @@ export const useReceiveOnMain = () => {
             username:
               remoteObjects.find((x) => x.id === remoteId)?.username || "",
           };
-          sendOrdered({ ...message, type: types.NetDataType.CHATMESSAGE_MAIN });
+          sendOrdered({
+            ...message,
+            type: types.ServerDataType.ChatMessage_Server,
+          });
           setChatMessages((x) => [message, ...x]);
           setTimeout(
             () => setChatMessages((x) => x.filter((xx) => xx !== message)),
