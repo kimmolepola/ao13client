@@ -102,7 +102,7 @@ export const useFrame = (
       nextSendTime = time + parameters.sendIntervalMain;
       sendUnordered({
         timestamp: time,
-        type: types.NetDataType.UPDATE,
+        type: types.ServerDataType.Update,
         data: updateData,
       });
     }

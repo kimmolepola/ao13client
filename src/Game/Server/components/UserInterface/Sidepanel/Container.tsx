@@ -25,7 +25,7 @@ const Container = ({ quit }: { quit: () => void }) => {
               ?.username || "",
         };
         sendOrdered({
-          type: types.NetDataType.CHATMESSAGE_MAIN,
+          type: types.ServerDataType.ChatMessage_Server,
           id: message.id,
           text: message.text,
           userId: message.userId,

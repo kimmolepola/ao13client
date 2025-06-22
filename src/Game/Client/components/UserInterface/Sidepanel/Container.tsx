@@ -10,7 +10,7 @@ const Container = ({ quit }: { quit: () => void }) => {
   const chatOnSubmit = useCallback(
     (value: string) => {
       sendOrdered({
-        type: types.NetDataType.CHATMESSAGE_CLIENT,
+        type: types.ClientDataType.ChatMessage_Client,
         text: value,
       });
     },

@@ -9,7 +9,7 @@ export const useSendFromClient = () => {
     const dataString = JSON.stringify(data);
     peerConnections.forEach((x) => {
       try {
-        x.orderedChannel.send(dataString);
+        x.orderedChannel?.send(dataString);
       } catch (error) {
         logError(error, data);
       }
@@ -20,7 +20,7 @@ export const useSendFromClient = () => {
     const stringData = JSON.stringify(data);
     peerConnections.forEach((x) => {
       try {
-        x.unorderedChannel.send(stringData);
+        x.unorderedChannel?.send(stringData);
       } catch (error) {
         logError(error, data);
       }

@@ -39,8 +39,8 @@ export const useConnection = () => {
 
   const closePeerConnection = useCallback(
     (peerConnection: types.PeerConnection) => {
-      peerConnection.orderedChannel.close();
-      peerConnection.unorderedChannel.close();
+      peerConnection.orderedChannel?.close();
+      peerConnection.unorderedChannel?.close();
       peerConnection.peerConnection.close();
     },
     []
@@ -61,8 +61,8 @@ export const useConnection = () => {
     setConnectedAmount(
       peerConnections.reduce(
         (acc, cur) =>
-          cur.orderedChannel.readyState === "open" &&
-          cur.unorderedChannel.readyState === "open"
+          cur.orderedChannel?.readyState === "open" &&
+          cur.unorderedChannel?.readyState === "open"
             ? acc + 1
             : acc,
         0
@@ -109,44 +109,78 @@ export const useConnection = () => {
       setConnectionMessage(
         state.main ? remoteId + " connecting..." : "Connecting to host..."
       );
-      const peerConnection = new RTCPeerConnection({ iceServers });
+      const peerConnection = new RTCPeerConnection({
+        iceServers,
+        iceTransportPolicy: "relay",
+      });
       peerConnection.addTransceiver("audio", { direction: "recvonly" });
+
+      peerConnection.onconnectionstatechange = (ev: Event) => {
+        console.log("Connection state change:", peerConnection.connectionState);
+      };
+
+      peerConnection.ondatachannel = (event: RTCDataChannelEvent) => {
+        console.log("--ondatachannel", event.channel.label);
+      };
+
       const orderedChannel = peerConnection.createDataChannel("ordered", {
         ordered: true,
-        negotiated: true,
+        // negotiated: true,
         id: 0,
       });
       const unorderedChannel = peerConnection.createDataChannel("unordered", {
         ordered: false,
-        negotiated: true,
+        // negotiated: true,
         id: 1,
       });
+
       orderedChannel.onopen = () => {
         console.log("--ordered open");
         unorderedChannel.readyState === "open" && handleChannelOpen(remoteId);
+        setInterval(() => {
+          if (orderedChannel.readyState === "open") {
+            console.log("--ping orderedChannel");
+            orderedChannel.send("ping");
+          }
+        }, 30000);
       };
       unorderedChannel.onopen = () => {
         console.log("--unordered open");
         orderedChannel.readyState === "open" && handleChannelOpen(remoteId);
       };
       orderedChannel.onclose = () => {
+        console.log("--ordered close");
         handleChannelClosed(remoteId);
       };
       unorderedChannel.onclose = () => {
         handleChannelClosed(remoteId);
       };
       orderedChannel.onmessage = ({ data }: { data: string }) => {
-        const d = JSON.parse(data);
-        state.main ? onReceiveOnMain(remoteId, d) : onReceiveOnClient(d);
+        try {
+          const d = JSON.parse(data);
+          state.main ? onReceiveOnMain(remoteId, d) : onReceiveOnClient(d);
+        } catch (err) {
+          console.log("--catch:", data);
+        }
       };
       unorderedChannel.onmessage = ({ data }: { data: string }) => {
         const d = JSON.parse(data);
         state.main ? onReceiveOnMain(remoteId, d) : onReceiveOnClient(d);
       };
+
       peerConnection.onicecandidate = ({ candidate }) => {
         console.log("--onicecandidate:", candidate);
         const socket = socketRef.current;
-        socket?.send("signaling", { remoteId, candidate });
+        // socket?.send("signaling", { remoteId, candidate });
+        candidate &&
+          socket?.send("signaling", {
+            // remoteId,
+            // candidate,
+            id: remoteId,
+            type: "candidate",
+            candidate: candidate.candidate,
+            mid: candidate.sdpMid,
+          });
         socket?.send("signalingx", "peerConnection.onicecandidate");
         console.log("--signalingx", "peerConnection.onicecandidate", remoteId);
       };
@@ -156,8 +190,11 @@ export const useConnection = () => {
           await peerConnection.setLocalDescription();
           const socket = socketRef.current;
           socket?.send("signaling", {
-            remoteId,
-            description: peerConnection.localDescription,
+            // remoteId,
+            // description: peerConnection.localDescription,
+            id: remoteId,
+            type: peerConnection.localDescription?.type,
+            description: peerConnection.localDescription?.sdp,
           });
           socket?.send("signalingx", "peerConnection.onnegotiationneeded");
           console.log(
@@ -186,43 +223,63 @@ export const useConnection = () => {
     ]
   );
 
-  const peerConnectionHandleSignaling = useCallback(
-    async (
-      remoteId: string,
-      description: RTCSessionDescription | undefined,
-      candidate: RTCIceCandidate | undefined
-    ) => {
-      const peerConnection = peerConnections.find(
-        (x) => x.remoteId === remoteId
-      )?.peerConnection;
-      if (peerConnection) {
-        try {
-          if (description) {
-            await peerConnection.setRemoteDescription(description);
-            if (description.type === "offer") {
-              await peerConnection.setLocalDescription();
-              const socket = socketRef.current;
-              socket?.send("signaling", {
-                remoteId,
-                description: peerConnection.localDescription,
-              });
-              socket?.send("signalingx", "peerConnection.setRemoteDescription");
-              console.log(
-                "--signalingx",
-                "peerConnection.setRemoteDescription",
-                remoteId
-              );
-            }
-          } else if (candidate) {
-            await peerConnection.addIceCandidate(candidate);
-          }
-        } catch (err) {
-          console.error(err);
-        }
+  type RTCSdpType = "answer" | "offer" | "pranswer" | "rollback";
+  type Msg =
+    | {
+        id: string;
+        type: RTCSdpType;
+        description: string;
       }
-    },
-    []
-  );
+    | {
+        id: string;
+        type: "candidate";
+        candidate: string;
+        mid: string;
+      };
+
+  const peerConnectionHandleSignaling = useCallback(async (msg: Msg) => {
+    const { id, type } = msg;
+    const peerConnection = peerConnections.find(
+      (x) => x.remoteId === id
+    )?.peerConnection;
+    if (peerConnection) {
+      try {
+        if (type !== "candidate") {
+          await peerConnection.setRemoteDescription({
+            // sdp: description.sdp,
+            sdp: msg.description,
+            type,
+          });
+          if (type === "offer") {
+            await peerConnection.setLocalDescription();
+            const socket = socketRef.current;
+            socket?.send("signaling", {
+              // remoteId: idx,
+              // description: peerConnection.localDescription,
+              id,
+              type: peerConnection.localDescription?.type,
+              description: peerConnection.localDescription?.sdp,
+            });
+            socket?.send("signalingx", "peerConnection.setRemoteDescription");
+            console.log(
+              "--signalingx",
+              "peerConnection.setRemoteDescription",
+              id
+            );
+          }
+        } else if (type === "candidate") {
+          await peerConnection.addIceCandidate({
+            // candidate: candidate.candidate,
+            candidate: msg.candidate,
+            // sdpMid: candidate.sdpMid,
+            sdpMid: msg.mid,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }, []);
 
   const disconnect = useCallback(async () => {
     state.main
@@ -280,48 +337,41 @@ export const useConnection = () => {
 
     socket?.start().catch((err) => document.write(err));
 
-    socket?.on("connect", () => {
-      setConnectionMessage("Connected to signaling server");
-      console.log("Signaling socket connected");
+    socket?.on("serverError", () => {
+      setConnectionMessage("Server error. Disconnecting...");
+      console.log("Server error. Disconnecting...");
+      disconnect();
     });
 
     socket?.on("init", (id: string) => {
-      console.log("--init");
+      setConnectionMessage("Connected to signaling server");
+      console.log("Signaling socket connected");
       globals.state.ownId = id;
+      createPeerConnection("server");
     });
 
-    socket?.on("main", (id: string) => {
-      console.log("--main");
-      setConnectionMessage("You are the game host");
-      state.main = true;
-      setMain(true);
-      handleNewIdOnMain(id);
-    });
+    // socket?.on("main", (id: string) => {
+    //   console.log("--main");
+    //   setConnectionMessage("You are the game host");
+    //   state.main = true;
+    //   setMain(true);
+    //   handleNewIdOnMain(id);
+    // });
 
-    socket?.on("connectToMain", (remoteId: string) => {
-      console.log("--connect to main. main: ", remoteId);
-      peerConnections.forEach((x) => closePeerConnection(x));
-      peerConnections.splice(0, peerConnections.length);
-      createPeerConnection(remoteId);
-    });
+    // socket?.on("connectToMain", (remoteId: string) => {
+    //   console.log("--connect to main. main: ", remoteId);
+    //   peerConnections.forEach((x) => closePeerConnection(x));
+    //   peerConnections.splice(0, peerConnections.length);
+    //   createPeerConnection(remoteId);
+    // });
 
-    socket?.on(
-      "signaling",
-      ({
-        id: remoteId,
-        description,
-        candidate,
-      }: {
-        id: string;
-        description?: RTCSessionDescription;
-        candidate?: RTCIceCandidate;
-      }) => {
-        console.log("--signaling received:", remoteId, description, candidate);
-        !peerConnections.some((x) => x.remoteId === remoteId) &&
-          createPeerConnection(remoteId);
-        peerConnectionHandleSignaling(remoteId, description, candidate);
-      }
-    );
+    socket?.on("signaling", (msg: Msg) => {
+      console.log("--signaling received:", msg.id, msg.type);
+      msg.id &&
+        !peerConnections.some((x) => x.remoteId === msg.id) &&
+        createPeerConnection(msg.id);
+      peerConnectionHandleSignaling(msg);
+    });
 
     socket?.on("disconnect", () => {
       setConnectionMessage("Disconnecting from signaling server");
@@ -330,13 +380,10 @@ export const useConnection = () => {
     });
   }, [
     user?.token,
-    closePeerConnection,
     createPeerConnection,
     disconnect,
-    handleNewIdOnMain,
     peerConnectionHandleSignaling,
     setConnectionMessage,
-    setMain,
   ]);
 
   return { connect, disconnect };

@@ -48,7 +48,9 @@ export const useObjects = () => {
           o.username = s.sUsername;
         }
       }
+      console.log("--data:", data);
       Object.values(data.data).forEach((s) => {
+        console.log("--");
         if (!globals.remoteObjects.some((x) => x.id === s.sId)) {
           objectIdsChanged = true;
           globals.remoteObjects.push({
