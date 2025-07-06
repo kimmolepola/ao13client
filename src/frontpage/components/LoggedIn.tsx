@@ -39,28 +39,10 @@ const LoggedIn = () => {
         const { data: turnCredentials, error: credentialsError } =
           await getTurnCredentials();
         if (turnCredentials) {
-          console.log("--turn credentials: ", turnCredentials);
-          // const iceServer = {
-          //   urls:
-          //     "turns:" +
-          //     turnCredentials.hostname +
-          //     ":" +
-          //     turnCredentials.port +
-          //     "?transport=tcp",
-          //   username: turnCredentials.username,
-          //   credential: turnCredentials.password,
-          // };
-
           const iceServer: any = {
-            urls: "turns:" + turnCredentials.hostname + ":" + 5349, // +
-            // turnCredentials.port +
-            // "?transport=tcp",
-
+            urls: "turns:" + turnCredentials.hostname + ":" + 5349,
             username: turnCredentials.username,
             credential: turnCredentials.password,
-          };
-          const googleIceServer: any = {
-            urls: "stun:stun.l.google.com:19302",
           };
           setIceServers([iceServer]);
           setPage("game");

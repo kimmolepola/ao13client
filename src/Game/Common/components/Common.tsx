@@ -1,6 +1,6 @@
 import { useMemo, useEffect, memo, useCallback } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import _ from "lodash";
+import { debounce } from "lodash";
 
 import Client from "../../Client";
 import Server from "../../Server";
@@ -27,7 +27,7 @@ const Common = () => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
   }, [setWindowSize]);
 
-  const debouncedResize = useMemo(() => _.debounce(onResize, 200), [onResize]);
+  const debouncedResize = useMemo(() => debounce(onResize, 200), [onResize]);
 
   window.addEventListener("resize", debouncedResize);
 

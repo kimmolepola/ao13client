@@ -115,7 +115,7 @@ export const useConnection = () => {
       });
       peerConnection.addTransceiver("audio", { direction: "recvonly" });
 
-      peerConnection.onconnectionstatechange = (ev: Event) => {
+      peerConnection.onconnectionstatechange = () => {
         console.log("Connection state change:", peerConnection.connectionState);
       };
 
