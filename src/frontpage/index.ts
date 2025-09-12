@@ -1,1 +1,1 @@
-export { default } from "./Frontpage";
+export { default } from "./components/Container";

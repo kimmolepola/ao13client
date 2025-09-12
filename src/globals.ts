@@ -2,9 +2,10 @@ import * as types from "./types";
 
 export const remoteObjects: types.RemoteGameObject[] = [];
 export const localObjects: types.LocalGameObject[] = [];
-export const peerConnections: types.PeerConnection[] = [];
-export const state: { main: boolean; ownId: string | undefined } = {
-  main: false,
+export const gameServer: {
+  connection: types.PeerConnection | undefined;
+} = { connection: undefined };
+export const state: { ownId: string | undefined } = {
   ownId: undefined,
 };
 export const dimensions: {

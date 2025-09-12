@@ -215,20 +215,11 @@ export type InitialGameObject = {
 
 export enum EventType {
   HEALTH_ZERO,
-  COLLISION,
   SHOT,
   REMOVE_LOCAL_OBJECT_INDEXES,
 }
 
-export type ServerGameEvent = {
-  type: EventType.COLLISION;
-  data: {
-    object: RemoteGameObject;
-    otherObjects: GameObject[];
-  };
-};
-
-export type CommonGameEvent =
+export type GameEvent =
   | {
       type: EventType.HEALTH_ZERO;
       data: RemoteGameObject;
@@ -239,5 +230,4 @@ export type CommonGameEvent =
     }
   | { type: EventType.REMOVE_LOCAL_OBJECT_INDEXES; data: number[] };
 
-export type ServerGameEventHandler = (e: ServerGameEvent) => void;
-export type CommonGameEventHandler = (e: CommonGameEvent) => void;
+export type GameEventHandler = (e: GameEvent) => void;

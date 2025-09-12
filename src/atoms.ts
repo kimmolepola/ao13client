@@ -1,6 +1,5 @@
 import { RefObject } from "react";
 import { atom } from "recoil";
-import { Socket } from "socket.io-client";
 
 import * as types from "./types";
 import * as parameters from "./parameters";
@@ -49,18 +48,8 @@ export const objectIds = atom<string[]>({
   default: [],
 });
 
-export const connectedAmount = atom<number>({
-  key: "connectedAmount",
-  default: 0,
-});
-
-export const connectedIdsOnMain = atom<string[]>({
-  key: "connectedIds",
-  default: [],
-});
-
-export const main = atom<boolean>({
-  key: "main",
+export const isConnectedToGameServer = atom<boolean>({
+  key: "isConnectedToGameServer",
   default: false,
 });
 
@@ -93,14 +82,6 @@ export const user = atom<
 >({
   key: "user",
   default: undefined,
-});
-
-export const socket = atom<
-  undefined | (Socket & { auth: { [key: string]: any } })
->({
-  key: "socket",
-  default: undefined,
-  dangerouslyAllowMutability: true,
 });
 
 export const page = atom<"frontpage" | "game">({
