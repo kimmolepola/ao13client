@@ -83,7 +83,6 @@ export const login = async ({
       username,
       password,
     });
-    console.log("--response:", response);
     return { data: response.data };
   } catch (err: any) {
     if (err.response?.status === 401) {
@@ -99,10 +98,8 @@ export const requestSignup = async ({ email }: { email: string }) => {
     const response = await axios.post(`${backendUrl}/api/v1/auth/signup`, {
       email,
     });
-    console.log("--response:", response);
     return { data: response.data };
   } catch (err: any) {
-    console.log("--err:", err);
     const error = err.response?.data ? err.response.data.error : err.toString();
     return { error };
   }

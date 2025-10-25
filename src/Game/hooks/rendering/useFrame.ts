@@ -21,7 +21,7 @@ export const useFrame = (
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   gameEventHandler: types.GameEventHandler
 ) => {
-  const { sendUnordered } = networkingHooks.useSend();
+  const { sendUnreliableBinary } = networkingHooks.useSend();
 
   const handleLocalObjects = (delta: number) => {
     const localObjectsRemoveIndexes = [];
@@ -48,23 +48,20 @@ export const useFrame = (
           if (o.isMe) {
             logic.handleKeys(delta, o);
             logic.handleCamera(camera, o, o.object3d);
-            logic.handleInfoBox(o, o.object3d, infoBoxRef);
+            logic.handleInfoBox(o, infoBoxRef);
             if (Date.now() > nextSendTime) {
               nextSendTime = Date.now() + parameters.sendIntervalClient;
-              const controlsData = logic.gatherControlsData(o);
+              const controlsData = logic.gatherControlsDataBinary(o);
               if (controlsData) {
-                sendUnordered({
-                  type: types.ClientDataType.Controls,
-                  data: controlsData,
-                });
+                sendUnreliableBinary(controlsData);
                 logic.resetControlValues(o);
               }
             }
           }
-          logic.handleMovement(delta, o, o.object3d);
+          logic.handleMovement(delta, o);
           logic.handleShot(delta, o, gameEventHandler);
         }
-        logic.interpolatePosition(o, o.object3d);
+        logic.interpolatePosition(o);
         logic.handleDataBlock(o, v1, v2, v3, q1, q2, q3, o.object3d, camera);
       }
     }

@@ -20,25 +20,33 @@ export const handleKeys = (
   const o = gameObject;
   o.keyDowns.forEach((key) => {
     switch (key) {
-      case types.Keys.UP:
+      case types.Keys.Up:
         o.controlsUp += delta;
         o.controlsOverChannelsUp += delta;
         break;
-      case types.Keys.DOWN:
+      case types.Keys.Down:
         o.controlsDown += delta;
         o.controlsOverChannelsDown += delta;
         break;
-      case types.Keys.LEFT:
+      case types.Keys.Left:
         o.controlsLeft += delta;
         o.controlsOverChannelsLeft += delta;
         break;
-      case types.Keys.RIGHT:
+      case types.Keys.Right:
         o.controlsRight += delta;
         o.controlsOverChannelsRight += delta;
         break;
-      case types.Keys.SPACE:
+      case types.Keys.Space:
         o.controlsSpace += delta;
         o.controlsOverChannelsSpace += delta;
+        break;
+      case types.Keys.D:
+        o.controlsD += delta;
+        o.controlsOverChannelsD += delta;
+        break;
+      case types.Keys.F:
+        o.controlsF += delta;
+        o.controlsOverChannelsF += delta;
         break;
       default:
         break;
@@ -77,24 +85,68 @@ export const resetControlValues = (gameObject: types.RemoteGameObject) => {
   o.controlsOverChannelsLeft = 0;
   o.controlsOverChannelsRight = 0;
   o.controlsOverChannelsSpace = 0;
+  o.controlsOverChannelsD = 0;
+  o.controlsOverChannelsF = 0;
 };
 
-export const gatherControlsData = (o: types.RemoteGameObject) => {
-  const c = {
-    up: o.controlsOverChannelsUp,
-    down: o.controlsOverChannelsDown,
-    left: o.controlsOverChannelsLeft,
-    right: o.controlsOverChannelsRight,
-    space: o.controlsOverChannelsSpace,
-  };
+const buffer = new ArrayBuffer(6);
+const dataView = new DataView(buffer);
+export const gatherControlsDataBinary = (o: types.RemoteGameObject) => {
+  const up = Math.round(o.controlsOverChannelsUp);
+  const down = Math.round(o.controlsOverChannelsDown);
+  const left = Math.round(o.controlsOverChannelsLeft);
+  const right = Math.round(o.controlsOverChannelsRight);
+  const space = Math.round(o.controlsOverChannelsSpace);
+  const d = Math.round(o.controlsOverChannelsD);
+  const f = Math.round(o.controlsOverChannelsF);
   if (
-    c.up === 0 &&
-    c.down === 0 &&
-    c.left === 0 &&
-    c.right === 0 &&
-    c.space === 0
+    up === 0 &&
+    down === 0 &&
+    left === 0 &&
+    right === 0 &&
+    space === 0 &&
+    d === 0 &&
+    f === 0
   ) {
     return undefined;
   }
-  return c;
+  let providedValues = 0b00000000;
+  let offset = 1;
+  if (up !== 0) {
+    providedValues |= 0b00000001;
+    dataView.setUint8(offset, up);
+    offset += 1;
+  }
+  if (down !== 0) {
+    providedValues |= 0b00000010;
+    dataView.setUint8(offset, down);
+    offset += 1;
+  }
+  if (left !== 0) {
+    providedValues |= 0b00000100;
+    dataView.setUint8(offset, left);
+    offset += 1;
+  }
+  if (right !== 0) {
+    providedValues |= 0b00001000;
+    dataView.setUint8(offset, right);
+    offset += 1;
+  }
+  if (space !== 0) {
+    providedValues |= 0b00010000;
+    dataView.setUint8(offset, space);
+    offset += 1;
+  }
+  if (d !== 0) {
+    providedValues |= 0b00100000;
+    dataView.setUint8(offset, d);
+    offset += 1;
+  }
+  if (f !== 0) {
+    providedValues |= 0b01000000;
+    dataView.setUint8(offset, f);
+    offset += 1;
+  }
+  dataView.setUint8(0, providedValues);
+  return buffer;
 };

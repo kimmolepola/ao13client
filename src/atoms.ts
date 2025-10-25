@@ -53,20 +53,6 @@ export const isConnectedToGameServer = atom<boolean>({
   default: false,
 });
 
-export const channelsOrdered = atom<
-  { remoteId: string; channel: RTCDataChannel }[]
->({
-  key: "channelsOrdered",
-  default: [],
-});
-
-export const channelsUnordered = atom<
-  { remoteId: string; channel: RTCDataChannel }[]
->({
-  key: "channelsUnordered",
-  default: [],
-});
-
 export const connectionMessage = atom<string | undefined>({
   key: "connectionMessage",
   default: undefined,

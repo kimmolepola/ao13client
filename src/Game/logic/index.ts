@@ -1,5 +1,5 @@
 export {
-  gatherControlsData,
+  gatherControlsDataBinary,
   resetControlValues,
   handleKeys,
   checkHealth,

@@ -4,15 +4,22 @@ import { gameServer } from "src/globals";
 import * as types from "src/types";
 
 export const useSend = () => {
-  const sendOrdered = useCallback((data: types.ChatMessageFromClient) => {
+  const sendReliable = useCallback((data: types.ChatMessageFromClient) => {
     const dataString = JSON.stringify(data);
-    gameServer.connection?.orderedChannel?.send(dataString);
+    gameServer.connection?.reliableChannel?.send(dataString);
   }, []);
 
-  const sendUnordered = useCallback((data: types.Controls) => {
-    const stringData = JSON.stringify(data);
-    gameServer.connection?.unorderedChannel?.send(stringData);
+  const sendReliableBinary = useCallback((data: ArrayBuffer) => {
+    gameServer.connection?.reliableChannelBinary?.send(data);
   }, []);
 
-  return { sendOrdered, sendUnordered };
+  const sendUnreliableBinary = useCallback((data: ArrayBuffer) => {
+    gameServer.connection?.unreliableChannelBinary?.send(data);
+  }, []);
+
+  return {
+    sendReliable,
+    sendReliableBinary,
+    sendUnreliableBinary,
+  };
 };

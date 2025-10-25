@@ -25,15 +25,15 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
 
   const symbol = useMemo(() => {
     switch (control) {
-      case types.Keys.SPACE:
+      case types.Keys.Space:
         return <TfiTarget />;
-      case types.Keys.LEFT:
+      case types.Keys.Left:
         return <TfiArrowCircleLeft />;
-      case types.Keys.RIGHT:
+      case types.Keys.Right:
         return <TfiArrowCircleRight />;
-      case types.Keys.UP:
+      case types.Keys.Up:
         return <TfiArrowCircleUp />;
-      case types.Keys.DOWN:
+      case types.Keys.Down:
         return <TfiArrowCircleDown />;
       default:
         return null;
@@ -56,13 +56,13 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
 const ControlButtons = () => {
   return (
     <div className="landscape:hidden absolute left-0 right-0 bottom-8 flex flex-col gap-4 items-center">
-      <ControlButton control={types.Keys.UP} />
+      <ControlButton control={types.Keys.Up} />
       <div className="w-full flex justify-evenly">
-        <ControlButton control={types.Keys.LEFT} />
-        <ControlButton control={types.Keys.SPACE} />
-        <ControlButton control={types.Keys.RIGHT} />
+        <ControlButton control={types.Keys.Left} />
+        <ControlButton control={types.Keys.Space} />
+        <ControlButton control={types.Keys.Right} />
       </div>
-      <ControlButton control={types.Keys.DOWN} />
+      <ControlButton control={types.Keys.Down} />
     </div>
   );
 };

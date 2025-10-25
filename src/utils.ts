@@ -1,3 +1,5 @@
+import * as parameters from "./parameters";
+
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180);
 export const radiansToDegrees = (radians: number) => radians * (180 / Math.PI);
 export const parseIceUfrag = (sdp: any) =>
@@ -16,4 +18,12 @@ export const logError = (error: any, data: any) => {
   } else {
     console.error("Error:", error.message, "Data:", data);
   }
+};
+
+const min = -Math.PI;
+const max = Math.PI;
+const rangeMax = parameters.angleMaxValue;
+export const decodeAngle = (encodedAngle: number) => {
+  return (encodedAngle / rangeMax) * (max - min) + min;
+  // encode: Math.round(((angle - min) / (max - min)) * rangeMax);
 };

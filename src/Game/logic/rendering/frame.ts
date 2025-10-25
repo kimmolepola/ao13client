@@ -38,19 +38,18 @@ export const handleRadarBox = (
 };
 
 export const handleInfoBox = (
-  gameObject: types.RemoteGameObject,
-  object3D: THREE.Object3D,
+  o: types.RemoteGameObject,
   infoBoxRef: RefObject<HTMLDivElement>
 ) => {
-  if (infoBoxRef.current) {
-    const degree = Math.round(utils.radiansToDegrees(-object3D.rotation.z));
+  if (infoBoxRef.current && o.object3d) {
+    const degree = Math.round(utils.radiansToDegrees(-o.object3d.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
-    infoBoxRef.current.textContent = `x: ${object3D.position.x.toFixed(0)}
-    y: ${object3D.position.y.toFixed(0)}
-    z: ${object3D.position.z.toFixed(0)}
+    infoBoxRef.current.textContent = `x: ${o.object3d.position.x.toFixed(0)}
+    y: ${o.object3d.position.y.toFixed(0)}
+    z: ${o.positionZ.toFixed(0)}
     heading: ${heading}
-    speed: ${gameObject.speed.toFixed(1)}
-    health: ${gameObject.health.toFixed(0)}`;
+    speed: ${o.speed.toFixed(1)}
+    health: ${o.health.toFixed(0)}`;
   }
 };
 
@@ -68,41 +67,57 @@ export const handleLocalObject = (
 
 export const handleMovement = (
   delta: number,
-  gameObject: types.RemoteGameObject,
-  object3D: THREE.Object3D
+  gameObject: types.RemoteGameObject
 ) => {
   const o = gameObject;
   const forceUp = o.controlsUp > delta ? delta : o.controlsUp;
   const forceDown = o.controlsDown > delta ? delta : o.controlsDown;
   const forceLeft = o.controlsLeft > delta ? delta : o.controlsLeft;
   const forceRight = o.controlsRight > delta ? delta : o.controlsRight;
+  const forceD = o.controlsD > delta ? delta : o.controlsD;
+  const forceF = o.controlsF > delta ? delta : o.controlsF;
   o.controlsUp -= forceUp;
   o.controlsDown -= forceDown;
   o.controlsLeft -= forceLeft;
   o.controlsRight -= forceRight;
-  o.speed += forceUp * parameters.acceleration;
-  o.speed -= forceDown * parameters.acceleration;
-  o.rotationSpeed += forceLeft * parameters.rotationAcceleration;
-  o.rotationSpeed -= forceRight * parameters.rotationAcceleration;
+  o.controlsF -= forceF;
+  o.controlsD -= forceD;
+  o.speed += forceUp * parameters.forceUpToSpeedFactor;
+  o.speed -= forceDown * parameters.forceDownToSpeedFactor;
+  o.rotationSpeed += forceLeft * parameters.forceLeftOrRightToRotationFactor;
+  o.rotationSpeed -= forceRight * parameters.forceLeftOrRightToRotationFactor;
+  o.verticalSpeed -= forceD * parameters.forceAscOrDescToVerticalSpeedFactor;
+  o.verticalSpeed += forceF * parameters.forceAscOrDescToVerticalSpeedFactor;
   if (o.speed > parameters.maxSpeed) {
     o.speed = parameters.maxSpeed;
   }
   if (o.speed < parameters.minSpeed) {
     o.speed = parameters.minSpeed;
   }
-  if (o.rotationSpeed > parameters.maxRotationSpeed) {
-    o.rotationSpeed = parameters.maxRotationSpeed;
+  if (o.rotationSpeed > parameters.maxRotationSpeedAbsolute) {
+    o.rotationSpeed = parameters.maxRotationSpeedAbsolute;
+  } else if (o.rotationSpeed < -parameters.maxRotationSpeedAbsolute) {
+    o.rotationSpeed = -parameters.maxRotationSpeedAbsolute;
   }
-  if (o.rotationSpeed < -parameters.maxRotationSpeed) {
-    o.rotationSpeed = -parameters.maxRotationSpeed;
+  if (o.verticalSpeed > parameters.maxVerticalSpeedAbsolute) {
+    o.verticalSpeed = parameters.maxVerticalSpeedAbsolute;
+  } else if (o.verticalSpeed < -parameters.maxVerticalSpeedAbsolute) {
+    o.verticalSpeed = -parameters.maxVerticalSpeedAbsolute;
   }
-  object3D.rotateZ(o.rotationSpeed * delta);
-  object3D.translateY((o.speed * delta) / 100);
+  o.object3d?.rotateZ(o.rotationSpeed * parameters.rotationFactor * delta);
+  o.object3d?.translateY(o.speed * parameters.speedFactor * delta);
+  o.positionZ += o.verticalSpeed * parameters.verticalSpeedFactor * delta;
   if (!forceLeft && !forceRight && o.rotationSpeed) {
     if (Math.abs(o.rotationSpeed) < 0.00001) {
       o.rotationSpeed = 0;
     }
     o.rotationSpeed *= 0.99;
+  }
+  if (!forceD && !forceF && o.verticalSpeed) {
+    if (Math.abs(o.verticalSpeed) < 0.00001) {
+      o.verticalSpeed = 0;
+    }
+    o.verticalSpeed *= 0.99;
   }
 };
 
@@ -173,7 +188,15 @@ export const handleDataBlock = (
     const row2 = o.infoElement.row2Ref?.current;
     if (container && row1 && row2) {
       row1.textContent = gameObject.username;
-      row2.textContent = gameObject.health.toFixed(0);
+
+      row2.textContent =
+        gameObject.object3d?.position.x.toFixed(0) +
+        ", " +
+        gameObject.object3d?.position.y.toFixed(0) +
+        ", " +
+        gameObject.positionZ.toFixed(0);
+      // row2.textContent = gameObject.health.toFixed(0);
+
       // let's put the info element on the screen to that position
       // with some offset to have it slightly below the object
       container.style.left = `${
@@ -189,10 +212,11 @@ export const handleDataBlock = (
   }
 };
 
-export const interpolatePosition = (
-  o: types.RemoteGameObject,
-  object3D: THREE.Object3D
-) => {
-  object3D.position.lerp(o.backendPosition, parameters.interpolationAlpha);
-  object3D.quaternion.slerp(o.backendQuaternion, parameters.interpolationAlpha);
+export const interpolatePosition = (o: types.RemoteGameObject) => {
+  o.object3d?.position.lerp(o.backendPosition, parameters.interpolationAlpha);
+  o.object3d?.quaternion.slerp(
+    o.backendQuaternion,
+    parameters.interpolationAlpha
+  );
+  o.positionZ -= (o.positionZ - o.backendPositionZ) / 2;
 };

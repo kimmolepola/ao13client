@@ -34,7 +34,6 @@ const LoggedIn = () => {
   const onClickPlay = useCallback(async () => {
     if (!errorText) {
       const { data, error } = await checkOkToStart();
-      console.log("--checkoktostart:", data, error);
       if (data && data.success) {
         const { data: turnCredentials, error: credentialsError } =
           await getTurnCredentials();

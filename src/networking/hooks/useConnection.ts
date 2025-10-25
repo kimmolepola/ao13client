@@ -19,12 +19,17 @@ export const useConnection = () => {
     atoms.isConnectedToGameServer
   );
   const { handleQuit: handleQuitForObjects } = clientHooks.useObjects();
-  const { onReceive } = useReceive();
+  const {
+    onReceiveReliable,
+    onReceiveReliableBinary,
+    onReceiveUnreliableBinary,
+  } = useReceive();
 
   const closePeerConnection = useCallback(
     (peerConnection: types.PeerConnection) => {
-      peerConnection.orderedChannel?.close();
-      peerConnection.unorderedChannel?.close();
+      peerConnection.reliableChannel?.close();
+      peerConnection.reliableChannelBinary?.close();
+      peerConnection.unreliableChannelBinary?.close();
       peerConnection.peerConnection.close();
     },
     []
@@ -47,41 +52,56 @@ export const useConnection = () => {
         console.log("On data channel:", event.channel.label);
       };
 
-      const orderedChannel = peerConnection.createDataChannel("ordered", {
+      const reliableChannel = peerConnection.createDataChannel("reliable", {
         ordered: true,
         // negotiated: true,
         id: 0,
       });
-      const unorderedChannel = peerConnection.createDataChannel("unordered", {
-        ordered: false,
-        // negotiated: true,
-        id: 1,
-      });
+      const reliableChannelBinary = peerConnection.createDataChannel(
+        "reliable-binary",
+        {
+          ordered: true,
+          // negotiated: true,
+          id: 2,
+        }
+      );
+      const unreliableChannelBinary = peerConnection.createDataChannel(
+        "unreliable-binary",
+        {
+          ordered: false,
+          // negotiated: true,
+          id: 1,
+          maxRetransmits: 0,
+        }
+      );
 
-      orderedChannel.onopen = () => {
+      reliableChannel.onopen = () => {
         setConnectionMessage("Connected to game server");
         setIsConnectedToGameServer(true);
         console.log("Connected to game server");
       };
 
-      orderedChannel.onclose = () => {
+      reliableChannel.onclose = () => {
         setConnectionMessage("Disconnected from game server");
         setIsConnectedToGameServer(false);
         console.log("Disconnected from game server");
       };
 
-      orderedChannel.onmessage = ({ data }: { data: string }) => {
+      reliableChannel.onmessage = ({ data }: { data: string }) => {
         try {
           const d = JSON.parse(data);
-          onReceive(d);
+          onReceiveReliable(d);
         } catch (err) {
           console.log("Ordered channel onmessage error:", data);
         }
       };
-      unorderedChannel.onmessage = ({ data }: { data: string }) => {
-        // console.log("--data:", data);
-        const d = JSON.parse(data);
-        onReceive(d);
+      reliableChannelBinary.binaryType = "arraybuffer";
+      reliableChannelBinary.onmessage = ({ data }: { data: ArrayBuffer }) => {
+        onReceiveReliableBinary(data);
+      };
+      unreliableChannelBinary.binaryType = "arraybuffer";
+      unreliableChannelBinary.onmessage = ({ data }: { data: ArrayBuffer }) => {
+        onReceiveUnreliableBinary(data);
       };
 
       peerConnection.onicecandidate = ({ candidate }) => {
@@ -109,12 +129,20 @@ export const useConnection = () => {
       };
       gameServer.connection = {
         peerConnection,
-        orderedChannel,
-        unorderedChannel,
+        reliableChannel,
+        reliableChannelBinary,
+        unreliableChannelBinary,
         remoteId,
       };
     },
-    [iceServers, onReceive, setConnectionMessage, setIsConnectedToGameServer]
+    [
+      iceServers,
+      setConnectionMessage,
+      setIsConnectedToGameServer,
+      onReceiveReliable,
+      onReceiveReliableBinary,
+      onReceiveUnreliableBinary,
+    ]
   );
 
   type RTCSdpType = "answer" | "offer" | "pranswer" | "rollback";

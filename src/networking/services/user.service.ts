@@ -8,7 +8,6 @@ export const checkOkToStart = async () => {
     );
     return { data: response.data, error: null };
   } catch (err: any) {
-    console.log("--err:", err);
     const error = err.response?.data ? err.response.data.error : err.toString();
     return { data: null, error };
   }

@@ -9,15 +9,19 @@ import * as types from "src/types";
 const convertKeyToControl = (key: string) => {
   switch (key) {
     case "ArrowUp":
-      return types.Keys.UP;
+      return types.Keys.Up;
     case "ArrowDown":
-      return types.Keys.DOWN;
+      return types.Keys.Down;
     case "ArrowLeft":
-      return types.Keys.LEFT;
+      return types.Keys.Left;
     case "ArrowRight":
-      return types.Keys.RIGHT;
+      return types.Keys.Right;
     case "Space":
-      return types.Keys.SPACE;
+      return types.Keys.Space;
+    case "KeyD":
+      return types.Keys.D;
+    case "KeyF":
+      return types.Keys.F;
     default:
       return null;
   }

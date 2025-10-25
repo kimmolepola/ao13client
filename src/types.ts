@@ -1,6 +1,12 @@
 import { RefObject } from "react";
 import * as THREE from "three";
 
+// 2 bytes for sequence number, 1 byte for associated reliable-state sequence number
+export const unreliableStateInfoBytes = 3;
+
+export const reliableStateSingleObjectBytes = 41;
+export const unreliableStateSingleObjectMaxBytes = 32;
+
 export enum Position {
   RIGHT,
   BOTTOM,
@@ -17,8 +23,9 @@ export type Three = {
 export type PeerConnection = {
   remoteId: string;
   peerConnection: RTCPeerConnection;
-  orderedChannel?: RTCDataChannel;
-  unorderedChannel?: RTCDataChannel;
+  reliableChannel?: RTCDataChannel;
+  reliableChannelBinary?: RTCDataChannel;
+  unreliableChannelBinary?: RTCDataChannel;
 };
 
 export type PeerConnectionsDictionary = {
@@ -46,11 +53,13 @@ export type ChatMessage = {
 };
 
 export enum Keys {
-  UP = "up",
-  DOWN = "down",
-  LEFT = "left",
-  RIGHT = "right",
-  SPACE = "space",
+  Up = "up",
+  Down = "down",
+  Left = "left",
+  Right = "right",
+  Space = "space",
+  D = "d",
+  F = "f",
 }
 
 export enum GameObjectType {
@@ -90,12 +99,17 @@ export interface RemoteGameObject extends GameObject {
   controlsLeft: number;
   controlsRight: number;
   controlsSpace: number;
+  controlsF: number;
+  controlsD: number;
   controlsOverChannelsUp: number;
   controlsOverChannelsDown: number;
   controlsOverChannelsLeft: number;
   controlsOverChannelsRight: number;
   controlsOverChannelsSpace: number;
+  controlsOverChannelsD: number;
+  controlsOverChannelsF: number;
   rotationSpeed: number;
+  verticalSpeed: number;
   backendPosition: THREE.Vector3;
   backendQuaternion: THREE.Quaternion;
   keyDowns: Keys[];
@@ -104,42 +118,30 @@ export interface RemoteGameObject extends GameObject {
     row1Ref: RefObject<HTMLDivElement> | undefined;
     row2Ref: RefObject<HTMLDivElement> | undefined;
   };
-
   shotDelay: number;
+  positionZ: number;
+  backendPositionZ: number;
 }
 
 export enum ClientDataType {
-  ChatMessage_Client,
-  Controls,
+  ChatMessage_Client = "ChatMessage_Client",
 }
 
 export enum ServerDataType {
-  ChatMessage_Server,
-  Update,
-  State,
+  ChatMessage_Server = "ChatMessage_Server",
+  BaseState = "BaseState",
 }
 
-export type ChatMessageFromClient = {
-  type: ClientDataType.ChatMessage_Client;
-  text: string;
-};
-
-export type ChatMessageFromMain = {
+export type ChatMessageFromServer = {
   type: ServerDataType.ChatMessage_Server;
   id: string;
   text: string;
   userId: string;
 };
 
-export type Controls = {
-  type: ClientDataType.Controls;
-  data: {
-    up: number;
-    down: number;
-    left: number;
-    right: number;
-    space: number;
-  };
+export type ChatMessageFromClient = {
+  type: ClientDataType.ChatMessage_Client;
+  text: string;
 };
 
 export type UpdateObject = {
@@ -150,52 +152,111 @@ export type UpdateObject = {
   uControlsLeft: number;
   uControlsRight: number;
   uControlsSpace: number;
+  uControlsD: number;
+  uControlsF: number;
   uRotationSpeed: number;
+  uVerticalSpeed: number;
   uSpeed: number;
   uPositionX: number;
   uPositionY: number;
   uPositionZ: number;
-  uQuaternionX: number;
-  uQuaternionY: number;
-  uQuaternionZ: number;
-  uQuaternionW: number;
+  uAngleZ: number;
+  // uQuaternionX: number;
+  // uQuaternionY: number;
+  // uQuaternionZ: number;
+  // uQuaternionW: number;
 };
 
-export type StateObject = {
-  sId: string;
-  sIsPlayer: boolean;
-  sUsername: string;
-  sScore: number;
-  sRotationSpeed: number;
-  sSpeed: number;
-  sPositionX: number;
-  sPositionY: number;
-  sPositionZ: number;
-  sQuaternionX: number;
-  sQuaternionY: number;
-  sQuaternionZ: number;
-  sQuaternionW: number;
+export type BaseStateObject = {
+  id: string;
+  isPlayer: boolean;
+  username: string;
 };
 
-export type Update = {
-  timestamp: number;
-  type: ServerDataType.Update;
-  data: {
-    [id: string]: UpdateObject;
-  };
+// Reliable-State shape (1 + n * 41 bytes)
+// [
+//   Uint8 sequence number (1 byte)
+//   ...stateDataInOrder (41 bytes each): [
+//     Uint32 guid part 1
+//     Uint32 guid part 2
+//     Uint32 guid part 3
+//     Uint32 guid part 4
+//     Uint32 score
+//     Uint8 health
+//     Int8 rotationSpeed
+//     Int8 verticalSpeed
+//     Uint16 speed
+//     Float32 positionX
+//     Float32 positionY
+//     Float32 positionZ
+//     Float32 angleZ
+//   ]
+// ]
+
+// Unreliable-State shape (3 + n * 2-32 bytes)
+// [
+//   Uint16 sequence number (2 bytes)
+//   Uint8 sequence number of associated reliable-state (1 byte)
+//   ...game object data (2-32 bytes each): [
+//     Uint8 providedValues1to8
+//     Uint8 providedValues9to16
+//     Uint32 score? #1
+//     Uint8 health? #2
+//     Uint8 controlsUp? #3
+//     Uint8 controlsDown? #4
+//     Uint8 controlsLeft? #5
+//     Uint8 controlsRight? #6
+//     Uint8 controlsSpace? #7
+//     Uint8 controlsD? #8
+//     Uint8 controlsF? #9
+//     Int8 rotationSpeed? #10
+//     int8 verticalSpeed? #11
+//     Uint16 speed? #12
+//     Float32 positionX? #13
+//     Float32 positionY? #14
+//     Float32 positionZ? #15
+//     Uint16 angleZ? #16
+//   ]
+// ]
+
+// ControlsBinary shape (1-8 bytes)
+// [
+//   Uint8 providedValues
+//   Uint8 up?
+//   Uint8 down?
+//   Uint8 left?
+//   Uint8 right?
+//   Uint8 space?
+//   Uint8 d?
+//   Uint8 f?
+// ]
+
+export type UpdateBinary = ArrayBuffer;
+export type ReliableStateBinary = ArrayBuffer;
+
+export type ReliableState = {
+  id: string;
+  score: number;
+  health: number;
+  rotationSpeed: number;
+  verticalSpeed: number;
+  speed: number;
+  positionX: number;
+  positionY: number;
+  positionZ: number;
+  angleZ: number;
+  // quaternionX: number;
+  // quaternionY: number;
+  // quaternionZ: number;
+  // quaternionW: number;
 };
 
-export type State = {
-  type: ServerDataType.State;
-  data: { [id: string]: StateObject };
+export type BaseState = {
+  type: ServerDataType.BaseState;
+  data: BaseStateObject[];
 };
 
-export type NetData =
-  | ChatMessageFromClient
-  | Controls
-  | ChatMessageFromMain
-  | Update
-  | State;
+export type NetData = ChatMessageFromServer | BaseState;
 
 export type Channel = {
   send: (stringData: string) => void;
