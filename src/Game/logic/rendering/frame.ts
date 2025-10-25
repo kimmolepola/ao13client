@@ -189,12 +189,7 @@ export const handleDataBlock = (
     if (container && row1 && row2) {
       row1.textContent = gameObject.username;
 
-      row2.textContent =
-        gameObject.object3d?.position.x.toFixed(0) +
-        ", " +
-        gameObject.object3d?.position.y.toFixed(0) +
-        ", " +
-        gameObject.positionZ.toFixed(0);
+      row2.textContent = gameObject.health.toFixed(0);
       // row2.textContent = gameObject.health.toFixed(0);
 
       // let's put the info element on the screen to that position
