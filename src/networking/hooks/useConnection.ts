@@ -26,7 +26,7 @@ export const useConnection = () => {
   } = useReceive();
 
   const closePeerConnection = useCallback(
-    (peerConnection: types.PeerConnection) => {
+    (peerConnection: types.ConnectionObject) => {
       peerConnection.reliableChannel?.close();
       peerConnection.reliableChannelBinary?.close();
       peerConnection.unreliableChannelBinary?.close();

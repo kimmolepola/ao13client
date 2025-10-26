@@ -20,7 +20,7 @@ export type Three = {
   renderer: THREE.Renderer;
 };
 
-export type PeerConnection = {
+export type ConnectionObject = {
   remoteId: string;
   peerConnection: RTCPeerConnection;
   reliableChannel?: RTCDataChannel;

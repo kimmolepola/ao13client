@@ -7,26 +7,97 @@ import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as parameters from "src/parameters";
 import { decodeAngle } from "../../utils";
+import { debugOn } from "../components/UserInterface/Sidepanel/Header";
 
 const axis = new THREE.Vector3(0, 0, 1);
 
-const recentStates: { [sequenceNumber: number]: types.ReliableState[] } = {};
+const recentStates: {
+  [sequenceNumber: number]:
+    | { timestamp: number; data: types.ReliableState[] }
+    | undefined;
+} = {};
 
 type RecentState = {
   sequenceNumber: number;
   stateDataInOrder: types.ReliableState[];
 };
+
+const debug = (stateSequenceNumber: number) => {
+  console.log("Received state sequance number:", stateSequenceNumber);
+  console.log("RecentStates:", recentStates);
+  console.log("GameServer:", globals.gameServer);
+  setTimeout(async () => {
+    globals.gameServer.connection?.peerConnection
+      .getStats(null)
+      .then((stats) => {
+        let selected_firefox;
+        let selectedCandidatePairId: string;
+        let transportReport: any;
+        const candidatePairs: any[] = [];
+
+        stats.forEach((report) => {
+          if (report.type === "candidate-pair" && report.selected) {
+            selected_firefox = report;
+          }
+          if (report.type === "transport") {
+            selectedCandidatePairId = report.selectedCandidatePairId;
+            transportReport = report;
+          }
+          if (report.type === "candidate-pair") {
+            candidatePairs.push(report);
+          }
+          console.log("Report:", report.type, report);
+        });
+
+        const selectedCandidatePair =
+          selected_firefox ||
+          candidatePairs.find((x) => x.id === selectedCandidatePairId);
+
+        const local = stats.get(selectedCandidatePair.localCandidateId);
+        const remote = stats.get(selectedCandidatePair.remoteCandidateId);
+
+        console.log("Local candidate:", local);
+        console.log("Remote candidate:", remote);
+
+        console.log("Local protocol:", local?.protocol);
+        console.log("Remote protocol:", remote?.protocol);
+        console.log("Remote candidate type:", remote?.candidateType); // 'host', 'srflx', 'relay'
+
+        if (remote?.candidateType === "relay") {
+          console.log("Using TURN relay");
+        } else {
+          console.log("Not using TURN relay");
+        }
+
+        console.log("Relay protocol:", transportReport?.relayProtocol);
+        console.log("Transport protocol:", transportReport?.protocol); // 'udp' or 'tcp'
+      });
+  });
+};
+
 const updateRecentStates = (state: RecentState) => {
-  recentStates[state.sequenceNumber] = state.stateDataInOrder;
-  const sequenceNumbers = Object.keys(recentStates)
-    .map((x) => parseInt(x))
-    .sort((a, b) => b - a);
-  while (sequenceNumbers.length > 10) {
-    const oldestVersion = sequenceNumbers.pop();
-    if (oldestVersion !== undefined) {
-      delete recentStates[oldestVersion];
-    }
+  recentStates[state.sequenceNumber] = {
+    timestamp: Date.now(),
+    data: state.stateDataInOrder,
+  };
+
+  if (Object.keys(recentStates).length > 10) {
+    const oldest: {
+      timestamp: number;
+      sequenceNumber: number | undefined;
+    } = {
+      timestamp: Date.now(),
+      sequenceNumber: undefined,
+    };
+    Object.entries(recentStates).forEach(([key, value]) => {
+      if (value?.timestamp && value.timestamp < oldest.timestamp) {
+        oldest.timestamp = value.timestamp;
+        oldest.sequenceNumber = Number(key);
+      }
+    });
+    oldest.sequenceNumber && delete recentStates[oldest.sequenceNumber];
   }
+  debugOn.value && debug(state.sequenceNumber);
 };
 
 export const useObjects = () => {
@@ -165,9 +236,7 @@ export const useObjects = () => {
   const handleReceiveUnreliableStateDataBinary = useCallback(
     (dataView: DataView) => {
       const reliableStateSequenceNumber = dataView.getUint8(2);
-      const associatedState = recentStates[reliableStateSequenceNumber] as
-        | types.ReliableState[]
-        | undefined;
+      const associatedState = recentStates[reliableStateSequenceNumber]?.data;
       if (!associatedState) {
         console.warn(
           "Received update data for unknown state version:",
