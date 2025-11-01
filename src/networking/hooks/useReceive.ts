@@ -6,6 +6,8 @@ import { remoteObjects } from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as clientHooks from "src/Game/hooks";
+import { handleReceiveUnreliableStateDataBinary } from "../../Game/netcode/unreliableState";
+import { handleReceiveReliableStateDataBinary } from "../../Game/netcode/reliableState";
 
 const sequenceNumber16bitsIsNewer = (
   newSeq: number,
@@ -20,11 +22,8 @@ export const useReceive = () => {
   const mostRecentSequenceNumber16bits = useRef<number | null>(null);
 
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
-  const {
-    handleReceiveBaseState,
-    handleReceiveReliableStateDataBinary,
-    handleReceiveUnreliableStateDataBinary,
-  } = clientHooks.useObjects();
+  const { handleReceiveBaseState, handleReceiveState } =
+    clientHooks.useObjects();
 
   const onReceiveReliable = useCallback(
     (data: types.NetData) => {
@@ -53,13 +52,10 @@ export const useReceive = () => {
     [setChatMessages, handleReceiveBaseState]
   );
 
-  const onReceiveReliableBinary = useCallback(
-    (data: ArrayBuffer) => {
-      const dataView = new DataView(data);
-      handleReceiveReliableStateDataBinary(dataView);
-    },
-    [handleReceiveReliableStateDataBinary]
-  );
+  const onReceiveReliableBinary = useCallback((data: ArrayBuffer) => {
+    const dataView = new DataView(data);
+    handleReceiveReliableStateDataBinary(dataView);
+  }, []);
 
   const onReceiveUnreliableBinary = useCallback(
     (data: ArrayBuffer) => {
@@ -73,10 +69,11 @@ export const useReceive = () => {
         )
       ) {
         mostRecentSequenceNumber16bits.current = sequenceNumber16bits;
-        handleReceiveUnreliableStateDataBinary(dataView);
+        const updateObjects = handleReceiveUnreliableStateDataBinary(dataView);
+        updateObjects && handleReceiveState(updateObjects);
       }
     },
-    [handleReceiveUnreliableStateDataBinary]
+    [handleReceiveState]
   );
 
   return {

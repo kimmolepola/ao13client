@@ -1,3 +1,4 @@
+import { RefObject } from "react";
 import * as THREE from "three";
 
 import * as networkingHooks from "src/networking/hooks";
@@ -5,7 +6,7 @@ import * as parameters from "src/parameters";
 import * as globals from "src/globals";
 import * as types from "src/types";
 import * as logic from "../../logic";
-import { RefObject } from "react";
+import { gatherControlsDataBinary } from "../../netcode/message";
 
 const v1 = new THREE.Vector3();
 const v2 = new THREE.Vector3();
@@ -51,7 +52,7 @@ export const useFrame = (
             logic.handleInfoBox(o, infoBoxRef);
             if (Date.now() > nextSendTime) {
               nextSendTime = Date.now() + parameters.sendIntervalClient;
-              const controlsData = logic.gatherControlsDataBinary(o);
+              const controlsData = gatherControlsDataBinary(o);
               if (controlsData) {
                 sendUnreliableBinary(controlsData);
                 logic.resetControlValues(o);
