@@ -7,7 +7,7 @@ export const sidepanelMinimumSize = 90;
 export const shotDelay = 50;
 
 // netcode
-export const sendIntervalClient = 50;
+export const sendIntervalClient = 1000 / 20;
 export const angleMaxValue = 65535;
 
 // fastest projectile speed 25500 km/h ~ 13769 knots
@@ -30,3 +30,6 @@ export const forceLeftOrRightToRotationFactor = 0.1;
 export const maxVerticalSpeedAbsolute = 127;
 export const verticalSpeedFactor = 0.001;
 export const forceAscOrDescToVerticalSpeedFactor = 0.01;
+
+export const bulletSpeed = 1000;
+export const bulletSpeedReductionFactor = 0.97;

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useRef, useCallback } from "react";
 import { useSetRecoilState } from "recoil";
 
 import { chatMessageTimeToLive } from "src/parameters";
@@ -7,13 +7,18 @@ import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as clientHooks from "src/Game/hooks";
 
-let mostRecentSequenceNumber16bits = 0;
-
-const sequenceNumber16bitsIsNewer = (a: number, b: number) => {
-  return ((a - b + 0x10000) & 0xffff) < 0x8000;
+const sequenceNumber16bitsIsNewer = (
+  newSeq: number,
+  recentSeq: number | null
+) => {
+  return recentSeq === null
+    ? true
+    : ((newSeq - recentSeq + 0x10000) & 0xffff) < 0x8000;
 };
 
 export const useReceive = () => {
+  const mostRecentSequenceNumber16bits = useRef<number | null>(null);
+
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
   const {
     handleReceiveBaseState,
@@ -60,13 +65,14 @@ export const useReceive = () => {
     (data: ArrayBuffer) => {
       const dataView = new DataView(data);
       const sequenceNumber16bits = dataView.getUint16(0);
+
       if (
         sequenceNumber16bitsIsNewer(
           sequenceNumber16bits,
-          mostRecentSequenceNumber16bits
+          mostRecentSequenceNumber16bits.current
         )
       ) {
-        mostRecentSequenceNumber16bits = sequenceNumber16bits;
+        mostRecentSequenceNumber16bits.current = sequenceNumber16bits;
         handleReceiveUnreliableStateDataBinary(dataView);
       }
     },

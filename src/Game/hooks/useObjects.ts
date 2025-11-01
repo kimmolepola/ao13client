@@ -9,6 +9,9 @@ import * as parameters from "src/parameters";
 import { decodeAngle } from "../../utils";
 import { debugOn } from "../components/UserInterface/Sidepanel/Header";
 
+let currentReliableStateSequenceNumber = 0;
+let currentUnreliableStateIdsInOrderMaxIndex = 0;
+
 const axis = new THREE.Vector3(0, 0, 1);
 
 const recentStates: {
@@ -236,6 +239,7 @@ export const useObjects = () => {
   const handleReceiveUnreliableStateDataBinary = useCallback(
     (dataView: DataView) => {
       const reliableStateSequenceNumber = dataView.getUint8(2);
+
       const associatedState = recentStates[reliableStateSequenceNumber]?.data;
       if (!associatedState) {
         console.warn(
@@ -434,6 +438,27 @@ export const useObjects = () => {
             o.controlsF += u.uControlsF || 0;
           }
         }
+      }
+      if (
+        debugOn.value &&
+        reliableStateSequenceNumber !== currentReliableStateSequenceNumber
+      ) {
+        currentReliableStateSequenceNumber = reliableStateSequenceNumber;
+        console.log(
+          "reliableStateSequenceNumber:",
+          reliableStateSequenceNumber
+        );
+        console.log("updateObjects:", updateObjects);
+      }
+      if (
+        debugOn.value &&
+        idsInOrderIndex !== currentUnreliableStateIdsInOrderMaxIndex
+      ) {
+        currentUnreliableStateIdsInOrderMaxIndex = idsInOrderIndex;
+        console.log(
+          "unreliableStateIdsInOrderMaxIndex:",
+          currentUnreliableStateIdsInOrderMaxIndex
+        );
       }
     },
     []

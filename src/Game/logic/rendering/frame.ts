@@ -59,8 +59,8 @@ export const handleLocalObject = (
   object3D: THREE.Object3D
 ) => {
   const o = gameObject;
-  object3D.translateY((o.speed * delta) / 100);
-  o.speed *= 0.98;
+  object3D.translateY(o.speed * parameters.speedFactor * delta);
+  o.speed *= parameters.bulletSpeedReductionFactor;
   o.timeToLive -= delta;
   return o.timeToLive < 0;
 };

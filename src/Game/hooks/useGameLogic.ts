@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as types from "src/types";
 import * as hooks from ".";
 import * as globals from "src/globals";
+import * as parameters from "src/parameters";
 
 export const useGameLogic = (scene: THREE.Scene) => {
   hooks.useLoader(scene);
@@ -43,7 +44,7 @@ export const useGameLogic = (scene: THREE.Scene) => {
         }
         case types.EventType.SHOT: {
           const id = uuidv4();
-          const speed = gameEvent.data.speed + 2;
+          const speed = gameEvent.data.speed + parameters.bulletSpeed;
           const type = types.GameObjectType
             .BULLET as types.GameObjectType.BULLET;
           const object3d = await load(types.GameObjectType.BULLET);
@@ -54,7 +55,7 @@ export const useGameLogic = (scene: THREE.Scene) => {
           object3d?.geometry.boundingBox?.getSize(dimensions);
           object3d?.position.copy(gameEvent.data.object3d.position);
           object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
-          object3d?.translateY(1);
+          object3d?.translateY(0.5);
           globals.localObjects.push({
             id,
             type,
