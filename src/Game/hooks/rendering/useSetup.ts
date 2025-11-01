@@ -41,11 +41,16 @@ export const useSetup = () => {
   }, [size, windowSize]);
 
   const camera = useMemo(() => {
-    const c = new THREE.PerspectiveCamera(70, size.width / size.height, 1, 200);
+    const c = new THREE.PerspectiveCamera(
+      70,
+      size.width / size.height,
+      49990,
+      50001
+    );
     if (size.width < size.height) {
       c.position.setZ(parameters.cameraDefaultZ);
     } else {
-      c.position.setZ(parameters.cameraDefaultZ * (size.height / size.width));
+      c.position.setZ(parameters.cameraDefaultZ);
     }
     return c;
   }, [size]);

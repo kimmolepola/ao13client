@@ -59,7 +59,7 @@ export const useObjects = () => {
               rotationSpeed: 0,
               verticalSpeed: 0,
               speed: 0,
-              backendPosition: new THREE.Vector3(0, 0, 0),
+              backendPosition: new THREE.Vector3(0, 0, 1),
               backendQuaternion: new THREE.Quaternion(0, 0, 0, 0),
               keyDowns: [],
               infoElement: {
@@ -108,7 +108,7 @@ export const useObjects = () => {
           o.health = u.uHealth;
           o.rotationSpeed = u.uRotationSpeed || 0;
           o.speed = u.uSpeed || 0;
-          o.backendPosition.set(u.uPositionX, u.uPositionY, 0);
+          o.backendPosition.set(u.uPositionX, u.uPositionY, 1);
           o.backendQuaternion.setFromAxisAngle(axis, u.uAngleZ);
           o.backendPositionZ = u.uPositionZ;
           // o.backendQuaternion.set(

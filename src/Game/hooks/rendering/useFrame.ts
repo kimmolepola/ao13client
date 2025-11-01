@@ -29,7 +29,7 @@ export const useFrame = (
     for (let i = globals.localObjects.length - 1; i > -1; i--) {
       const o = globals.localObjects[i];
       if (o && o.object3d) {
-        const remove = logic.handleLocalObject(delta, o, o.object3d);
+        const remove = logic.handleLocalObject(delta, o);
         remove && localObjectsRemoveIndexes.push(i);
       }
     }

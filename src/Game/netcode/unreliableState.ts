@@ -123,14 +123,16 @@ export const handleReceiveUnreliableStateDataBinary = (dataView: DataView) => {
     }
 
     if (providedValues9to16 & 0b00010000) {
-      p.uPositionX = dataView.getFloat32(offset);
+      p.uPositionX =
+        dataView.getInt32(offset) * parameters.networkToPositionFactor;
       offset += 4;
     } else {
       p.uPositionX = associatedObject.positionX;
     }
 
     if (providedValues9to16 & 0b00100000) {
-      p.uPositionY = dataView.getFloat32(offset);
+      p.uPositionY =
+        dataView.getInt32(offset) * parameters.networkToPositionFactor;
       offset += 4;
     } else {
       p.uPositionY = associatedObject.positionY;

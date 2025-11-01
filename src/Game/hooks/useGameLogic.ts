@@ -55,7 +55,7 @@ export const useGameLogic = (scene: THREE.Scene) => {
           object3d?.geometry.boundingBox?.getSize(dimensions);
           object3d?.position.copy(gameEvent.data.object3d.position);
           object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
-          object3d?.translateY(0.5);
+          object3d?.translateY(5000);
           globals.localObjects.push({
             id,
             type,

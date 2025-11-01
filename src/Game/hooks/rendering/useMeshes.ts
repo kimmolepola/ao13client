@@ -34,9 +34,9 @@ export const useMeshes = () => {
 
   const loadBox = useCallback(
     async (fileName?: string, size?: [number, number, number]) => {
-      const width = size?.[0] || 1;
-      const height = size?.[1] || 1;
-      const depth = size?.[2] || 1;
+      const width = size?.[0] || 10000;
+      const height = size?.[1] || 10000;
+      const depth = size?.[2] || 10000;
       const createGeometry = () => new THREE.BoxGeometry(width, height, depth);
       const createMaterial = (x: THREE.Texture) => {
         const empty = new THREE.MeshBasicMaterial({
@@ -66,8 +66,8 @@ export const useMeshes = () => {
 
   const loadPlane = useCallback(
     async (fileName?: string, size?: [number, number, number]) => {
-      const width = size?.[0] || 1;
-      const height = size?.[1] || 1;
+      const width = size?.[0] || 10000;
+      const height = size?.[1] || 10000;
       const createGeometry = () => new THREE.PlaneGeometry(width, height);
       const createMaterial = (x: THREE.Texture) =>
         new THREE.MeshBasicMaterial({
@@ -85,7 +85,7 @@ export const useMeshes = () => {
 
   const loadBackground = useCallback(async () => {
     const createGeometry = (x: THREE.Texture) =>
-      new THREE.PlaneGeometry(x.image.width, x.image.height);
+      new THREE.PlaneGeometry(x.image.width * 10000, x.image.height * 10000);
     const createMaterial = (x: THREE.Texture) => {
       x.wrapS = THREE.MirroredRepeatWrapping;
       x.wrapT = THREE.MirroredRepeatWrapping;
@@ -104,9 +104,9 @@ export const useMeshes = () => {
   const loadFighter = useCallback(
     async (color?: string) => {
       const createGeometry = (x: THREE.Texture) => {
-        const width = Math.min(1, x.image.width / x.image.height);
-        const height = Math.min(1, x.image.height / x.image.width);
-        const depth = 0.01;
+        const width = Math.min(5000, (x.image.width / x.image.height) * 5000);
+        const height = Math.min(5000, (x.image.height / x.image.width) * 5000);
+        const depth = 1;
         return new THREE.BoxGeometry(width, height, depth);
       };
       const createMaterial = (x: THREE.Texture) => {

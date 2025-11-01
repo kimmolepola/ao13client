@@ -25,8 +25,8 @@ export const handleRadarBox = (
       const radarItemStyle = radarBoxRef.current?.[x.id]?.current?.style;
       const objectPosition = x.object3d?.position;
       if (radarItemStyle && objectPosition) {
-        radarItemStyle.left = `${objectPosition.x / 20 + 50}px`;
-        radarItemStyle.bottom = `${objectPosition.y / 20 + 50}px`;
+        radarItemStyle.left = `${objectPosition.x / 100000 + 50}px`;
+        radarItemStyle.bottom = `${objectPosition.y / 100000 + 50}px`;
         if (x.isMe && radarItemStyle.backgroundColor !== "orange") {
           radarItemStyle.backgroundColor = "orange";
         } else if (!x.isMe && radarItemStyle.zIndex !== "2") {
@@ -44,22 +44,23 @@ export const handleInfoBox = (
   if (infoBoxRef.current && o.object3d) {
     const degree = Math.round(utils.radiansToDegrees(-o.object3d.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
-    infoBoxRef.current.textContent = `x: ${o.object3d.position.x.toFixed(0)}
-    y: ${o.object3d.position.y.toFixed(0)}
+    infoBoxRef.current.textContent = `
+    x: ${(o.object3d.position.x / 100).toFixed(0)}
+    y: ${(o.object3d.position.y / 100).toFixed(0)}
     z: ${o.positionZ.toFixed(0)}
     heading: ${heading}
     speed: ${o.speed.toFixed(1)}
-    health: ${o.health.toFixed(0)}`;
+    health: ${o.health.toFixed(0)}
+    `;
   }
 };
 
 export const handleLocalObject = (
   delta: number,
-  gameObject: types.LocalGameObject,
-  object3D: THREE.Object3D
+  gameObject: types.LocalGameObject
 ) => {
   const o = gameObject;
-  object3D.translateY(o.speed * parameters.speedFactor * delta);
+  o.object3d?.translateY(o.speed * parameters.speedFactor * delta);
   o.speed *= parameters.bulletSpeedReductionFactor;
   o.timeToLive -= delta;
   return o.timeToLive < 0;

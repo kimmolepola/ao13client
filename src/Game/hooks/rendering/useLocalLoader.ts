@@ -31,7 +31,7 @@ export const useLocalLoader = (scene: THREE.Scene) => {
         case types.GameObjectType.EXPLOSION:
           return loadMesh(loadPlane, "explosion.png");
         case types.GameObjectType.BULLET:
-          return loadMesh(loadBox, "bullet.png", [0.12, 0.12, 0.12]);
+          return loadMesh(loadBox, "bullet.png", [600, 600, 1]);
         case types.GameObjectType.BACKGROUND:
           return loadMesh(loadBackground);
         default:
