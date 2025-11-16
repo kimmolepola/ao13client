@@ -19,17 +19,14 @@ export const useConnection = () => {
     atoms.isConnectedToGameServer
   );
   const { handleQuit: handleQuitForObjects } = clientHooks.useObjects();
-  const {
-    onReceiveReliable,
-    onReceiveReliableBinary,
-    onReceiveUnreliableBinary,
-  } = useReceive();
+  const { onReceiveStringData, onReceiveState } = useReceive();
 
   const closePeerConnection = useCallback(
     (peerConnection: types.ConnectionObject) => {
-      peerConnection.reliableChannel?.close();
-      peerConnection.reliableChannelBinary?.close();
-      peerConnection.unreliableChannelBinary?.close();
+      peerConnection.stringChannel?.close();
+      peerConnection.ackChannel?.close();
+      peerConnection.controlsChannel?.close();
+      peerConnection.stateChannel?.close();
       peerConnection.peerConnection.close();
     },
     []
@@ -52,56 +49,48 @@ export const useConnection = () => {
         console.log("On data channel:", event.channel.label);
       };
 
-      const reliableChannel = peerConnection.createDataChannel("reliable", {
-        ordered: true,
-        // negotiated: true,
-        id: 0,
-      });
-      const reliableChannelBinary = peerConnection.createDataChannel(
-        "reliable-binary",
-        {
-          ordered: true,
-          // negotiated: true,
-          id: 2,
-        }
+      const stringChannel = peerConnection.createDataChannel(
+        "string-reliable",
+        { ordered: true, id: 0 }
       );
-      const unreliableChannelBinary = peerConnection.createDataChannel(
-        "unreliable-binary",
-        {
-          ordered: false,
-          // negotiated: true,
-          id: 1,
-          maxRetransmits: 0,
-        }
+      const ackChannel = peerConnection.createDataChannel("ack-reliable", {
+        ordered: true,
+        id: 1,
+      });
+      const controlsChannel = peerConnection.createDataChannel(
+        "controls-unreliable",
+        { ordered: false, id: 2, maxRetransmits: 0 }
+      );
+      const stateChannel = peerConnection.createDataChannel(
+        "state-unreliable",
+        { ordered: false, id: 3, maxRetransmits: 0 }
       );
 
-      reliableChannel.onopen = () => {
+      stringChannel.onopen = () => {
         setConnectionMessage("Connected to game server");
         setIsConnectedToGameServer(true);
         console.log("Connected to game server");
       };
 
-      reliableChannel.onclose = () => {
+      stringChannel.onclose = () => {
         setConnectionMessage("Disconnected from game server");
         setIsConnectedToGameServer(false);
         console.log("Disconnected from game server");
       };
 
-      reliableChannel.onmessage = ({ data }: { data: string }) => {
+      stringChannel.onmessage = ({ data }: { data: string }) => {
         try {
           const d = JSON.parse(data);
-          onReceiveReliable(d);
+          onReceiveStringData(d);
         } catch (err) {
-          console.log("Ordered channel onmessage error:", data);
+          console.log("String channel onmessage error:", data);
         }
       };
-      reliableChannelBinary.binaryType = "arraybuffer";
-      reliableChannelBinary.onmessage = ({ data }: { data: ArrayBuffer }) => {
-        onReceiveReliableBinary(data);
-      };
-      unreliableChannelBinary.binaryType = "arraybuffer";
-      unreliableChannelBinary.onmessage = ({ data }: { data: ArrayBuffer }) => {
-        onReceiveUnreliableBinary(data);
+      ackChannel.binaryType = "arraybuffer";
+      controlsChannel.binaryType = "arraybuffer";
+      stateChannel.binaryType = "arraybuffer";
+      stateChannel.onmessage = ({ data }: { data: ArrayBuffer }) => {
+        onReceiveState(data);
       };
 
       peerConnection.onicecandidate = ({ candidate }) => {
@@ -129,9 +118,10 @@ export const useConnection = () => {
       };
       gameServer.connection = {
         peerConnection,
-        reliableChannel,
-        reliableChannelBinary,
-        unreliableChannelBinary,
+        stringChannel,
+        ackChannel,
+        controlsChannel,
+        stateChannel,
         remoteId,
       };
     },
@@ -139,9 +129,8 @@ export const useConnection = () => {
       iceServers,
       setConnectionMessage,
       setIsConnectedToGameServer,
-      onReceiveReliable,
-      onReceiveReliableBinary,
-      onReceiveUnreliableBinary,
+      onReceiveStringData,
+      onReceiveState,
     ]
   );
 

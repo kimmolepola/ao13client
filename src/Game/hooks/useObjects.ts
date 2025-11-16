@@ -5,8 +5,9 @@ import * as THREE from "three";
 import * as globals from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
+import * as parameters from "src/parameters";
 
-const axis = new THREE.Vector3(0, 0, 1);
+const uInterval = parameters.unreliableStateInterval;
 
 export const useObjects = () => {
   const setObjectIds = useSetRecoilState(atoms.objectIds);
@@ -31,12 +32,14 @@ export const useObjects = () => {
           const b = baseStateObjects[i];
           const r = globals.remoteObjects.find((x) => x.id === b.id);
           if (r) {
+            r.idOverNetwork = b.idOverNetwork;
             r.username = b.username;
             r.isPlayer = b.isPlayer;
           } else {
             objectIdsChanged = true;
             globals.remoteObjects.push({
               id: b.id,
+              idOverNetwork: b.idOverNetwork,
               isMe: b.id === globals.state.ownId,
               type: types.GameObjectType.FIGHTER,
               isPlayer: b.isPlayer,
@@ -83,6 +86,9 @@ export const useObjects = () => {
         if (objectIdsChanged) {
           const ids = baseStateObjects.map((x) => x.id);
           setObjectIds(ids);
+          globals.state.ownRemoteObjectIndex = globals.remoteObjects.findIndex(
+            (x) => x.isMe
+          );
         }
       };
 
@@ -99,32 +105,29 @@ export const useObjects = () => {
   }, [setObjectIds]);
 
   const handleReceiveState = useCallback(
-    (updateObjects: { [id: string]: types.UpdateObject }) => {
+    (updateObjects: types.UpdateObject[]) => {
       for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
         const o = globals.remoteObjects[i];
-        const u = o && updateObjects[o.id];
+        const u = o && updateObjects[o.idOverNetwork];
         if (u) {
-          o.score = u.uScore;
-          o.health = u.uHealth;
-          o.rotationSpeed = u.uRotationSpeed || 0;
-          o.speed = u.uSpeed || 0;
-          o.backendPosition.set(u.uPositionX, u.uPositionY, 1);
-          o.backendQuaternion.setFromAxisAngle(axis, u.uAngleZ);
-          o.backendPositionZ = u.uPositionZ;
-          // o.backendQuaternion.set(
-          //   u.uQuaternionX,
-          //   u.uQuaternionY,
-          //   u.uQuaternionZ,
-          //   u.uQuaternionW
-          // );
+          o.health = u.health;
+          o.backendPosition.setX(u.xDecoded);
+          o.backendPosition.setY(u.yDecoded);
+          o.backendPositionZ = u.z;
+          o.backendQuaternion.set(
+            u.quaternion.x,
+            u.quaternion.y,
+            u.quaternion.z,
+            u.quaternion.w
+          );
           if (!o.isMe) {
-            o.controlsUp += u.uControlsUp || 0;
-            o.controlsDown += u.uControlsDown || 0;
-            o.controlsLeft += u.uControlsLeft || 0;
-            o.controlsUp += u.uControlsUp || 0;
-            o.controlsSpace += u.uControlsSpace || 0;
-            o.controlsD += u.uControlsD || 0;
-            o.controlsF += u.uControlsF || 0;
+            o.controlsUp += u.ctrlsUp ? uInterval : 0;
+            o.controlsDown += u.ctrlsDown ? uInterval : 0;
+            o.controlsLeft += u.ctrlsLeft ? uInterval : 0;
+            o.controlsRight += u.ctrlsRight ? uInterval : 0;
+            o.controlsSpace += u.ctrlsSpace ? uInterval : 0;
+            o.controlsD += u.ctrlsD ? uInterval : 0;
+            o.controlsF += u.ctrlsF ? uInterval : 0;
           }
         }
       }

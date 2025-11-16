@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useSetRecoilState } from "recoil";
 
 import { chatMessageTimeToLive } from "src/parameters";
@@ -6,27 +6,36 @@ import { remoteObjects } from "src/globals";
 import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as clientHooks from "src/Game/hooks";
-import { handleReceiveUnreliableStateDataBinary } from "../../Game/netcode/unreliableState";
-import { handleReceiveReliableStateDataBinary } from "../../Game/netcode/reliableState";
+import {
+  handleReceiveStateData,
+  initializeState,
+} from "../../Game/netcode/state";
+import * as networkingHooks from "src/networking/hooks";
 
-const sequenceNumber16bitsIsNewer = (
-  newSeq: number,
-  recentSeq: number | null
-) => {
+const sequenceNumberIsNewer = (newSeq: number, recentSeq: number | null) => {
   return recentSeq === null
     ? true
-    : ((newSeq - recentSeq + 0x10000) & 0xffff) < 0x8000;
+    : ((newSeq - recentSeq + 0x100) & 0xff) < 0x80;
 };
 
+const toRecent = (seq: number) => seq % 32 === 0;
+
+const ackView = new Uint8Array(new ArrayBuffer(1));
+
 export const useReceive = () => {
-  const mostRecentSequenceNumber16bits = useRef<number | null>(null);
+  const { sendAck } = networkingHooks.useSend();
+  const mostRecentSequenceNumber = useRef<number | null>(null);
+
+  useEffect(() => {
+    initializeState();
+  }, []);
 
   const setChatMessages = useSetRecoilState(atoms.chatMessages);
   const { handleReceiveBaseState, handleReceiveState } =
     clientHooks.useObjects();
 
-  const onReceiveReliable = useCallback(
-    (data: types.NetData) => {
+  const onReceiveStringData = useCallback(
+    (data: types.StringData) => {
       switch (data.type) {
         case types.ServerDataType.BaseState: {
           handleReceiveBaseState(data.data);
@@ -52,33 +61,33 @@ export const useReceive = () => {
     [setChatMessages, handleReceiveBaseState]
   );
 
-  const onReceiveReliableBinary = useCallback((data: ArrayBuffer) => {
-    const dataView = new DataView(data);
-    handleReceiveReliableStateDataBinary(dataView);
-  }, []);
-
-  const onReceiveUnreliableBinary = useCallback(
+  const onReceiveState = useCallback(
     (data: ArrayBuffer) => {
       const dataView = new DataView(data);
-      const sequenceNumber16bits = dataView.getUint16(0);
+      const sequenceNumber = dataView.getUint8(0);
+      const save = toRecent(sequenceNumber);
 
-      if (
-        sequenceNumber16bitsIsNewer(
-          sequenceNumber16bits,
-          mostRecentSequenceNumber16bits.current
-        )
-      ) {
-        mostRecentSequenceNumber16bits.current = sequenceNumber16bits;
-        const updateObjects = handleReceiveUnreliableStateDataBinary(dataView);
-        updateObjects && handleReceiveState(updateObjects);
+      if (save) {
+        ackView[0] = sequenceNumber;
+        sendAck(ackView.buffer);
+      }
+
+      const isNewer = sequenceNumberIsNewer(
+        sequenceNumber,
+        mostRecentSequenceNumber.current
+      );
+
+      if (isNewer || save) {
+        mostRecentSequenceNumber.current = sequenceNumber;
+        const updateObjects = handleReceiveStateData(dataView, save);
+        isNewer && updateObjects && handleReceiveState(updateObjects);
       }
     },
-    [handleReceiveState]
+    [handleReceiveState, sendAck]
   );
 
   return {
-    onReceiveReliable,
-    onReceiveReliableBinary,
-    onReceiveUnreliableBinary,
+    onReceiveStringData,
+    onReceiveState,
   };
 };

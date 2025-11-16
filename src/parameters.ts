@@ -7,8 +7,12 @@ export const sidepanelMinimumSize = 90;
 export const shotDelay = 50;
 
 // netcode
-export const sendIntervalClient = 1000 / 20;
+export const clientSendInterval = 1000 / 20;
+export const unreliableStateInterval = 1000 / 20;
 export const angleMaxValue = 65535;
+export const maxRemoteObjects = 256;
+export const stateMaxSequenceNumber = 255;
+export const recentStateSlotLength = 32;
 
 // fastest projectile speed 25500 km/h ~ 13769 knots
 // 16 bit max value is 65535
@@ -19,6 +23,8 @@ export const networkToSpeedFactor = 1 / speedToNetworkFactor;
 
 const positonToNetworkFactor = 0.01;
 export const networkToPositionFactor = 1 / positonToNetworkFactor;
+const positionToNetworkAddition = 0xffffffff / 2;
+export const networkToPositionAddition = -positionToNetworkAddition;
 
 export const initialSpeed = 0;
 export const minSpeed = 0;

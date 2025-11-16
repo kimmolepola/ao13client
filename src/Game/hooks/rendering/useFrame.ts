@@ -6,7 +6,7 @@ import * as parameters from "src/parameters";
 import * as globals from "src/globals";
 import * as types from "src/types";
 import * as logic from "../../logic";
-import { gatherControlsDataBinary } from "../../netcode/message";
+import { gatherControlsDataBinary } from "../../netcode/controls";
 
 const v1 = new THREE.Vector3();
 const v2 = new THREE.Vector3();
@@ -22,7 +22,7 @@ export const useFrame = (
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   gameEventHandler: types.GameEventHandler
 ) => {
-  const { sendUnreliableBinary } = networkingHooks.useSend();
+  const { sendControlsData } = networkingHooks.useSend();
 
   const handleLocalObjects = (delta: number) => {
     const localObjectsRemoveIndexes = [];
@@ -51,10 +51,10 @@ export const useFrame = (
             logic.handleCamera(camera, o, o.object3d);
             logic.handleInfoBox(o, infoBoxRef);
             if (Date.now() > nextSendTime) {
-              nextSendTime = Date.now() + parameters.sendIntervalClient;
+              nextSendTime = Date.now() + parameters.clientSendInterval;
               const controlsData = gatherControlsDataBinary(o);
               if (controlsData) {
-                sendUnreliableBinary(controlsData);
+                sendControlsData(controlsData);
                 logic.resetControlValues(o);
               }
             }

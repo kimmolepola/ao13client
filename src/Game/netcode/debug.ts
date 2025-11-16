@@ -1,9 +1,10 @@
 import * as globals from "src/globals";
-import * as netcodeGlobals from "./globals";
+import { debugOn } from "../components/UserInterface/Sidepanel/Header";
+// import * as netcodeGlobals from "./globals";
 
 export const debug = (stateSequenceNumber: number) => {
   console.log("Received state sequance number:", stateSequenceNumber);
-  console.log("RecentStates:", netcodeGlobals.recentStates);
+  // console.log("RecentStates:", netcodeGlobals.recentStates);
   console.log("GameServer:", globals.gameServer);
   setTimeout(async () => {
     globals.gameServer.connection?.peerConnection
@@ -52,4 +53,32 @@ export const debug = (stateSequenceNumber: number) => {
         console.log("Transport protocol:", transportReport?.protocol); // 'udp' or 'tcp'
       });
   });
+};
+
+export const debugNoRecentObjectState = (
+  idIsProvided: boolean,
+  idOverNetwork: number,
+  index: number
+) => {
+  debugOn.value &&
+    console.error(
+      "No recentObjectState, idIsProvided:",
+      idIsProvided,
+      "idOverNetwork:",
+      idOverNetwork,
+      "index:",
+      index
+    );
+};
+
+export const debugDifferenceSignificance = (
+  variableName: string,
+  differenceSignificance: number
+) => {
+  debugOn.value &&
+    console.error(
+      "DifferenceSignificance:",
+      variableName,
+      differenceSignificance
+    );
 };

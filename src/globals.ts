@@ -5,8 +5,12 @@ export const localObjects: types.LocalGameObject[] = [];
 export const gameServer: {
   connection: types.ConnectionObject | undefined;
 } = { connection: undefined };
-export const state: { ownId: string | undefined } = {
+export const state: {
+  ownId: string | undefined;
+  ownRemoteObjectIndex: number | undefined;
+} = {
   ownId: undefined,
+  ownRemoteObjectIndex: undefined,
 };
 export const dimensions: {
   windowWidth: number;
