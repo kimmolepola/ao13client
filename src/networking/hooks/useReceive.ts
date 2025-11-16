@@ -11,6 +11,7 @@ import {
   initializeState,
 } from "../../Game/netcode/state";
 import * as networkingHooks from "src/networking/hooks";
+import * as debug from "../../Game/netcode/debug";
 
 const sequenceNumberIsNewer = (newSeq: number, recentSeq: number | null) => {
   return recentSeq === null
@@ -63,6 +64,7 @@ export const useReceive = () => {
 
   const onReceiveState = useCallback(
     (data: ArrayBuffer) => {
+      debug.receiveState(data);
       const dataView = new DataView(data);
       const sequenceNumber = dataView.getUint8(0);
       const save = toRecent(sequenceNumber);
@@ -70,6 +72,7 @@ export const useReceive = () => {
       if (save) {
         ackView[0] = sequenceNumber;
         sendAck(ackView.buffer);
+        debug.debug(sequenceNumber);
       }
 
       const isNewer = sequenceNumberIsNewer(
@@ -81,6 +84,9 @@ export const useReceive = () => {
         mostRecentSequenceNumber.current = sequenceNumber;
         const updateObjects = handleReceiveStateData(dataView, save);
         isNewer && updateObjects && handleReceiveState(updateObjects);
+      }
+      if (!isNewer) {
+        debug.statistics.outOfSequence++;
       }
     },
     [handleReceiveState, sendAck]

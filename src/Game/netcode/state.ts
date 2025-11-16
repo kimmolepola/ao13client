@@ -17,7 +17,9 @@ const recentStates: types.RecentStates = {
   224: [],
 };
 
-const getRecentState = (curSeq: number) => {
+export const getRecentStateForDebug = () => recentStates;
+
+const getTargetRecentState = (curSeq: number) => {
   const maxSequenceNumber = parameters.stateMaxSequenceNumber;
   const sequenceNumbers = maxSequenceNumber + 1;
   const slotLength = parameters.recentStateSlotLength;
@@ -64,21 +66,14 @@ const initializeUpdateObjects = () => {
 };
 
 const initializeRecentStates = () => {
-  const getInitializedArray = () => {
-    const arr = [];
-    for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-      arr.push({ ...initialUpdateObject });
-    }
-    return arr;
-  };
-  recentStates[0] = getInitializedArray();
-  recentStates[32] = getInitializedArray();
-  recentStates[64] = getInitializedArray();
-  recentStates[96] = getInitializedArray();
-  recentStates[128] = getInitializedArray();
-  recentStates[160] = getInitializedArray();
-  recentStates[192] = getInitializedArray();
-  recentStates[224] = getInitializedArray();
+  recentStates[0] = [];
+  recentStates[32] = [];
+  recentStates[64] = [];
+  recentStates[96] = [];
+  recentStates[128] = [];
+  recentStates[160] = [];
+  recentStates[192] = [];
+  recentStates[224] = [];
 };
 
 export const initializeState = () => {
@@ -90,6 +85,10 @@ const resetUpdateObjects = () => {
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
     updateObjects[i].exists = false;
   }
+};
+
+const resetRecentState = (seqNum: number) => {
+  recentStates[seqNum] = [];
 };
 
 const getBit = (value: number, bitPosition: number) =>
@@ -138,7 +137,8 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
 
   const sequenceNumber = dataView.getUint8(0);
 
-  const recentState = getRecentState(sequenceNumber);
+  save && resetRecentState(sequenceNumber);
+  const recentState = getTargetRecentState(sequenceNumber);
 
   let offset = 1;
   let index = 0;
@@ -169,11 +169,6 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       ? recentState.find((x) => x.idOverNetwork === idOverNetwork)
       : recentState[index];
 
-    if (!recentObjectState) {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
-    }
-
     const updateObject = updateObjects[idOverNetwork];
     updateObject.exists = true;
 
@@ -186,7 +181,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       updateObject.ctrlsSpace = getBit(controls, 4);
       updateObject.ctrlsD = getBit(controls, 5);
       updateObject.ctrlsF = getBit(controls, 6);
-    } else {
+    } else if (recentObjectState) {
       updateObject.ctrlsUp = recentObjectState.ctrlsUp;
       updateObject.ctrlsDown = recentObjectState.ctrlsDown;
       updateObject.ctrlsLeft = recentObjectState.ctrlsLeft;
@@ -194,12 +189,18 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       updateObject.ctrlsSpace = recentObjectState.ctrlsSpace;
       updateObject.ctrlsD = recentObjectState.ctrlsD;
       updateObject.ctrlsF = recentObjectState.ctrlsF;
+    } else {
+      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
+      return;
     }
 
     if (healthIsProvided) {
       updateObject.health = getNextByte();
-    } else {
+    } else if (recentObjectState) {
       updateObject.health = recentObjectState.health;
+    } else {
+      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
+      return;
     }
 
     if (bytesForPositionAndAngleIsProvided) {
@@ -212,7 +213,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
         getBits(providedBytesForPositionAndAngle, 4, 1) + 1;
       updateObject.angleZDifferenceSignificance =
         getBits(providedBytesForPositionAndAngle, 5, 1) + 1;
-    } else {
+    } else if (recentObjectState) {
       updateObject.xDifferenceSignificance =
         recentObjectState.xDifferenceSignificance;
       updateObject.yDifferenceSignificance =
@@ -221,12 +222,15 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
         recentObjectState.zDifferenceSignificance;
       updateObject.angleZDifferenceSignificance =
         recentObjectState.angleZDifferenceSignificance;
+    } else {
+      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
+      return;
     }
 
-    let xEncoded = recentObjectState.xEncoded;
-    let yEncoded = recentObjectState.yEncoded;
-    let z = recentObjectState.z;
-    let angleZ = recentObjectState.quaternionEncodedWithOnlyZRotation;
+    let xEncoded = recentObjectState?.xEncoded || 0;
+    let yEncoded = recentObjectState?.yEncoded || 0;
+    let z = recentObjectState?.z || 0;
+    let angleZ = recentObjectState?.quaternionEncodedWithOnlyZRotation || 0;
 
     if (xIsProvided) {
       xEncoded = replaceWithChange(
@@ -273,6 +277,14 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     if (updateObject.xEncoded !== xEncoded) {
+      console.log(
+        "--ENCODED:",
+        xEncoded,
+        updateObject.xEncoded,
+        "DECODED:",
+        utils.decodeAxisValue(xEncoded),
+        updateObject.xDecoded
+      );
       updateObject.xEncoded = xEncoded;
       updateObject.xDecoded = utils.decodeAxisValue(xEncoded);
     }
@@ -290,8 +302,11 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     save && recentStates[sequenceNumber].push(updateObject);
+    save && debug.debugSaveState(updateObject);
     index++;
   }
+
+  debug.statistics.objects = index;
 
   return updateObjects;
 };

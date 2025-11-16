@@ -1,10 +1,54 @@
 import * as globals from "src/globals";
-import { debugOn } from "../components/UserInterface/Sidepanel/Header";
 // import * as netcodeGlobals from "./globals";
+import * as state from "./state";
+import * as types from "../../types";
+
+export const debugOn = { value: false };
+
+export const receiveState = (data: ArrayBuffer) => {
+  !debugOn.value && (statistics.outOfSequence = 0);
+  debugOn.value && (statistics.bytes = data.byteLength);
+};
+
+export const statistics = {
+  bytes: 0,
+  objects: 0,
+  outOfSequence: 0,
+};
+
+export const debugNoRecentObjectState = (
+  idIsProvided: boolean,
+  idOverNetwork: number,
+  index: number
+) => {
+  debugOn.value &&
+    console.error(
+      "No recentObjectState, idIsProvided:",
+      idIsProvided,
+      "idOverNetwork:",
+      idOverNetwork,
+      "index:",
+      index
+    );
+};
+
+export const debugDifferenceSignificance = (
+  variableName: string,
+  differenceSignificance: number
+) => {
+  debugOn.value &&
+    console.error(
+      "DifferenceSignificance:",
+      variableName,
+      differenceSignificance
+    );
+};
 
 export const debug = (stateSequenceNumber: number) => {
-  console.log("Received state sequance number:", stateSequenceNumber);
-  // console.log("RecentStates:", netcodeGlobals.recentStates);
+  if (!debugOn.value) return;
+  console.log("RemoteGameObjects:", globals.remoteObjects);
+  console.log("Received state sequence number:", stateSequenceNumber);
+  console.log("RecentStates:", state.getRecentStateForDebug());
   console.log("GameServer:", globals.gameServer);
   setTimeout(async () => {
     globals.gameServer.connection?.peerConnection
@@ -55,30 +99,7 @@ export const debug = (stateSequenceNumber: number) => {
   });
 };
 
-export const debugNoRecentObjectState = (
-  idIsProvided: boolean,
-  idOverNetwork: number,
-  index: number
-) => {
-  debugOn.value &&
-    console.error(
-      "No recentObjectState, idIsProvided:",
-      idIsProvided,
-      "idOverNetwork:",
-      idOverNetwork,
-      "index:",
-      index
-    );
-};
-
-export const debugDifferenceSignificance = (
-  variableName: string,
-  differenceSignificance: number
-) => {
-  debugOn.value &&
-    console.error(
-      "DifferenceSignificance:",
-      variableName,
-      differenceSignificance
-    );
+export const debugSaveState = (updateObject: types.UpdateObject) => {
+  if (!debugOn.value) return;
+  console.log("SaveState:", updateObject);
 };
