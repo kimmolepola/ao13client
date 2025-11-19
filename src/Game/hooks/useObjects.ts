@@ -106,7 +106,6 @@ export const useObjects = () => {
 
   const handleReceiveState = useCallback(
     (updateObjects: types.UpdateObject[]) => {
-      // console.log("--handleReceiveState:", updateObjects);
       for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
         const o = globals.remoteObjects[i];
         const u = o && updateObjects[o.idOverNetwork];

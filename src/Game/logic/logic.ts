@@ -18,33 +18,41 @@ export const handleKeys = (
   gameObject: types.RemoteGameObject
 ) => {
   const o = gameObject;
-  o.keyDowns.forEach((key) => {
+  for (let i = 0; i < o.keyDowns.length; i++) {
+    const key = o.keyDowns[i];
     switch (key) {
       case types.Keys.Up:
         o.controlsUp += delta;
+        o.controlsOverChannelsUp += delta;
         break;
       case types.Keys.Down:
         o.controlsDown += delta;
+        o.controlsOverChannelsDown += delta;
         break;
       case types.Keys.Left:
         o.controlsLeft += delta;
+        o.controlsOverChannelsLeft += delta;
         break;
       case types.Keys.Right:
         o.controlsRight += delta;
+        o.controlsOverChannelsRight += delta;
         break;
       case types.Keys.Space:
         o.controlsSpace += delta;
+        o.controlsOverChannelsSpace += delta;
         break;
       case types.Keys.D:
         o.controlsD += delta;
+        o.controlsOverChannelsD += delta;
         break;
       case types.Keys.F:
         o.controlsF += delta;
+        o.controlsOverChannelsF += delta;
         break;
       default:
         break;
     }
-  });
+  }
 };
 
 export const handleShot = (

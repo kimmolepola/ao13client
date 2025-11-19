@@ -277,14 +277,6 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     if (updateObject.xEncoded !== xEncoded) {
-      console.log(
-        "--ENCODED:",
-        xEncoded,
-        updateObject.xEncoded,
-        "DECODED:",
-        utils.decodeAxisValue(xEncoded),
-        updateObject.xDecoded
-      );
       updateObject.xEncoded = xEncoded;
       updateObject.xDecoded = utils.decodeAxisValue(xEncoded);
     }
@@ -301,8 +293,10 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       updateObject.quaternion.setFromAxisAngle(axis, utils.decodeAngle(angleZ));
     }
 
-    save && recentStates[sequenceNumber].push(updateObject);
-    save && debug.debugSaveState(updateObject);
+    if (save) {
+      save && recentStates[sequenceNumber].push(updateObject);
+      save && debug.debugSaveState(updateObject);
+    }
     index++;
   }
 

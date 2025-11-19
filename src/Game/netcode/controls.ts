@@ -12,6 +12,8 @@ export const gatherControlsDataBinary = (o: types.RemoteGameObject) => {
   const d = o.controlsOverChannelsD;
   const f = o.controlsOverChannelsF;
 
+  if (!up && !down && !left && !right && !space && !d && !f) return;
+
   let controls = 0b00000000;
   up && (controls |= 0b00000001);
   down && (controls |= 0b00000010);

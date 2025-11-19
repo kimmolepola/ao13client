@@ -55,7 +55,6 @@ export const useFrame = (
               const controlsData = gatherControlsDataBinary(o);
               if (controlsData) {
                 sendControlsData(controlsData);
-                logic.resetControlValues(o);
               }
             }
           }
