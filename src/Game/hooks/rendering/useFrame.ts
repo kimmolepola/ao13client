@@ -14,7 +14,7 @@ const v3 = new THREE.Vector3();
 const q1 = new THREE.Quaternion();
 const q2 = new THREE.Quaternion();
 const q3 = new THREE.Quaternion();
-let nextSendTime = Date.now();
+let deltaCumulative = 0;
 
 export const useFrame = (
   camera: THREE.PerspectiveCamera,
@@ -41,6 +41,7 @@ export const useFrame = (
   };
 
   const handleObjects = (delta: number) => {
+    deltaCumulative += delta;
     for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
       const o = globals.remoteObjects[i];
       if (o && o.object3d) {
@@ -50,9 +51,9 @@ export const useFrame = (
             logic.handleKeys(delta, o);
             logic.handleCamera(camera, o, o.object3d);
             logic.handleInfoBox(o, infoBoxRef);
-            if (Date.now() > nextSendTime) {
-              nextSendTime = Date.now() + parameters.clientSendInterval;
-              const controlsData = gatherControlsDataBinary(o);
+            if (deltaCumulative > parameters.clientSendInterval) {
+              const controlsData = gatherControlsDataBinary(o, deltaCumulative);
+              deltaCumulative = 0;
               if (controlsData) {
                 sendControlsData(controlsData);
               }

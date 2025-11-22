@@ -3,6 +3,7 @@ import * as types from "../../types";
 import * as parameters from "../../parameters";
 import * as debug from "./debug";
 import * as utils from "../../utils";
+import * as globals from "../../globals";
 
 const axis = new THREE.Vector3(0, 0, 1);
 
@@ -26,14 +27,15 @@ const getTargetRecentState = (curSeq: number) => {
   const remainder = curSeq % slotLength;
   const slotStart = curSeq - remainder;
   const difference = slotStart - slotLength;
-  const previousSlotStart = (difference + sequenceNumbers) & maxSequenceNumber;
+  const previousSlotStart =
+    ((difference + sequenceNumbers) & maxSequenceNumber) >>> 0;
   const recentState = recentStates[previousSlotStart];
   return recentState;
 };
 
 const updateObjects: types.UpdateObject[] = []; // index is idOverNetwork
 
-const initialUpdateObject = {
+const getinitialUpdateObject = () => ({
   exists: false,
   idOverNetwork: 0,
   ctrlsUp: false,
@@ -56,12 +58,12 @@ const initialUpdateObject = {
   quaternionEncodedWithOnlyZRotation: 0,
   quaternion: new THREE.Quaternion(0, 0, 0, 0),
   quaternionChanged: false,
-};
+});
 
 const initializeUpdateObjects = () => {
   updateObjects.length = 0;
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-    updateObjects.push({ ...initialUpdateObject, idOverNetwork: i });
+    updateObjects.push({ ...getinitialUpdateObject(), idOverNetwork: i });
   }
 };
 
@@ -114,19 +116,23 @@ const replaceWithChange = (
   variableName: string
 ) => {
   if (differenceSignificance === 4) {
-    return dataView.getUint32(offset);
+    const result = dataView.getUint32(offset);
+    return result;
   }
   if (differenceSignificance === 3) {
     const change = getUint24(dataView, offset);
-    return (oldValue & ~0xffffff) | (change & 0xffffff);
+    const result = ((oldValue & ~0xffffff) | (change & 0xffffff)) >>> 0;
+    return result;
   }
   if (differenceSignificance === 2) {
     const change = dataView.getUint16(offset);
-    return (oldValue & ~0xffff) | (change & 0xffff);
+    const result = ((oldValue & ~0xffff) | (change & 0xffff)) >>> 0;
+    return result;
   }
   if (differenceSignificance === 1) {
     const change = dataView.getUint8(offset);
-    return (oldValue & ~0xff) | (change & 0xff);
+    const result = ((oldValue & ~0xff) | (change & 0xff)) >>> 0;
+    return result;
   }
   debug.debugDifferenceSignificance(variableName, differenceSignificance);
   return oldValue;
@@ -294,7 +300,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     if (save) {
-      save && recentStates[sequenceNumber].push(updateObject);
+      save && recentStates[sequenceNumber].push({ ...updateObject });
       save && debug.debugSaveState(updateObject);
     }
     index++;
