@@ -4,8 +4,48 @@ import * as THREE from "three";
 // 2 bytes for sequence number, 1 byte for associated reliable-state sequence number
 export const unreliableStateInfoBytes = 3;
 
-export const reliableStateSingleObjectBytes = 41;
-export const unreliableStateSingleObjectMaxBytes = 32;
+export const reliableStateSingleObjectBytes = 14;
+export const reliableStateOffsets = {
+  idOverNetwork: 0,
+  health: 1,
+  positionX: 2,
+  positionY: 6,
+  positionZ: 10,
+  angleZ: 12,
+};
+
+export const unreliableStateSingleObjectMaxBytes = 17;
+
+export type UpdateObject = {
+  exists: boolean;
+  idOverNetwork: number;
+  ctrlsUp: boolean;
+  ctrlsDown: boolean;
+  ctrlsLeft: boolean;
+  ctrlsRight: boolean;
+  ctrlsSpace: boolean;
+  ctrlsD: boolean;
+  ctrlsF: boolean;
+  health: number;
+  xDifferenceSignificance: number;
+  yDifferenceSignificance: number;
+  zDifferenceSignificance: number;
+  angleZDifferenceSignificance: number;
+  xEncoded: number;
+  xDecoded: number;
+  yEncoded: number;
+  yDecoded: number;
+  z: number;
+  quaternionEncodedWithOnlyZRotation: number;
+  quaternion: THREE.Quaternion;
+};
+
+export type RecentStates = {
+  // The objects in the UpdateObject[] array are in the order they were in the received data.
+  // If the received object data does not have idOverNetwork, the idOverNetwork will be looked from
+  // the object in the UpdateObject[] array that has the same index as the received object.
+  [sequenceNumber: number]: UpdateObject[];
+};
 
 export enum Position {
   RIGHT,
@@ -23,9 +63,10 @@ export type Three = {
 export type ConnectionObject = {
   remoteId: string;
   peerConnection: RTCPeerConnection;
-  reliableChannel?: RTCDataChannel;
-  reliableChannelBinary?: RTCDataChannel;
-  unreliableChannelBinary?: RTCDataChannel;
+  stringChannel?: RTCDataChannel;
+  ackChannel?: RTCDataChannel;
+  controlsChannel?: RTCDataChannel;
+  stateChannel?: RTCDataChannel;
 };
 
 export type PeerConnectionsDictionary = {
@@ -87,6 +128,7 @@ export interface LocalGameObject extends GameObject {
 }
 
 export interface RemoteGameObject extends GameObject {
+  idOverNetwork: number;
   health: number;
   type: GameObjectType.FIGHTER;
   object3d: THREE.Mesh<THREE.BoxGeometry, THREE.Material[]> | undefined;
@@ -144,91 +186,67 @@ export type ChatMessageFromClient = {
   text: string;
 };
 
-export type UpdateObject = {
-  uScore: number;
-  uHealth: number;
-  uControlsUp: number;
-  uControlsDown: number;
-  uControlsLeft: number;
-  uControlsRight: number;
-  uControlsSpace: number;
-  uControlsD: number;
-  uControlsF: number;
-  uRotationSpeed: number;
-  uVerticalSpeed: number;
-  uSpeed: number;
-  uPositionX: number;
-  uPositionY: number;
-  uPositionZ: number;
-  uAngleZ: number;
-  // uQuaternionX: number;
-  // uQuaternionY: number;
-  // uQuaternionZ: number;
-  // uQuaternionW: number;
-};
-
 export type BaseStateObject = {
   id: string;
+  idOverNetwork: number;
   isPlayer: boolean;
   username: string;
 };
 
-// Reliable-State shape (1 + n * 41 bytes)
+// State shape (1 + n * 1-17 bytes)
 // [
 //   Uint8 sequence number (1 byte)
-//   ...stateDataInOrder (41 bytes each): [
-//     Uint32 guid part 1
-//     Uint32 guid part 2
-//     Uint32 guid part 3
-//     Uint32 guid part 4
-//     Uint32 score
-//     Uint8 health
-//     Int8 rotationSpeed
-//     Int8 verticalSpeed
-//     Uint16 speed
-//     Float32 positionX
-//     Float32 positionY
-//     Float32 positionZ
-//     Float32 angleZ
+//   ...game object data (1-17 bytes each): [                                           bytes cumulative max
+//     Uint8 providedValues1to8                                                         1
+//       1: idOverNetwork                                                               |
+//       2: controls                                                                    |
+//       3: health                                                                      |
+//       4: positionX                                                                   |
+//       5: positionY                                                                   |
+//       6: positionZ                                                                   |
+//       7: angleZ                                                                      |
+//       8: providedBytesForPositionAndAngle                                            |
+//     Uint8 idOverNetwork? #1                                                          2
+//     Uint8 controls? #2 (1:up 2:down 3:left 4:right 5:space 6:keyD 7:keyF)            3
+//     Uint8 health? #3                                                                 4
+//     Uint8 providedBytesForPositionAndAngle? #4 (6 bits in use)                       5
+//       1&2 positionX:                                                                 |
+//         [00]: 1 byte                                                                 |
+//         [01]: 2 bytes                                                                |
+//         [10]: 3 bytes                                                                |
+//         [11]: 4 bytes                                                                |
+//       3&4 positionY:                                                                 |
+//         [00]: 1 byte                                                                 |
+//         [01]: 2 bytes                                                                |
+//         [10]: 3 bytes                                                                |
+//         [11]: 4 bytes                                                                |
+//       5 positionZ:                                                                   |
+//         [0]: 1 byte                                                                  |
+//         [1]: 2 bytes                                                                 |
+//       6 angleZ:                                                                      |
+//         [0]: 1 byte                                                                  |
+//         [1]: 2 bytes                                                                 |
+//     Uint8*1-4 positionX? #3 (unit is cm * positonToNetworkFactor (0.01) = meter)     9
+//     Uint8*1-4 positionY? #4 (unit is cm * positonToNetworkFactor (0.01) = meter)     13
+//     Uint8*1-2 positionZ? #5 (unit is feet)                                           15
+//     Uint8*1-2 angleZ? #6                                                             17
 //   ]
 // ]
 
-// Unreliable-State shape (3 + n * 2-32 bytes)
+// Controls shape (1-5 bytes)
 // [
-//   Uint16 sequence number (2 bytes)
-//   Uint8 sequence number of associated reliable-state (1 byte)
-//   ...game object data (2-32 bytes each): [
-//     Uint8 providedValues1to8
-//     Uint8 providedValues9to16
-//     Uint32 score? #1
-//     Uint8 health? #2
-//     Uint8 controlsUp? #3
-//     Uint8 controlsDown? #4
-//     Uint8 controlsLeft? #5
-//     Uint8 controlsRight? #6
-//     Uint8 controlsSpace? #7
-//     Uint8 controlsD? #8
-//     Uint8 controlsF? #9
-//     Int8 rotationSpeed? #10
-//     int8 verticalSpeed? #11
-//     Uint16 speed? #12
-//     Float32 positionX? #13
-//     Float32 positionY? #14
-//     Float32 positionZ? #15
-//     Uint16 angleZ? #16
-//   ]
-// ]
-
-// ControlsBinary shape (1-8 bytes)
-// [
-//   Uint8 providedValues
-//   Uint8 up?
-//   Uint8 down?
-//   Uint8 left?
-//   Uint8 right?
-//   Uint8 space?
-//   Uint8 d?
-//   Uint8 f?
+//     Uint8 providedControls1to7 (1:up 2:down 3:left 4:right 5:space 6:keyD 7:keyF)
+//     Uint8
+//       1-4 providedControl1?
+//       5-8 providedControl2?
+//     Uint8
+//       1-4 providedControl3?
+//       5-8 providedControl4?
+//     Uint8
+//       1-4 providedControl5?
+//       5-8 providedControl6?
+//     Uint8
+//       1-4 providedControl7?
 // ]
 
 export type UpdateBinary = ArrayBuffer;
@@ -256,7 +274,7 @@ export type BaseState = {
   data: BaseStateObject[];
 };
 
-export type NetData = ChatMessageFromServer | BaseState;
+export type StringData = ChatMessageFromServer | BaseState;
 
 export type Channel = {
   send: (stringData: string) => void;

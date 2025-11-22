@@ -18,7 +18,8 @@ export const handleKeys = (
   gameObject: types.RemoteGameObject
 ) => {
   const o = gameObject;
-  o.keyDowns.forEach((key) => {
+  for (let i = 0; i < o.keyDowns.length; i++) {
+    const key = o.keyDowns[i];
     switch (key) {
       case types.Keys.Up:
         o.controlsUp += delta;
@@ -51,7 +52,7 @@ export const handleKeys = (
       default:
         break;
     }
-  });
+  }
 };
 
 export const handleShot = (

@@ -5,16 +5,16 @@ import * as networkingHooks from "src/networking/hooks";
 import * as types from "src/types";
 
 const Container = ({ quit }: { quit: () => void }) => {
-  const { sendReliable } = networkingHooks.useSend();
+  const { sendStringData } = networkingHooks.useSend();
 
   const chatOnSubmit = useCallback(
     (value: string) => {
-      sendReliable({
+      sendStringData({
         type: types.ClientDataType.ChatMessage_Client,
         text: value,
       });
     },
-    [sendReliable]
+    [sendStringData]
   );
 
   return <Content quit={quit} chatOnSubmit={chatOnSubmit} />;

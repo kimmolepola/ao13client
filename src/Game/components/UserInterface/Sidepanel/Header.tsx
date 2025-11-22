@@ -1,8 +1,7 @@
 import { useState, useCallback, memo } from "react";
 import { BiMove } from "react-icons/bi";
 import clsx from "clsx";
-
-export const debugOn = { value: false };
+import { debugOn } from "../../../netcode/debug";
 
 const Header = ({
   move,

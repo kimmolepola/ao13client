@@ -5,6 +5,7 @@ import * as types from "src/types";
 import * as utils from "src/utils";
 import * as parameters from "src/parameters";
 import * as globals from "src/globals";
+import * as debug from "../../netcode/debug";
 
 export const handleCamera = (
   camera: THREE.PerspectiveCamera,
@@ -51,6 +52,18 @@ export const handleInfoBox = (
     heading: ${heading}
     speed: ${o.speed.toFixed(1)}
     health: ${o.health.toFixed(0)}
+    ${
+      debug.debugOn.value
+        ? `
+      bytes: ${debug.statistics.bytes}
+      objects: ${debug.statistics.objects}
+      perObjMean: ${Math.ceil(
+        debug.statistics.bytes / debug.statistics.objects
+      )}
+      outOfSequence: ${debug.statistics.outOfSequence}
+      `
+        : ""
+    }
     `;
   }
 };

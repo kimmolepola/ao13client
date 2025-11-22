@@ -47,6 +47,8 @@ export const useControls = () => {
     return () => {
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("touchend", handleAllReleased);
+      window.removeEventListener("touchcancel", handleAllReleased);
     };
   }, [handleKeyUp, handleKeyDown]);
 };
