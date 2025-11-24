@@ -39,7 +39,7 @@ export const useConnection = () => {
         iceServers,
         iceTransportPolicy: "relay",
       });
-      peerConnection.addTransceiver("audio", { direction: "recvonly" });
+      // peerConnection.addTransceiver("audio", { direction: "recvonly" });
 
       peerConnection.onconnectionstatechange = () => {
         console.log("Connection state change:", peerConnection.connectionState);
@@ -206,7 +206,8 @@ export const useConnection = () => {
 
   const connect = useCallback(async () => {
     try {
-      await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+      // await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+      await navigator.mediaDevices.getUserMedia({ video: false, audio: false });
     } catch (err) {
       console.log("getUserMedia err:", err);
     }

@@ -23,10 +23,10 @@ const Content = () => {
   const location = useLocation();
 
   return (
-    <div className="h-full flex flex-col bg-blue-200">
+    <div className="h-full flex flex-col bg-blue-200 dark:bg-blue-900">
       {Boolean(user) && <AppBar />}
       <div
-        className={`grow flex flex-col items-center bg-rose-50 text-zinc-800 gap-4 ${
+        className={`grow flex flex-col items-center bg-rose-50 text-zinc-800 dark:bg-rose-900 dark:text-zinc-200 gap-4 ${
           user ? "pt-12 top-12" : "pt-24"
         }`}
       >
