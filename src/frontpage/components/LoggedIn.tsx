@@ -84,10 +84,6 @@ const LoggedIn = () => {
             >
               Play
             </button>
-            <div className="w-2/3 flex justify-center">
-              Microphone permission required on mobile for the connection to
-              work
-            </div>
           </>
         }
       />
