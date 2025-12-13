@@ -60,9 +60,11 @@ export const connectionMessage = atom<string | undefined>({
 
 export const user = atom<
   | {
-      token: string | undefined;
       username: string;
       score: number;
+      accessToken: string | undefined;
+      accessTokenExpiration: number | undefined;
+      refreshToken: string | undefined;
     }
   | undefined
 >({

@@ -1,8 +1,10 @@
 import axios from "axios";
 import { backendUrl } from "src/config";
+import * as globals from "../../globals";
 
-export const setToken = (token: string) => {
-  axios.defaults.headers.common = { Authorization: `Bearer ${token}` };
+export const setAccessToken = (accessToken: string) => {
+  globals.accessToken.value = accessToken;
+  axios.defaults.headers.common = { Authorization: `Bearer ${accessToken}` };
 };
 
 export const getTurnCredentials = async () => {
@@ -83,13 +85,19 @@ export const login = async ({
       username,
       password,
     });
-    return { data: response.data };
+    const data = {
+      username: response.data?.username,
+      score: response.data?.score,
+      accessToken: response.data?.accessToken,
+      refreshToken: response.data?.refreshToken,
+    };
+    return { data, error: null };
   } catch (err: any) {
     if (err.response?.status === 401) {
-      return { error: "Invalid username, email or password" };
+      return { data: null, error: "Invalid username, email or password" };
     }
     const error = err.response?.data ? err.response.data.error : err.toString();
-    return { error };
+    return { data: null, error };
   }
 };
 
@@ -123,7 +131,30 @@ export const confirmSignup = async ({
         token,
       }
     );
-    return { data: response.data };
+    const data = {
+      username: response.data?.username,
+      score: response.data?.score,
+      accessToken: response.data?.accessToken,
+      refreshToken: response.data?.refreshToken,
+    };
+    return { data, error: null };
+  } catch (err: any) {
+    const error = err.response?.data ? err.response.data.error : err.toString();
+    return { data: null, error };
+  }
+};
+
+export const requestTokenRefresh = async (refreshToken: string) => {
+  try {
+    const response = await axios.post(
+      `${backendUrl}/api/v1/auth/refreshToken`,
+      { refreshToken }
+    );
+    const data = {
+      accessToken: response.data?.accessToken,
+      refreshToken: response.data?.refreshToken,
+    };
+    return { data };
   } catch (err: any) {
     const error = err.response?.data ? err.response.data.error : err.toString();
     return { error };

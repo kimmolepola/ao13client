@@ -12,7 +12,6 @@ import * as globals from "src/globals";
 
 export const useConnection = () => {
   const socketRef = useRef<HubConnection | undefined>();
-  const user = useRecoilValue(atoms.user);
   const iceServers = useRecoilValue(atoms.iceServers);
   const setConnectionMessage = useSetRecoilState(atoms.connectionMessage);
   const setIsConnectedToGameServer = useSetRecoilState(
@@ -205,15 +204,15 @@ export const useConnection = () => {
   ]);
 
   const connect = useCallback(async () => {
-    try {
-      // await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-      await navigator.mediaDevices.getUserMedia({ video: false, audio: false });
-    } catch (err) {
-      console.log("getUserMedia err:", err);
-    }
+    // try {
+    // await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    // await navigator.mediaDevices.getUserMedia({ video: false, audio: false });
+    // } catch (err) {
+    //   console.log("getUserMedia err:", err);
+    // }
     socketRef.current = new HubConnectionBuilder()
       .withUrl(backendUrl + "/api/v1/hub", {
-        accessTokenFactory: () => user?.token || "",
+        accessTokenFactory: () => globals.accessToken.value || "",
       })
       .build();
 
@@ -245,7 +244,6 @@ export const useConnection = () => {
       disconnect();
     });
   }, [
-    user?.token,
     createPeerConnection,
     disconnect,
     peerConnectionHandleSignaling,

@@ -36,11 +36,11 @@ const Container = () => {
   }, [setPage, disconnect]);
 
   useEffect(() => {
-    if (!initialized && iceServers && user?.token) {
+    if (!initialized && iceServers && user?.accessToken) {
       initialized = true;
       connect();
     }
-  }, [connect, iceServers, user?.token]);
+  }, [connect, iceServers, user?.accessToken]);
 
   const style = useMemo(() => {
     const { size, position } = sidepanelGeometry;

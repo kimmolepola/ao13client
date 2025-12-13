@@ -3,12 +3,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import clsx from "clsx";
 
-import { confirmSignup, setToken } from "src/networking/services/auth.service";
+import {
+  confirmSignup,
+  setAccessToken,
+} from "src/networking/services/auth.service";
 
 import * as theme from "src/theme";
 import * as atoms from "src/atoms";
 import * as types from "../types";
 import * as hooks from "../hooks";
+import * as utils from "../../utils";
 
 const ConfirmSignUp = () => {
   const query = new URLSearchParams(useLocation().search);
@@ -42,11 +46,24 @@ const ConfirmSignUp = () => {
     } else if (!newValidation.password && !newValidation.repeatPassword) {
       newValidation.state = types.ValidationState.LOADING;
       setValidation(newValidation);
-      const { data, error } = await confirmSignup({ email, password, token });
+      const { data: fullData, error } = await confirmSignup({
+        email,
+        password,
+        token,
+      });
+      const exp = utils.decodeJWT(fullData?.accessToken)?.payload?.exp;
+      const data = {
+        exp,
+        username: fullData?.username,
+        score: fullData?.score,
+        accessToken: fullData?.accessToken,
+        accessTokenExpiration: exp,
+        refreshToken: fullData?.refreshToken,
+      };
       newValidation.create = error;
       newValidation.state = types.ValidationState.OPEN;
       if (!error) {
-        setToken(data.token);
+        setAccessToken(data.accessToken);
         setUser(data);
       }
     }

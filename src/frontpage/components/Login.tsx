@@ -3,12 +3,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
 import clsx from "clsx";
 
-import { setToken, login } from "src/networking/services/auth.service";
+import { setAccessToken, login } from "src/networking/services/auth.service";
 
 import * as theme from "src/theme";
 import * as atoms from "src/atoms";
 import * as types from "../types";
 import * as hooks from "../hooks";
+import * as utils from "../../utils";
 
 const Login = () => {
   const setUser = useSetRecoilState(atoms.user);
@@ -33,19 +34,24 @@ const Login = () => {
       newValidation.state = types.ValidationState.LOADING;
       setValidation(newValidation);
       const { data: fullData, error } = await login({ username, password });
+      const exp = utils.decodeJWT(fullData?.accessToken)?.payload?.exp;
       const data = {
-        token: fullData?.token,
         username: fullData?.username,
         score: fullData?.score,
+        accessToken: fullData?.accessToken,
+        accessTokenExpiration: exp,
+        refreshToken: fullData?.refreshToken,
       };
       newValidation.login = error;
       newValidation.state = types.ValidationState.OPEN;
       if (!error) {
         setUser(data);
-        setToken(data?.token);
+        setAccessToken(data?.accessToken);
         setUsername("");
         if (rememberMe) {
           localStorage.setItem("user", JSON.stringify(data));
+        } else {
+          localStorage.removeItem("user");
         }
       }
     }

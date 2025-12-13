@@ -2,7 +2,7 @@ import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useRecoilState } from "recoil";
 
-import { logout, setToken } from "src/networking/services/auth.service";
+import { logout, setAccessToken } from "src/networking/services/auth.service";
 
 import * as atoms from "src/atoms";
 
@@ -13,7 +13,7 @@ const AppBar = () => {
     logout();
     localStorage.removeItem("user");
     setUser(undefined);
-    setToken("");
+    setAccessToken("");
   }, [setUser]);
 
   return (
