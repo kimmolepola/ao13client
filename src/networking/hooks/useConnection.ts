@@ -1,24 +1,27 @@
-import { useRef, useCallback } from "react";
+import { Dispatch, SetStateAction, useRef, useCallback } from "react";
 import { HubConnectionBuilder, HubConnection } from "@microsoft/signalr";
-import { useSetRecoilState, useRecoilValue } from "recoil";
 
 import { backendUrl } from "src/config";
 import { gameServer } from "src/globals";
 import { useReceive } from "./useReceive";
-import * as clientHooks from "src/Game/hooks";
-import * as atoms from "src/atoms";
+import * as hooks from "src/Game/hooks";
 import * as types from "src/types";
 import * as globals from "src/globals";
 
-export const useConnection = () => {
+export const useConnection = (
+  iceServers: types.IceServerInfo[] | undefined,
+  onChangeConnectionMessage: (value: string | undefined) => void,
+  onChangeIsConnectedToGameServer: (value: boolean) => void,
+  setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
+  onChangeObjectIds: (value: string[]) => void
+) => {
   const socketRef = useRef<HubConnection | undefined>();
-  const iceServers = useRecoilValue(atoms.iceServers);
-  const setConnectionMessage = useSetRecoilState(atoms.connectionMessage);
-  const setIsConnectedToGameServer = useSetRecoilState(
-    atoms.isConnectedToGameServer
+  const { handleQuit: handleQuitForObjects } =
+    hooks.useObjects(onChangeObjectIds);
+  const { onReceiveStringData, onReceiveState } = useReceive(
+    onChangeObjectIds,
+    setChatMessages
   );
-  const { handleQuit: handleQuitForObjects } = clientHooks.useObjects();
-  const { onReceiveStringData, onReceiveState } = useReceive();
 
   const closePeerConnection = useCallback(
     (peerConnection: types.ConnectionObject) => {
@@ -33,7 +36,7 @@ export const useConnection = () => {
 
   const createPeerConnection = useCallback(
     (remoteId: string) => {
-      setConnectionMessage("Connecting to server...");
+      onChangeConnectionMessage("Connecting to server...");
       const peerConnection = new RTCPeerConnection({
         iceServers,
         iceTransportPolicy: "relay",
@@ -66,14 +69,14 @@ export const useConnection = () => {
       );
 
       stringChannel.onopen = () => {
-        setConnectionMessage("Connected to game server");
-        setIsConnectedToGameServer(true);
+        onChangeConnectionMessage("Connected to game server");
+        onChangeIsConnectedToGameServer(true);
         console.log("Connected to game server");
       };
 
       stringChannel.onclose = () => {
-        setConnectionMessage("Disconnected from game server");
-        setIsConnectedToGameServer(false);
+        onChangeConnectionMessage("Disconnected from game server");
+        onChangeIsConnectedToGameServer(false);
         console.log("Disconnected from game server");
       };
 
@@ -126,8 +129,8 @@ export const useConnection = () => {
     },
     [
       iceServers,
-      setConnectionMessage,
-      setIsConnectedToGameServer,
+      onChangeConnectionMessage,
+      onChangeIsConnectedToGameServer,
       onReceiveStringData,
       onReceiveState,
     ]
@@ -193,14 +196,14 @@ export const useConnection = () => {
     gameServer.connection && closePeerConnection(gameServer.connection);
     gameServer.connection = undefined;
     globals.state.ownId = undefined;
-    setConnectionMessage("Disconnected from signaling server");
-    setIsConnectedToGameServer(false);
+    onChangeConnectionMessage("Disconnected from signaling server");
+    onChangeIsConnectedToGameServer(false);
     console.log("Signaling socket disconnected");
   }, [
     closePeerConnection,
     handleQuitForObjects,
-    setConnectionMessage,
-    setIsConnectedToGameServer,
+    onChangeConnectionMessage,
+    onChangeIsConnectedToGameServer,
   ]);
 
   const connect = useCallback(async () => {
@@ -221,13 +224,13 @@ export const useConnection = () => {
     socket?.start().catch((err) => document.write(err));
 
     socket?.on("serverError", () => {
-      setConnectionMessage("Server error. Disconnecting...");
+      onChangeConnectionMessage("Server error. Disconnecting...");
       console.log("Server error. Disconnecting...");
       disconnect();
     });
 
     socket?.on("init", (id: string) => {
-      setConnectionMessage("Connected to signaling server");
+      onChangeConnectionMessage("Connected to signaling server");
       console.log("Signaling socket connected");
       globals.state.ownId = id;
       createPeerConnection("server");
@@ -239,7 +242,7 @@ export const useConnection = () => {
     });
 
     socket?.on("disconnect", () => {
-      setConnectionMessage("Disconnecting from signaling server");
+      onChangeConnectionMessage("Disconnecting from signaling server");
       console.log("Signaling socket disconnecting");
       disconnect();
     });
@@ -247,7 +250,7 @@ export const useConnection = () => {
     createPeerConnection,
     disconnect,
     peerConnectionHandleSignaling,
-    setConnectionMessage,
+    onChangeConnectionMessage,
   ]);
 
   return { connect, disconnect };
