@@ -1,16 +1,20 @@
 import { ChangeEvent, memo, useMemo, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
-import { useSetRecoilState } from "recoil";
 
 import { updateUsername } from "src/networking/services/user.service";
 
 import * as theme from "src/theme";
-import * as atoms from "src/atoms";
 import * as types from "../types";
 import * as hooks from "../hooks";
+import * as sharedTypes from "../../types";
 
-const Settings = () => {
-  const setUser = useSetRecoilState(atoms.user);
+const Settings = ({
+  user,
+  onChangeUser,
+}: {
+  user: sharedTypes.User | undefined;
+  onChangeUser: (user: sharedTypes.User | undefined) => void;
+}) => {
   const [validation, setValidation, resetValidation] = hooks.useValidation();
   const [username, setUsername] = useState("");
 
@@ -47,7 +51,8 @@ const Settings = () => {
         ? types.ValidationState.OPEN
         : types.ValidationState.SUCCESS;
       if (!error) {
-        setUser((u) => (u ? { ...u, username: data.username } : undefined));
+        const newUser = user ? { ...user, username: data.username } : undefined;
+        onChangeUser(newUser);
         setUsername("");
       }
     }

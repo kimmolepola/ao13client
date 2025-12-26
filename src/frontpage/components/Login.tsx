@@ -1,18 +1,20 @@
 import { ChangeEvent, memo, useCallback, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useSetRecoilState } from "recoil";
 import clsx from "clsx";
 
 import { setAccessToken, login } from "src/networking/services/auth.service";
 
 import * as theme from "src/theme";
-import * as atoms from "src/atoms";
 import * as types from "../types";
 import * as hooks from "../hooks";
 import * as utils from "../../utils";
+import * as sharedTypes from "../../types";
 
-const Login = () => {
-  const setUser = useSetRecoilState(atoms.user);
+const Login = ({
+  onChangeUser,
+}: {
+  onChangeUser: (user: sharedTypes.User | undefined) => void;
+}) => {
   const navigate = useNavigate();
   const [validation, setValidation, resetValidation] = hooks.useValidation();
   const [username, setUsername] = useState("");
@@ -45,7 +47,7 @@ const Login = () => {
       newValidation.login = error;
       newValidation.state = types.ValidationState.OPEN;
       if (!error) {
-        setUser(data);
+        onChangeUser(data);
         setAccessToken(data?.accessToken);
         setUsername("");
         if (rememberMe) {

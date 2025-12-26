@@ -1,13 +1,10 @@
 import { useCallback, useEffect } from "react";
-import { useRecoilValue } from "recoil";
 import * as THREE from "three";
-import * as atoms from "src/atoms";
 import * as hooks from "..";
 import * as globals from "src/globals";
 import * as types from "src/types";
 
-export const useLoader = (scene: THREE.Scene) => {
-  const objectIds = useRecoilValue(atoms.objectIds);
+export const useLoader = (objectIds: string[], scene: THREE.Scene) => {
   const { loadFighter } = hooks.useMeshes();
 
   const load = useCallback(

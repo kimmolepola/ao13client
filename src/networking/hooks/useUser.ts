@@ -1,18 +1,15 @@
 import { useCallback } from "react";
-import { useSetRecoilState } from "recoil";
 
 import { getUser } from "../services/user.service";
-import * as atoms from "../../atoms";
+import * as types from "../../types";
 
-export const useUser = () => {
-  const setUser = useSetRecoilState(atoms.user);
-
+export const useUser = (
+  onChangeUser: (user: types.User | undefined) => void
+) => {
   const refreshUser = useCallback(async () => {
     const { data } = await getUser();
-    if (data) {
-      setUser(data);
-    }
-  }, [setUser]);
+    data && onChangeUser(data);
+  }, [onChangeUser]);
 
   return { refreshUser };
 };

@@ -1,6 +1,5 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { useLocation, Routes, Route } from "react-router-dom";
-import { useRecoilValue, useSetRecoilState } from "recoil";
 
 import { checkOkToStart } from "src/networking/services/user.service";
 import { getTurnCredentials } from "src/networking/services/auth.service";
@@ -9,14 +8,21 @@ import * as networkingHooks from "src/networking/hooks";
 import Settings from "./Settings";
 
 import * as theme from "src/theme";
-import * as atoms from "src/atoms";
+import * as types from "../../types";
 
-const LoggedIn = () => {
+const LoggedIn = ({
+  user,
+  onChangeUser,
+  onChangePage,
+  onChangeIceServers,
+}: {
+  user: types.User | undefined;
+  onChangeUser: (user: types.User | undefined) => void;
+  onChangePage: (page: "frontpage" | "game") => void;
+  onChangeIceServers: (value: types.IceServerInfo[]) => void;
+}) => {
   const location = useLocation();
-  const user = useRecoilValue(atoms.user);
-  const setPage = useSetRecoilState(atoms.page);
-  const setIceServers = useSetRecoilState(atoms.iceServers);
-  const { refreshUser } = networkingHooks.useUser();
+  const { refreshUser } = networkingHooks.useUser(onChangeUser);
 
   const [errorText, setErrorText] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -43,8 +49,8 @@ const LoggedIn = () => {
             username: turnCredentials.username,
             credential: turnCredentials.password,
           };
-          setIceServers([iceServer]);
-          setPage("game");
+          onChangeIceServers([iceServer]);
+          onChangePage("game");
         } else {
           setErrorText(credentialsError);
           setTimeout(() => setErrorText(undefined), 5000);
@@ -54,11 +60,14 @@ const LoggedIn = () => {
         setTimeout(() => setErrorText(undefined), 5000);
       }
     }
-  }, [errorText, setErrorText, setIceServers, setPage]);
+  }, [errorText, setErrorText, onChangeIceServers, onChangePage]);
 
   return (
     <Routes>
-      <Route path="/settings" element={<Settings />} />
+      <Route
+        path="/settings"
+        element={<Settings user={user} onChangeUser={onChangeUser} />}
+      />
       <Route
         path="*"
         element={

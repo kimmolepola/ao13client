@@ -1,25 +1,23 @@
 import { useRef, memo, RefObject } from "react";
-import * as THREE from "three";
 import * as hooks from "../hooks";
-import * as types from "src/types";
 
 const Canvas = ({
-  camera,
-  scene,
-  renderer,
+  width,
+  height,
   style,
   infoBoxRef,
   radarBoxRef,
-  gameEventHandler,
+  objectIds,
 }: {
-  camera: THREE.PerspectiveCamera;
-  scene: THREE.Scene;
-  renderer: THREE.Renderer;
+  width: number;
+  height: number;
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
-  gameEventHandler: types.GameEventHandler;
+  objectIds: string[];
 }) => {
+  const { scene, renderer, camera } = hooks.useSetup(width, height);
+  const { gameEventHandler } = hooks.useGameLogic(objectIds, scene);
   const ref = useRef(null);
   hooks.useRendering(
     camera,

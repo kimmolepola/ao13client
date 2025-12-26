@@ -1,16 +1,16 @@
 import { useCallback } from "react";
-import { useSetRecoilState } from "recoil";
 import { setAccessToken } from "src/networking/services/auth.service";
 
-import * as atoms from "src/atoms";
+import * as types from "../../types";
 
-export const useAuth = () => {
-  const setUser = useSetRecoilState(atoms.user);
+export const useAuth = (
+  onChangeUser: (user: types.User | undefined) => void
+) => {
   const loadSavedUser = useCallback(() => {
     const item = JSON.parse(localStorage.getItem("user") || "null");
-    setUser(item);
+    onChangeUser(item);
     setAccessToken(item?.token);
-  }, [setUser]);
+  }, [onChangeUser]);
 
   return { loadSavedUser };
 };

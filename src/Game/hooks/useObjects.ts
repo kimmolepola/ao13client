@@ -1,17 +1,13 @@
 import { useCallback } from "react";
-import { useSetRecoilState } from "recoil";
 import * as THREE from "three";
 
 import * as globals from "src/globals";
-import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as parameters from "src/parameters";
 
 const uInterval = parameters.unreliableStateInterval;
 
-export const useObjects = () => {
-  const setObjectIds = useSetRecoilState(atoms.objectIds);
-
+export const useObjects = (onChangeObjectIds: (value: string[]) => void) => {
   const handleReceiveBaseState = useCallback(
     (baseStateObjects: types.BaseStateObject[]) => {
       let objectIdsChanged = false;
@@ -85,7 +81,7 @@ export const useObjects = () => {
       const updateObjectIds = () => {
         if (objectIdsChanged) {
           const ids = baseStateObjects.map((x) => x.id);
-          setObjectIds(ids);
+          onChangeObjectIds(ids);
           globals.state.ownRemoteObjectIndex = globals.remoteObjects.findIndex(
             (x) => x.isMe
           );
@@ -96,13 +92,13 @@ export const useObjects = () => {
       addNewOrUpdate();
       updateObjectIds();
     },
-    [setObjectIds]
+    [onChangeObjectIds]
   );
 
   const handleQuit = useCallback(() => {
     globals.remoteObjects.splice(0, globals.remoteObjects.length);
-    setObjectIds([]);
-  }, [setObjectIds]);
+    onChangeObjectIds([]);
+  }, [onChangeObjectIds]);
 
   const handleReceiveState = useCallback(
     (updateObjects: types.UpdateObject[]) => {

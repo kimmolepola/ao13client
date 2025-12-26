@@ -1,6 +1,27 @@
 import { RefObject } from "react";
 import * as THREE from "three";
 
+export type IceServerInfo = {
+  urls: string;
+  username: string;
+  credential: string;
+};
+
+export type User = {
+  username: string;
+  score: number;
+  accessToken: string | undefined;
+  accessTokenExpiration: number | undefined;
+  refreshToken: string | undefined;
+};
+
+export type WindowSize = { width: number; height: number };
+
+export type SidePanelGeometry = {
+  position: Position;
+  diameter: number;
+};
+
 // 2 bytes for sequence number, 1 byte for associated reliable-state sequence number
 export const unreliableStateInfoBytes = 3;
 

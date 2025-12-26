@@ -2,10 +2,13 @@ import { FormEvent, ChangeEvent, memo, useCallback, useState } from "react";
 
 import Messages from "./Messages";
 import Input from "./Input";
+import * as types from "src/types";
 
 const Container = ({
+  chatMessages,
   chatOnSubmit,
 }: {
+  chatMessages: types.ChatMessage[];
   chatOnSubmit: (value: string) => void;
 }) => {
   const [value, setValue] = useState("");
@@ -25,7 +28,7 @@ const Container = ({
 
   return (
     <div className="flex flex-col grow">
-      <Messages />
+      <Messages chatMessages={chatMessages} />
       <Input value={value} onChange={onChange} onSubmit={onSubmit} />
     </div>
   );

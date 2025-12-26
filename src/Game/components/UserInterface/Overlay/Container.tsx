@@ -1,5 +1,4 @@
 import { RefObject, memo } from "react";
-import { useRecoilValue } from "recoil";
 
 import {
   ConnectingBox as ConnectingBoxDiv,
@@ -9,7 +8,6 @@ import {
   RadarBox,
 } from ".";
 import * as globals from "src/globals";
-import * as atoms from "src/atoms";
 
 const InfoTexts = () => (
   <>
@@ -27,21 +25,22 @@ const Container = ({
   style,
   infoBoxRef,
   radarBoxRef,
+  isConnectedToGameServer,
+  objectIds,
 }: {
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
+  isConnectedToGameServer: boolean;
+  objectIds: string[];
 }) => {
-  useRecoilValue(atoms.objectIds); // rerender when objectIds change
-  const isConnected = useRecoilValue(atoms.isConnectedToGameServer);
-
   return (
     <div className="absolute inset-0 z-1" style={style}>
       <InfoTexts />
-      <ConnectingBox visible={!isConnected} />
-      {isConnected && <InfoBox infoBoxRef={infoBoxRef} />}
+      <ConnectingBox visible={!isConnectedToGameServer} />
+      {isConnectedToGameServer && <InfoBox infoBoxRef={infoBoxRef} />}
       <ControlButtons />
-      <RadarBox radarBoxRef={radarBoxRef} />
+      <RadarBox radarBoxRef={radarBoxRef} objectIds={objectIds} />
     </div>
   );
 };

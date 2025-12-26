@@ -5,17 +5,16 @@ import {
   useState,
   useCallback,
 } from "react";
-import { useRecoilState } from "recoil";
 
-import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as globals from "src/globals";
 import * as parameters from "src/parameters";
 
-export const useResize = () => {
-  const [sidepanelGeometry, setSidepanelGeometry] = useRecoilState(
-    atoms.sidepanelGeometry
-  );
+export const useResize = (
+  position: types.Position,
+  onChangePosition: (value: types.Position) => void,
+  onChangeDiameter: (value: number) => void
+) => {
   const [resizing, setResizing] = useState(false);
   const [moveStartPoint, setMoveStartPoint] = useState<
     { x: number; y: number } | undefined
@@ -24,7 +23,7 @@ export const useResize = () => {
   const getPosition = useCallback(
     (x: number, y: number) => {
       if (moveStartPoint) {
-        switch (sidepanelGeometry.position) {
+        switch (position) {
           case types.Position.LEFT:
           case types.Position.RIGHT:
             if (y < moveStartPoint.y - globals.dimensions.windowHeight / 4) {
@@ -51,12 +50,12 @@ export const useResize = () => {
             break;
         }
       }
-      return sidepanelGeometry.position;
+      return position;
     },
-    [sidepanelGeometry, moveStartPoint]
+    [position, moveStartPoint]
   );
 
-  const getSize = useCallback(
+  const getDiameter = useCallback(
     (x: number, y: number, position: types.Position) => {
       const min = parameters.sidepanelMinimumSize;
       switch (position) {
@@ -86,15 +85,13 @@ export const useResize = () => {
   const onMove = useCallback(
     (x: number, y: number) => {
       if (resizing) {
-        const position = getPosition(x, y);
-        const size = getSize(x, y, position);
-        setSidepanelGeometry({
-          position,
-          size,
-        });
+        const pos = getPosition(x, y);
+        const diam = getDiameter(x, y, pos);
+        onChangePosition(pos);
+        onChangeDiameter(diam);
       }
     },
-    [resizing, getSize, getPosition, setSidepanelGeometry]
+    [resizing, getDiameter, getPosition, onChangePosition, onChangeDiameter]
   );
 
   const onMouseMove = useCallback(
@@ -128,7 +125,7 @@ export const useResize = () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
     };
-  }, [resizing, setSidepanelGeometry, onMouseMove, onTouchMove]);
+  }, [resizing, onMouseMove, onTouchMove]);
 
   const onMouseDown = useCallback((e: ReactMouseEvent) => {
     setMoveStartPoint({ x: e.pageX, y: e.pageY });

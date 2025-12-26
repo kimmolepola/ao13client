@@ -1,20 +1,23 @@
 import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { useRecoilState } from "recoil";
 
 import { logout, setAccessToken } from "src/networking/services/auth.service";
 
-import * as atoms from "src/atoms";
+import * as types from "../../types";
 
-const AppBar = () => {
-  const [user, setUser] = useRecoilState(atoms.user);
-
+const AppBar = ({
+  user,
+  onChangeUser,
+}: {
+  user: types.User | undefined;
+  onChangeUser: (user: types.User | undefined) => void;
+}) => {
   const onClickLogout = useCallback(async () => {
     logout();
     localStorage.removeItem("user");
-    setUser(undefined);
+    onChangeUser(undefined);
     setAccessToken("");
-  }, [setUser]);
+  }, [onChangeUser]);
 
   return (
     <>
@@ -29,7 +32,7 @@ const AppBar = () => {
           {user?.username && `Hi, ${user.username}`}
         </div>
         <div className="w-1/3 flex justify-end pr-3 gap-2">
-          {user && !user.username.includes("guest_") && (
+          {user && (
             <Link className="text-2xl active:text-black" to="/settings">
               {"\u2699"}
             </Link>

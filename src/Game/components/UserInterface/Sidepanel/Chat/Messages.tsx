@@ -1,13 +1,10 @@
 import { memo } from "react";
-import { useRecoilValue } from "recoil";
 import clsx from "clsx";
 
-import * as atoms from "src/atoms";
 import * as globals from "src/globals";
+import * as types from "src/types";
 
-const Messages = () => {
-  const chatMessages = useRecoilValue(atoms.chatMessages);
-
+const Messages = ({ chatMessages }: { chatMessages: types.ChatMessage[] }) => {
   return (
     <div className="relative h-full w-full">
       <div className="absolute inset-0 flex flex-col-reverse gap-0.5 overflow-auto">

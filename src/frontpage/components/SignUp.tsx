@@ -7,19 +7,17 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { useRecoilValue } from "recoil";
 import clsx from "clsx";
 
 import { requestSignup } from "src/networking/services/auth.service";
 
 import * as theme from "src/theme";
-import * as atoms from "src/atoms";
 import * as types from "../types";
 import * as hooks from "../hooks";
+import * as sharedTypes from "../../types";
 
-const SignUp = () => {
+const SignUp = ({ user }: { user: sharedTypes.User | undefined }) => {
   const navigate = useNavigate();
-  const user = useRecoilValue(atoms.user);
   const [validation, setValidation, resetValidation] = hooks.useValidation();
   const [email, setEmail] = useState("");
 

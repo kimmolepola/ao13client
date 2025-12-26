@@ -6,8 +6,8 @@ import * as hooks from ".";
 import * as globals from "src/globals";
 import * as parameters from "src/parameters";
 
-export const useGameLogic = (scene: THREE.Scene) => {
-  hooks.useLoader(scene);
+export const useGameLogic = (objectIds: string[], scene: THREE.Scene) => {
+  hooks.useLoader(objectIds, scene);
   const { load, remove } = hooks.useLocalLoader(scene);
 
   useEffect(() => {

@@ -1,9 +1,13 @@
-import { useEffect, useRef, useCallback } from "react";
-import { useSetRecoilState } from "recoil";
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 
 import { chatMessageTimeToLive } from "src/parameters";
 import { remoteObjects } from "src/globals";
-import * as atoms from "src/atoms";
 import * as types from "src/types";
 import * as clientHooks from "src/Game/hooks";
 import {
@@ -23,7 +27,10 @@ const toRecent = (seq: number) => seq % 32 === 0;
 
 const ackView = new Uint8Array(new ArrayBuffer(1));
 
-export const useReceive = () => {
+export const useReceive = (
+  onChangeObjectIds: (value: string[]) => void,
+  setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>
+) => {
   const { sendAck } = networkingHooks.useSend();
   const mostRecentSequenceNumber = useRef<number | null>(null);
 
@@ -31,9 +38,8 @@ export const useReceive = () => {
     initializeState();
   }, []);
 
-  const setChatMessages = useSetRecoilState(atoms.chatMessages);
   const { handleReceiveBaseState, handleReceiveState } =
-    clientHooks.useObjects();
+    clientHooks.useObjects(onChangeObjectIds);
 
   const onReceiveStringData = useCallback(
     (data: types.StringData) => {

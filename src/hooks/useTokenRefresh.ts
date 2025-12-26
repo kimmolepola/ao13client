@@ -1,17 +1,15 @@
-import { useEffect } from "react";
-import { useRecoilState } from "recoil";
-import * as atoms from "../atoms";
+import { useEffect, Dispatch, SetStateAction } from "react";
 import {
   setAccessToken,
   requestTokenRefresh,
 } from "src/networking/services/auth.service";
 import * as utils from "../utils";
+import * as types from "../types";
 
-export const useTokenRefresh = () => {
-  const [user, setUser] = useRecoilState(atoms.user);
-
-  console.log("--user:", user);
-
+export const useTokenRefresh = (
+  user: types.User | undefined,
+  setUser: Dispatch<SetStateAction<types.User | undefined>>
+) => {
   useEffect(() => {
     let timeoutId: number | undefined;
     if (user?.accessTokenExpiration) {
