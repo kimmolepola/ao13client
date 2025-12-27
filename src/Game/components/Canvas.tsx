@@ -1,5 +1,22 @@
-import { useRef, memo, RefObject } from "react";
-import * as hooks from "../hooks";
+import { useEffect, useRef, memo, RefObject } from "react";
+import * as THREE from "three";
+import * as parameters from "src/parameters";
+import {
+  startAnimation,
+  stopAnimation,
+} from "src/Game/logic/rendering/animation";
+import { runFrame } from "../logic/rendering/frame";
+import { sendControlsData } from "src/networking/logic/send";
+import { gameEventHandler } from "../logic/gameLogic";
+import { localLoad } from "../logic/rendering/localLoader";
+import { updateRenderedObjects } from "../logic/rendering/loader";
+import * as types from "src/types";
+
+const camera = new THREE.PerspectiveCamera(70, 1, 49990, 50001);
+const scene = new THREE.Scene();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+camera.position.setZ(parameters.cameraDefaultZ);
+localLoad(scene, types.GameObjectType.BACKGROUND);
 
 const Canvas = ({
   width,
@@ -16,18 +33,37 @@ const Canvas = ({
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
   objectIds: string[];
 }) => {
-  const { scene, renderer, camera } = hooks.useSetup(width, height);
-  const { gameEventHandler } = hooks.useGameLogic(objectIds, scene);
-  const ref = useRef(null);
-  hooks.useRendering(
-    camera,
-    scene,
-    renderer,
-    ref,
-    infoBoxRef,
-    radarBoxRef,
-    gameEventHandler
-  );
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    console.log("--eff", width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  }, [width, height]);
+
+  useEffect(() => {
+    updateRenderedObjects(objectIds, scene);
+  }, [objectIds]);
+
+  useEffect(() => {
+    const node = ref.current;
+    node?.appendChild(renderer.domElement);
+    startAnimation(
+      camera,
+      scene,
+      renderer,
+      infoBoxRef,
+      radarBoxRef,
+      gameEventHandler,
+      sendControlsData,
+      runFrame
+    );
+    return () => {
+      node?.removeChild(renderer.domElement);
+      stopAnimation();
+    };
+  }, [ref, infoBoxRef, radarBoxRef]);
 
   return <div ref={ref} className="absolute inset-0" style={style} />;
 };

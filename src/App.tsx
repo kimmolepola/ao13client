@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-import Game from "./Game";
+import Game from "./Game/components/Container";
 import Frontpage from "./Frontpage";
 
 import * as frontpageHooks from "./Frontpage/hooks";

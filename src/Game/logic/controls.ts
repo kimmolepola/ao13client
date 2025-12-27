@@ -30,3 +30,35 @@ export const handleAllReleased = () => {
     o.keyDowns.splice(0, o.keyDowns.length);
   }
 };
+
+const convertKeyToControl = (key: string) => {
+  switch (key) {
+    case "ArrowUp":
+      return types.Keys.Up;
+    case "ArrowDown":
+      return types.Keys.Down;
+    case "ArrowLeft":
+      return types.Keys.Left;
+    case "ArrowRight":
+      return types.Keys.Right;
+    case "Space":
+      return types.Keys.Space;
+    case "KeyD":
+      return types.Keys.D;
+    case "KeyF":
+      return types.Keys.F;
+    default:
+      return null;
+  }
+};
+
+export const handleKeyDown = (e: any) => {
+  if (e.repeat) return;
+  const control = convertKeyToControl(e.code);
+  if (control) handlePressed(control);
+};
+
+export const handleKeyUp = (e: any) => {
+  const control = convertKeyToControl(e.code);
+  if (control) handleReleased(control);
+};

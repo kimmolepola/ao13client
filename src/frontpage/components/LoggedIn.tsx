@@ -1,14 +1,14 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { useLocation, Routes, Route } from "react-router-dom";
 
-import { checkOkToStart } from "src/networking/services/user.service";
-import { getTurnCredentials } from "src/networking/services/auth.service";
-import * as networkingHooks from "src/networking/hooks";
+import { checkOkToStart } from "src/networking/services/user";
+import { getTurnCredentials } from "src/networking/services/auth";
 
 import Settings from "./Settings";
 
 import * as theme from "src/theme";
 import * as types from "../../types";
+import { refreshUser } from "src/networking/logic/user";
 
 const LoggedIn = ({
   user,
@@ -22,7 +22,6 @@ const LoggedIn = ({
   onChangeIceServers: (value: types.IceServerInfo[]) => void;
 }) => {
   const location = useLocation();
-  const { refreshUser } = networkingHooks.useUser(onChangeUser);
 
   const [errorText, setErrorText] = useState<string>();
   const [loading, setLoading] = useState(false);
@@ -33,9 +32,9 @@ const LoggedIn = ({
 
   const onClickRefresh = useCallback(async () => {
     setLoading(true);
-    await refreshUser();
+    await refreshUser(onChangeUser);
     setTimeout(() => setLoading(false), 250);
-  }, [refreshUser]);
+  }, [onChangeUser]);
 
   const onClickPlay = useCallback(async () => {
     if (!errorText) {

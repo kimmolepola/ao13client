@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
 
-import { logout, setAccessToken } from "src/networking/services/auth.service";
+import { logout, setAccessToken } from "src/networking/services/auth";
 
 import * as types from "../../types";
 

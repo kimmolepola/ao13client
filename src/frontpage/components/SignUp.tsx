@@ -9,7 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
 
-import { requestSignup } from "src/networking/services/auth.service";
+import { requestSignup } from "src/networking/services/auth";
 
 import * as theme from "src/theme";
 import * as types from "../types";

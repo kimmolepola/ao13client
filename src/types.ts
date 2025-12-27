@@ -1,6 +1,21 @@
 import { RefObject } from "react";
 import * as THREE from "three";
 
+export type RTCSdpType = "answer" | "offer" | "pranswer" | "rollback";
+
+export type Msg =
+  | {
+      id: string;
+      type: RTCSdpType;
+      description: string;
+    }
+  | {
+      id: string;
+      type: "candidate";
+      candidate: string;
+      mid: string;
+    };
+
 export type IceServerInfo = {
   urls: string;
   username: string;
@@ -18,7 +33,7 @@ export type User = {
 export type WindowSize = { width: number; height: number };
 
 export type SidePanelGeometry = {
-  position: Position;
+  position: SidepanelPosition;
   diameter: number;
 };
 
@@ -68,11 +83,11 @@ export type RecentStates = {
   [sequenceNumber: number]: UpdateObject[];
 };
 
-export enum Position {
-  RIGHT,
-  BOTTOM,
-  LEFT,
-  TOP,
+export enum SidepanelPosition {
+  Right,
+  Bottom,
+  Left,
+  Top,
 }
 
 export type Three = {
@@ -314,20 +329,20 @@ export type InitialGameObject = {
 };
 
 export enum EventType {
-  HEALTH_ZERO,
-  SHOT,
-  REMOVE_LOCAL_OBJECT_INDEXES,
+  HealthZero,
+  Shot,
+  RemoveLocalObjectIndexes,
 }
 
 export type GameEvent =
   | {
-      type: EventType.HEALTH_ZERO;
+      type: EventType.HealthZero;
       data: RemoteGameObject;
     }
   | {
-      type: EventType.SHOT;
+      type: EventType.Shot;
       data: { object3d: THREE.Mesh; speed: number };
     }
-  | { type: EventType.REMOVE_LOCAL_OBJECT_INDEXES; data: number[] };
+  | { type: EventType.RemoveLocalObjectIndexes; data: number[] };
 
-export type GameEventHandler = (e: GameEvent) => void;
+export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;

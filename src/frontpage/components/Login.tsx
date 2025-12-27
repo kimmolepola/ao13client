@@ -2,7 +2,7 @@ import { ChangeEvent, memo, useCallback, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import clsx from "clsx";
 
-import { setAccessToken, login } from "src/networking/services/auth.service";
+import { setAccessToken, login } from "src/networking/services/auth";
 
 import * as theme from "src/theme";
 import * as types from "../types";

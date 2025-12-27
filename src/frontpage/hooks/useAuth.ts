@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { setAccessToken } from "src/networking/services/auth.service";
+import { setAccessToken } from "src/networking/services/auth";
 
 import * as types from "../../types";
 

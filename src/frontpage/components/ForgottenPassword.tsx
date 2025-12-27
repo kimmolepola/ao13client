@@ -1,6 +1,6 @@
 import { ChangeEvent, memo, useMemo, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { requestPasswordReset } from "src/networking/services/auth.service";
+import { requestPasswordReset } from "src/networking/services/auth";
 import clsx from "clsx";
 
 import * as theme from "src/theme";

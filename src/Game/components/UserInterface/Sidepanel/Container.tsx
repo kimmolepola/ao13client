@@ -4,9 +4,9 @@ import clsx from "clsx";
 import Header from "./Header";
 import Chat from "./Chat/Container";
 import * as types from "src/types";
-import * as hooks from "../../../hooks";
+import { useResize } from "../../../hooks/useResize";
 
-import * as networkingHooks from "src/networking/hooks";
+import { sendStringData } from "src/networking/logic/send";
 
 const Container = ({
   username,
@@ -20,29 +20,24 @@ const Container = ({
   quit: onClickQuit,
 }: {
   username: string | undefined;
-  position: types.Position;
+  position: types.SidepanelPosition;
   diameter: number;
   connectionMessage: string | undefined;
   chatMessages: types.ChatMessage[];
   windowSize: { width: number; height: number };
-  onChangePosition: (value: types.Position) => void;
+  onChangePosition: (value: types.SidepanelPosition) => void;
   onChangeDiameter: (value: number) => void;
   quit: () => void;
 }) => {
-  const { sendStringData } = networkingHooks.useSend();
-
-  const chatOnSubmit = useCallback(
-    (value: string) => {
-      sendStringData({
-        type: types.ClientDataType.ChatMessage_Client,
-        text: value,
-      });
-    },
-    [sendStringData]
-  );
+  const chatOnSubmit = useCallback((value: string) => {
+    sendStringData({
+      type: types.ClientDataType.ChatMessage_Client,
+      text: value,
+    });
+  }, []);
 
   const [move, setMove] = useState(false);
-  const { onMouseDown, onTouchStart } = hooks.useResize(
+  const { onMouseDown, onTouchStart } = useResize(
     position,
     onChangePosition,
     onChangeDiameter
@@ -50,13 +45,13 @@ const Container = ({
 
   const sidePanelStyle = useMemo(() => {
     switch (position) {
-      case types.Position.BOTTOM:
+      case types.SidepanelPosition.Bottom:
         return { top: windowSize.height - diameter };
-      case types.Position.LEFT:
+      case types.SidepanelPosition.Left:
         return { right: windowSize.width - diameter };
-      case types.Position.RIGHT:
+      case types.SidepanelPosition.Right:
         return { left: windowSize.width - diameter };
-      case types.Position.TOP:
+      case types.SidepanelPosition.Top:
         return { bottom: windowSize.height - diameter };
       default:
         return undefined;
@@ -65,13 +60,13 @@ const Container = ({
 
   const sidePanelClassName = useMemo(() => {
     switch (position) {
-      case types.Position.BOTTOM:
+      case types.SidepanelPosition.Bottom:
         return "flex-col";
-      case types.Position.LEFT:
+      case types.SidepanelPosition.Left:
         return "flex-row-reverse";
-      case types.Position.RIGHT:
+      case types.SidepanelPosition.Right:
         return "flex-row";
-      case types.Position.TOP:
+      case types.SidepanelPosition.Top:
         return "flex-col-reverse";
       default:
         return "";
