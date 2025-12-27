@@ -2,7 +2,7 @@ import { useEffect, Dispatch, SetStateAction } from "react";
 import {
   setAccessToken,
   requestTokenRefresh,
-} from "src/networking/services/auth.service";
+} from "src/networking/services/auth";
 import * as utils from "../utils";
 import * as types from "../types";
 

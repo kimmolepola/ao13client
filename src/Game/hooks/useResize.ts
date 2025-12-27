@@ -11,8 +11,8 @@ import * as globals from "src/globals";
 import * as parameters from "src/parameters";
 
 export const useResize = (
-  position: types.Position,
-  onChangePosition: (value: types.Position) => void,
+  position: types.SidepanelPosition,
+  onChangePosition: (value: types.SidepanelPosition) => void,
   onChangeDiameter: (value: number) => void
 ) => {
   const [resizing, setResizing] = useState(false);
@@ -24,26 +24,26 @@ export const useResize = (
     (x: number, y: number) => {
       if (moveStartPoint) {
         switch (position) {
-          case types.Position.LEFT:
-          case types.Position.RIGHT:
+          case types.SidepanelPosition.Left:
+          case types.SidepanelPosition.Right:
             if (y < moveStartPoint.y - globals.dimensions.windowHeight / 4) {
               setMoveStartPoint({ x, y });
-              return types.Position.TOP;
+              return types.SidepanelPosition.Top;
             }
             if (y > moveStartPoint.y + globals.dimensions.windowHeight / 4) {
               setMoveStartPoint({ x, y });
-              return types.Position.BOTTOM;
+              return types.SidepanelPosition.Bottom;
             }
             break;
-          case types.Position.TOP:
-          case types.Position.BOTTOM:
+          case types.SidepanelPosition.Top:
+          case types.SidepanelPosition.Bottom:
             if (x < moveStartPoint.x - globals.dimensions.windowWidth / 4) {
               setMoveStartPoint({ x, y });
-              return types.Position.LEFT;
+              return types.SidepanelPosition.Left;
             }
             if (x > moveStartPoint.x + globals.dimensions.windowWidth / 4) {
               setMoveStartPoint({ x, y });
-              return types.Position.RIGHT;
+              return types.SidepanelPosition.Right;
             }
             break;
           default:
@@ -55,33 +55,6 @@ export const useResize = (
     [position, moveStartPoint]
   );
 
-  const getDiameter = useCallback(
-    (x: number, y: number, position: types.Position) => {
-      const min = parameters.sidepanelMinimumSize;
-      switch (position) {
-        case types.Position.LEFT: {
-          const max = globals.dimensions.windowWidth;
-          return Math.max(min, Math.min(max, x));
-        }
-        case types.Position.RIGHT: {
-          const max = globals.dimensions.windowWidth;
-          return Math.max(min, Math.min(max, max - x));
-        }
-        case types.Position.TOP: {
-          const max = globals.dimensions.windowHeight;
-          return Math.max(min, Math.min(max, y));
-        }
-        case types.Position.BOTTOM: {
-          const max = globals.dimensions.windowHeight;
-          return Math.max(min, Math.min(max, max - y));
-        }
-        default:
-          return min;
-      }
-    },
-    []
-  );
-
   const onMove = useCallback(
     (x: number, y: number) => {
       if (resizing) {
@@ -91,7 +64,7 @@ export const useResize = (
         onChangeDiameter(diam);
       }
     },
-    [resizing, getDiameter, getPosition, onChangePosition, onChangeDiameter]
+    [resizing, getPosition, onChangePosition, onChangeDiameter]
   );
 
   const onMouseMove = useCallback(
@@ -138,4 +111,32 @@ export const useResize = (
   }, []);
 
   return { onMouseDown, onTouchStart };
+};
+
+const getDiameter = (
+  x: number,
+  y: number,
+  position: types.SidepanelPosition
+) => {
+  const min = parameters.sidepanelMinimumSize;
+  switch (position) {
+    case types.SidepanelPosition.Left: {
+      const max = globals.dimensions.windowWidth;
+      return Math.max(min, Math.min(max, x));
+    }
+    case types.SidepanelPosition.Right: {
+      const max = globals.dimensions.windowWidth;
+      return Math.max(min, Math.min(max, max - x));
+    }
+    case types.SidepanelPosition.Top: {
+      const max = globals.dimensions.windowHeight;
+      return Math.max(min, Math.min(max, y));
+    }
+    case types.SidepanelPosition.Bottom: {
+      const max = globals.dimensions.windowHeight;
+      return Math.max(min, Math.min(max, max - y));
+    }
+    default:
+      return min;
+  }
 };

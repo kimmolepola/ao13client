@@ -6,9 +6,12 @@ import * as utils from "src/utils";
 import * as parameters from "src/parameters";
 import * as globals from "src/globals";
 import * as debug from "../../netcode/debug";
+import * as gameLogic from "../gameLogic";
+
+import { gatherControlsDataBinary } from "../../netcode/controls";
 
 export const handleCamera = (
-  camera: THREE.PerspectiveCamera,
+  camera: THREE.Camera,
   gameObject: types.RemoteGameObject,
   object3D: THREE.Object3D
 ) => {
@@ -144,7 +147,7 @@ export const handleDataBlock = (
   q2: THREE.Quaternion,
   q3: THREE.Quaternion,
   object3D: THREE.Object3D,
-  camera: THREE.PerspectiveCamera
+  camera: THREE.Camera
 ) => {
   const o = gameObject;
   if (o.infoElement && gameObject.dimensions) {
@@ -228,4 +231,88 @@ export const interpolatePosition = (o: types.RemoteGameObject) => {
     parameters.interpolationAlpha
   );
   o.positionZ -= (o.positionZ - o.backendPositionZ) / 2;
+};
+
+const v1 = new THREE.Vector3();
+const v2 = new THREE.Vector3();
+const v3 = new THREE.Vector3();
+const q1 = new THREE.Quaternion();
+const q2 = new THREE.Quaternion();
+const q3 = new THREE.Quaternion();
+let deltaCumulative = 0;
+const localObjectsRemoveIndexes: number[] = [];
+
+const handleLocalObjects = (
+  delta: number,
+  scene: THREE.Scene,
+  gameEventHandler: types.GameEventHandler
+) => {
+  for (let i = globals.localObjects.length - 1; i > -1; i--) {
+    const o = globals.localObjects[i];
+    if (o && o.object3d) {
+      const remove = handleLocalObject(delta, o);
+      remove && localObjectsRemoveIndexes.push(i);
+    }
+  }
+  gameEventHandler(scene, {
+    type: types.EventType.RemoveLocalObjectIndexes,
+    data: localObjectsRemoveIndexes,
+  });
+  localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
+};
+
+const handleObjects = (
+  delta: number,
+  camera: THREE.Camera,
+  scene: THREE.Scene,
+  infoBoxRef: RefObject<HTMLDivElement>,
+  gameEventHandler: types.GameEventHandler,
+  sendControlsData: (data: ArrayBuffer) => void
+) => {
+  deltaCumulative += delta;
+  for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
+    const o = globals.remoteObjects[i];
+    if (o && o.object3d) {
+      if (o.object3d.visible) {
+        gameLogic.checkHealth(scene, o, gameEventHandler);
+        if (o.isMe) {
+          gameLogic.handleKeys(delta, o);
+          handleCamera(camera, o, o.object3d);
+          handleInfoBox(o, infoBoxRef);
+          if (deltaCumulative > parameters.clientSendInterval) {
+            const controlsData = gatherControlsDataBinary(o, deltaCumulative);
+            deltaCumulative = 0;
+            if (controlsData) {
+              sendControlsData(controlsData);
+            }
+          }
+        }
+        handleMovement(delta, o);
+        gameLogic.handleShot(scene, delta, o, gameEventHandler);
+      }
+      interpolatePosition(o);
+      handleDataBlock(o, v1, v2, v3, q1, q2, q3, o.object3d, camera);
+    }
+  }
+};
+
+export const runFrame = (
+  delta: number,
+  camera: THREE.Camera,
+  scene: THREE.Scene,
+  infoBoxRef: RefObject<HTMLDivElement>,
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  gameEventHandler: types.GameEventHandler,
+  sendControlsData: (data: ArrayBuffer) => void
+) => {
+  handleLocalObjects(delta, scene, gameEventHandler);
+  handleObjects(
+    delta,
+    camera,
+    scene,
+    infoBoxRef,
+    gameEventHandler,
+    sendControlsData
+  );
+  handleRadarBox(radarBoxRef);
 };

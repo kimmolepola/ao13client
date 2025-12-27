@@ -1,7 +1,7 @@
 import { ChangeEvent, memo, useMemo, useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { updateUsername } from "src/networking/services/user.service";
+import { updateUsername } from "src/networking/services/user";
 
 import * as theme from "src/theme";
 import * as types from "../types";
