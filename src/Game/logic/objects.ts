@@ -59,7 +59,8 @@ export const handleReceiveBaseState = (
           verticalSpeed: 0,
           speed: 0,
           backendPosition: new THREE.Vector3(0, 0, 1),
-          backendQuaternion: new THREE.Quaternion(0, 0, 0, 0),
+          // backendQuaternion: new THREE.Quaternion(0, 0, 0, 0),
+          backendRotationZ: 0,
           keyDowns: [],
           infoElement: {
             containerRef: undefined,
@@ -104,15 +105,16 @@ export const handleReceiveState = (updateObjects: types.UpdateObject[]) => {
     const u = o && updateObjects[o.idOverNetwork];
     if (u) {
       o.health = u.health;
-      o.backendPosition.setX(u.xDecoded);
-      o.backendPosition.setY(u.yDecoded);
+      o.backendPosition.setX(u.x);
+      o.backendPosition.setY(u.y);
       o.backendPositionZ = u.z;
-      o.backendQuaternion.set(
-        u.quaternion.x,
-        u.quaternion.y,
-        u.quaternion.z,
-        u.quaternion.w
-      );
+      o.backendRotationZ = u.rotationZ;
+      // o.backendQuaternion.set(
+      //   u.quaternion.x,
+      //   u.quaternion.y,
+      //   u.quaternion.z,
+      //   u.quaternion.w
+      // );
       if (!o.isMe) {
         o.controlsUp += u.ctrlsUp ? uInterval : 0;
         o.controlsDown += u.ctrlsDown ? uInterval : 0;

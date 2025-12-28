@@ -36,7 +36,6 @@ const Canvas = ({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log("--eff", width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
