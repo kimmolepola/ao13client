@@ -68,12 +68,14 @@ export type UpdateObject = {
   zDifferenceSignificance: number;
   angleZDifferenceSignificance: number;
   xEncoded: number;
-  xDecoded: number;
   yEncoded: number;
-  yDecoded: number;
+  x: number;
+  y: number;
   z: number;
-  quaternionEncodedWithOnlyZRotation: number;
-  quaternion: THREE.Quaternion;
+  // quaternionEncodedWithOnlyZRotation: number;
+  // quaternion: THREE.Quaternion;
+  rotationZEncoded: number;
+  rotationZ: number;
 };
 
 export type RecentStates = {
@@ -189,7 +191,8 @@ export interface RemoteGameObject extends GameObject {
   rotationSpeed: number;
   verticalSpeed: number;
   backendPosition: THREE.Vector3;
-  backendQuaternion: THREE.Quaternion;
+  // backendQuaternion: THREE.Quaternion;
+  backendRotationZ: number;
   keyDowns: Keys[];
   infoElement: {
     containerRef: RefObject<HTMLDivElement> | undefined;

@@ -65,6 +65,7 @@ export const handleShot = (
   scene: THREE.Scene,
   delta: number,
   gameObject: types.RemoteGameObject,
+  object3d: THREE.Mesh,
   gameEventHandler: types.GameEventHandler
 ) => {
   const o = gameObject;
@@ -76,11 +77,10 @@ export const handleShot = (
     if (o.shotDelay - timeQuantity <= 0) {
       // shoot
       o.shotDelay += parameters.shotDelay;
-      o.object3d &&
-        gameEventHandler(scene, {
-          type: types.EventType.Shot,
-          data: { object3d: o.object3d, speed: o.speed },
-        });
+      gameEventHandler(scene, {
+        type: types.EventType.Shot,
+        data: { object3d, speed: o.speed },
+      });
     }
   }
   o.shotDelay -= Math.min(delta, o.shotDelay);
@@ -127,7 +127,8 @@ export const gameEventHandler = async (
       object3d?.geometry.computeBoundingBox();
       object3d?.geometry.boundingBox?.getSize(dimensions);
       object3d?.position.copy(gameEvent.data.object3d.position);
-      object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
+      // object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
+      object3d?.rotation.copy(gameEvent.data.object3d.rotation);
       object3d?.translateY(5000);
       globals.localObjects.push({
         id,

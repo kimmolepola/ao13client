@@ -1,18 +1,16 @@
 import { RefObject, memo } from "react";
 
-import {
-  ConnectingBox as ConnectingBoxDiv,
-  InfoBox,
-  InfoText,
-  ControlButtons,
-  RadarBox,
-} from ".";
 import * as globals from "src/globals";
+import DataBlock from "./DataBlock";
+import ConnectingBoxDiv from "./ConnectingBox";
+import InfoBox from "./InfoBox";
+import ControlButtons from "./ControlButtons";
+import RadarBox from "./RadarBox";
 
 const InfoTexts = () => (
   <>
     {globals.remoteObjects.reduce((acc: JSX.Element[], cur) => {
-      acc.push(<InfoText key={cur.id} gameObject={cur} />);
+      acc.push(<DataBlock key={cur.id} gameObject={cur} />);
       return acc;
     }, [])}
   </>

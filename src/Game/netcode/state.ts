@@ -1,10 +1,10 @@
-import * as THREE from "three";
+// import * as THREE from "three";
 import * as types from "../../types";
 import * as parameters from "../../parameters";
 import * as debug from "./debug";
 import * as utils from "../../utils";
 
-const axis = new THREE.Vector3(0, 0, 1);
+// const axis = new THREE.Vector3(0, 0, 1);
 
 const recentStates: types.RecentStates = {
   0: [],
@@ -51,12 +51,14 @@ const getinitialUpdateObject = () => ({
   angleZDifferenceSignificance: 0,
   xEncoded: 0,
   yEncoded: 0,
-  xDecoded: 0,
-  yDecoded: 0,
+  x: 0,
+  y: 0,
   z: 0,
-  quaternionEncodedWithOnlyZRotation: 0,
-  quaternion: new THREE.Quaternion(0, 0, 0, 0),
-  quaternionChanged: false,
+  // quaternionEncodedWithOnlyZRotation: 0,
+  // quaternion: new THREE.Quaternion(0, 0, 0, 0),
+  // quaternionChanged: false,
+  rotationZEncoded: 0,
+  rotationZ: 0,
 });
 
 const initializeUpdateObjects = () => {
@@ -235,7 +237,9 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     let xEncoded = recentObjectState?.xEncoded || 0;
     let yEncoded = recentObjectState?.yEncoded || 0;
     let z = recentObjectState?.z || 0;
-    let angleZ = recentObjectState?.quaternionEncodedWithOnlyZRotation || 0;
+    // let encodedAngleZ =
+    //   recentObjectState?.quaternionEncodedWithOnlyZRotation || 0;
+    let encodedAngleZ = recentObjectState?.rotationZEncoded || 0;
 
     if (xIsProvided) {
       xEncoded = replaceWithChange(
@@ -271,8 +275,8 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     if (angleZIsProvided) {
-      angleZ = replaceWithChange(
-        angleZ,
+      encodedAngleZ = replaceWithChange(
+        encodedAngleZ,
         updateObject.angleZDifferenceSignificance,
         dataView,
         offset,
@@ -283,19 +287,26 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
 
     if (updateObject.xEncoded !== xEncoded) {
       updateObject.xEncoded = xEncoded;
-      updateObject.xDecoded = utils.decodeAxisValue(xEncoded);
+      updateObject.x = utils.decodeAxisValue(xEncoded);
     }
 
     if (updateObject.yEncoded !== yEncoded) {
       updateObject.yEncoded = yEncoded;
-      updateObject.yDecoded = utils.decodeAxisValue(yEncoded);
+      updateObject.y = utils.decodeAxisValue(yEncoded);
     }
 
     updateObject.z = z;
 
-    if (updateObject.quaternionEncodedWithOnlyZRotation !== angleZ) {
-      updateObject.quaternionEncodedWithOnlyZRotation = angleZ;
-      updateObject.quaternion.setFromAxisAngle(axis, utils.decodeAngle(angleZ));
+    // if (updateObject.quaternionEncodedWithOnlyZRotation !== encodedAngleZ) {
+    //   updateObject.quaternionEncodedWithOnlyZRotation = encodedAngleZ;
+    //   updateObject.quaternion.setFromAxisAngle(
+    //     axis,
+    //     utils.decodeAngle(encodedAngleZ)
+    //   );
+    // }
+    if (updateObject.rotationZEncoded !== encodedAngleZ) {
+      updateObject.rotationZEncoded = encodedAngleZ;
+      updateObject.rotationZ = utils.decodeAngle(encodedAngleZ);
     }
 
     if (save) {
