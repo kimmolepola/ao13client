@@ -4,8 +4,6 @@ import * as globals from "src/globals";
 import * as types from "src/types";
 import * as parameters from "src/parameters";
 
-const uInterval = parameters.unreliableStateInterval;
-
 export const handleReceiveBaseState = (
   baseStateObjects: types.BaseStateObject[],
   onChangeObjectIds: (value: string[]) => void
@@ -70,7 +68,6 @@ export const handleReceiveBaseState = (
           object3d: undefined,
           dimensions: undefined,
           shotDelay: 0,
-          collisions: {},
           health: 100,
           positionZ: 1000,
           backendPositionZ: 1000,
@@ -99,7 +96,12 @@ export const handleQuit = (onChangeObjectIds: (value: string[]) => void) => {
   onChangeObjectIds([]);
 };
 
+let previousTime: number | null = null;
 export const handleReceiveState = (updateObjects: types.UpdateObject[]) => {
+  const time = Date.now();
+  const prev = previousTime ?? time - parameters.unreliableStateInterval;
+  const delta = time - prev;
+  previousTime = time;
   for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
     const o = globals.remoteObjects[i];
     const u = o && updateObjects[o.idOverNetwork];
@@ -109,20 +111,14 @@ export const handleReceiveState = (updateObjects: types.UpdateObject[]) => {
       o.backendPosition.setY(u.y);
       o.backendPositionZ = u.z;
       o.backendRotationZ = u.rotationZ;
-      // o.backendQuaternion.set(
-      //   u.quaternion.x,
-      //   u.quaternion.y,
-      //   u.quaternion.z,
-      //   u.quaternion.w
-      // );
       if (!o.isMe) {
-        o.controlsUp += u.ctrlsUp ? uInterval : 0;
-        o.controlsDown += u.ctrlsDown ? uInterval : 0;
-        o.controlsLeft += u.ctrlsLeft ? uInterval : 0;
-        o.controlsRight += u.ctrlsRight ? uInterval : 0;
-        o.controlsSpace += u.ctrlsSpace ? uInterval : 0;
-        o.controlsD += u.ctrlsD ? uInterval : 0;
-        o.controlsF += u.ctrlsF ? uInterval : 0;
+        o.controlsUp += u.ctrlsUp ? delta : 0;
+        o.controlsDown += u.ctrlsDown ? delta : 0;
+        o.controlsLeft += u.ctrlsLeft ? delta : 0;
+        o.controlsRight += u.ctrlsRight ? delta : 0;
+        o.controlsSpace += u.ctrlsSpace ? delta : 0;
+        o.controlsD += u.ctrlsD ? delta : 0;
+        o.controlsF += u.ctrlsF ? delta : 0;
       }
     }
   }

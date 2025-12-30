@@ -1,10 +1,10 @@
-export const interpolationAlpha = 0.025;
+export const interpolationAlpha = 0.075;
 export const chatMessageTimeToLive = 60000;
 export const infoTextOffsetValue = 10;
 export const cameraDefaultZ = 50000;
 export const sidepanelDefaultSize = 150;
 export const sidepanelMinimumSize = 90;
-export const shotDelay = 50;
+export const shotDelay = 100;
 
 // netcode
 export const clientSendInterval = 1000 / 20;

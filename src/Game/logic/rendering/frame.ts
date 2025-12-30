@@ -242,16 +242,21 @@ const handleDataBlock = (
   }
 };
 
-const interpolatePosition = (
+const interpolatePositionAndRotaion = (
   o: types.RemoteGameObject,
   object3d: THREE.Mesh
 ) => {
   const alpha = parameters.interpolationAlpha;
+
+  // position interpolation
   object3d.position.lerp(o.backendPosition, alpha);
   o.positionZ = (o.positionZ + o.backendPositionZ) * 0.5;
-  // object3d.quaternion.slerp(o.backendQuaternion, parameters.interpolationAlpha);
-  const rotationZ = object3d.rotation.z;
-  object3d.rotation.z = rotationZ + (o.backendRotationZ - rotationZ) * alpha;
+
+  // rotation interpolation
+  let diff = o.backendRotationZ - object3d.rotation.z;
+  if (diff > Math.PI) diff -= Math.PI * 2;
+  else if (diff < -Math.PI) diff += Math.PI * 2;
+  object3d.rotation.z += diff * alpha;
 };
 
 const handleLocalObjects = (
@@ -311,7 +316,7 @@ const handleObjects = (
         handleMovement(delta, o, o.object3d);
         gameLogic.handleShot(scene, delta, o, o.object3d, gameEventHandler);
       }
-      interpolatePosition(o, o.object3d);
+      interpolatePositionAndRotaion(o, o.object3d);
       handleDataBlock(o, o.object3d, camera, viewProjection);
       handleRadarBoxItem(o, o.object3d, radarBoxRef);
     }

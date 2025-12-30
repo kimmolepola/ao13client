@@ -52,7 +52,6 @@ const createPeerConnection = (
   onChangeObjectIds: (value: string[]) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>
 ) => {
-  console.log("--create");
   onChangeConnectionMessage("Connecting to server...");
   const peerConnection = new RTCPeerConnection({
     iceServers,

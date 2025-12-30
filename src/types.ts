@@ -154,7 +154,6 @@ export interface GameObject {
   speed: number;
   object3d: THREE.Object3D | undefined;
   dimensions?: THREE.Vector3 | undefined;
-  collisions: { [gameObjectId: string]: { time: number; collision: boolean } };
 }
 
 export interface LocalGameObject extends GameObject {

@@ -97,7 +97,6 @@ export const gameEventHandler = async (
       const type = types.GameObjectType.EXPLOSION;
       const object3d = await localLoad(scene, types.GameObjectType.EXPLOSION);
       const timeToLive = 30000;
-      const collisions = {};
       if (gameEvent.data.object3d) {
         object3d?.position.copy(gameEvent.data.object3d.position);
         gameEvent.data.object3d.visible = false;
@@ -108,7 +107,6 @@ export const gameEventHandler = async (
         speed,
         object3d,
         timeToLive,
-        collisions,
       });
       break;
     }
@@ -123,7 +121,6 @@ export const gameEventHandler = async (
       const object3d = await localLoad(scene, types.GameObjectType.BULLET);
       const dimensions = new THREE.Vector3();
       const timeToLive = 1500;
-      const collisions = {};
       object3d?.geometry.computeBoundingBox();
       object3d?.geometry.boundingBox?.getSize(dimensions);
       object3d?.position.copy(gameEvent.data.object3d.position);
@@ -137,7 +134,6 @@ export const gameEventHandler = async (
         object3d,
         dimensions,
         timeToLive,
-        collisions,
       });
       break;
     }

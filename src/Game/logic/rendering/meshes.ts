@@ -27,10 +27,7 @@ const load = async <
   return result;
 };
 
-export const loadBox = async (
-  fileName?: string,
-  size?: [number, number, number]
-) => {
+export const loadBox = (fileName?: string, size?: [number, number, number]) => {
   const width = size?.[0] || 10000;
   const height = size?.[1] || 10000;
   const depth = size?.[2] || 10000;
@@ -59,7 +56,7 @@ export const loadBox = async (
   );
 };
 
-export const loadPlane = async (
+export const loadPlane = (
   fileName?: string,
   size?: [number, number, number]
 ) => {
@@ -78,7 +75,7 @@ export const loadPlane = async (
   );
 };
 
-export const loadBackground = async () => {
+export const loadBackground = () => {
   const createGeometry = (x: THREE.Texture) =>
     new THREE.PlaneGeometry(x.image.width * 10000, x.image.height * 10000);
   const createMaterial = (x: THREE.Texture) => {
@@ -96,7 +93,7 @@ export const loadBackground = async () => {
   );
 };
 
-export const loadFighter = async (color?: string) => {
+export const loadFighter = (color?: string) => {
   const createGeometry = (x: THREE.Texture) => {
     const width = Math.min(5000, (x.image.width / x.image.height) * 5000);
     const height = Math.min(5000, (x.image.height / x.image.width) * 5000);
