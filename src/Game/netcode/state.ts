@@ -105,8 +105,7 @@ const getUint24 = (view: DataView, offset: number) => {
   const b0 = view.getUint8(offset);
   const b1 = view.getUint8(offset + 1);
   const b2 = view.getUint8(offset + 2);
-
-  return b0 | (b1 << 8) | (b2 << 16);
+  return ((b0 << 16) | (b1 << 8) | b2) >>> 0;
 };
 
 const replaceWithChange = (
@@ -118,21 +117,52 @@ const replaceWithChange = (
 ) => {
   if (differenceSignificance === 4) {
     const result = dataView.getUint32(offset);
+    // variableName === "y" &&
+    //   console.log(
+    //     "--rr32:",
+    //     result,
+    //     dataView.getUint8(offset),
+    //     dataView.getUint8(offset + 1),
+    //     dataView.getUint8(offset + 2),
+    //     dataView.getUint8(offset + 3)
+    //   );
+
     return result;
   }
   if (differenceSignificance === 3) {
     const change = getUint24(dataView, offset);
-    const result = ((oldValue & ~0xffffff) | (change & 0xffffff)) >>> 0;
+    const result = ((oldValue & 0xff000000) | (change & 0x00ffffff)) >>> 0;
+    // variableName === "y" &&
+    //   console.log(
+    //     "--rr24:",
+    //     change,
+    //     result,
+    //     dataView.getUint8(offset),
+    //     dataView.getUint8(offset + 1),
+    //     dataView.getUint8(offset + 2)
+    //   );
     return result;
   }
   if (differenceSignificance === 2) {
     const change = dataView.getUint16(offset);
-    const result = ((oldValue & ~0xffff) | (change & 0xffff)) >>> 0;
+    const result = ((oldValue & 0xffff0000) | (change & 0x0000ffff)) >>> 0;
+    // variableName === "y" &&
+    //   console.log(
+    //     "--rr16:",
+    //     change,
+    //     result,
+    //     dataView.getUint8(offset),
+    //     dataView.getUint8(offset + 1)
+    //   );
+
     return result;
   }
   if (differenceSignificance === 1) {
     const change = dataView.getUint8(offset);
-    const result = ((oldValue & ~0xff) | (change & 0xff)) >>> 0;
+    const result = ((oldValue & 0xffffff00) | (change & 0x000000ff)) >>> 0;
+    // variableName === "y" &&
+    //   console.log("--rr8:", change, result, dataView.getUint8(offset));
+
     return result;
   }
   debug.debugDifferenceSignificance(variableName, differenceSignificance);
@@ -293,17 +323,10 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     if (updateObject.yEncoded !== yEncoded) {
       updateObject.yEncoded = yEncoded;
       updateObject.y = utils.decodeAxisValue(yEncoded);
+      // console.log("--y:", updateObject.y.toFixed(2));
     }
 
     updateObject.z = z;
-
-    // if (updateObject.quaternionEncodedWithOnlyZRotation !== encodedAngleZ) {
-    //   updateObject.quaternionEncodedWithOnlyZRotation = encodedAngleZ;
-    //   updateObject.quaternion.setFromAxisAngle(
-    //     axis,
-    //     utils.decodeAngle(encodedAngleZ)
-    //   );
-    // }
     if (updateObject.rotationZEncoded !== encodedAngleZ) {
       updateObject.rotationZEncoded = encodedAngleZ;
       updateObject.rotationZ = utils.decodeAngle(encodedAngleZ);

@@ -10,18 +10,40 @@ import * as gameLogic from "../gameLogic";
 
 import { gatherControlsDataBinary } from "../../netcode/controls";
 
-const v1 = new THREE.Vector3();
-const v2 = new THREE.Vector3();
-const v3 = new THREE.Vector3();
-const m1 = new THREE.Matrix4();
+const positionAlpha = parameters.objectPositionInterpolationAlpha;
+const rotationAlpha = parameters.objectRotationInterpolationAlpha;
+const cameraPositionAlpha = parameters.cameraPositionInterpolationAlpha;
+const cameraRotationAlpha = parameters.cameraRotationInterpolationAlpha;
+
+const cameraTarget = new THREE.Vector3(0, 0, parameters.cameraDefaultZ);
 
 let deltaCumulative = 0;
 const localObjectsRemoveIndexes: number[] = [];
 
-const handleCamera = (camera: THREE.Camera, object3d: THREE.Mesh) => {
-  camera.position.x = object3d.position.x;
-  camera.position.y = object3d.position.y;
-  camera.rotation.z = object3d.rotation.z;
+const normalizeAngle = (a: number) => {
+  a %= Math.PI * 2;
+  if (a <= -Math.PI) a += Math.PI * 2;
+  else if (a > Math.PI) a -= Math.PI * 2;
+  return a;
+};
+
+const handleCamera = (
+  camPosAlpha: number,
+  camRotAlpha: number,
+  camera: THREE.Camera,
+  o: types.RemoteGameObject,
+  object3d: THREE.Mesh
+) => {
+  cameraTarget.x = object3d.position.x;
+  cameraTarget.y = object3d.position.y;
+  camera.position.lerp(cameraTarget, camPosAlpha);
+
+  const current = normalizeAngle(camera.rotation.z);
+  const target = normalizeAngle(object3d.rotation.z);
+  const diff = normalizeAngle(target - current);
+
+  camera.rotation.z = current + diff * camRotAlpha;
+  // camera.translateY(1);
 };
 
 const handleRadarBoxItem = (
@@ -29,12 +51,18 @@ const handleRadarBoxItem = (
   object3d: THREE.Mesh,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>
 ) => {
+  if (
+    o.previousPosition[0] === object3d.position.x.toFixed(0) &&
+    o.previousPosition[1] === object3d.position.y.toFixed(0)
+  ) {
+    return;
+  }
   const radarItemStyle = radarBoxRef.current?.[o.id]?.current?.style;
   const objectPosition = object3d?.position;
   if (radarItemStyle && objectPosition) {
-    radarItemStyle.transform = `translate(${
-      objectPosition.x / 100000 + 50
-    }px, ${-objectPosition.y / 100000 + 50}px)`;
+    radarItemStyle.transform = `translate3d(${objectPosition.x / 1 + 50}px, ${
+      -objectPosition.y / 1 + 50
+    }px, 0)`;
   }
 };
 
@@ -47,8 +75,8 @@ const handleInfoBox = (
     const degree = Math.round(utils.radiansToDegrees(-object3d.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
     infoBoxRef.current.textContent = `
-    x: ${(object3d.position.x / 100).toFixed(0)}
-    y: ${(object3d.position.y / 100).toFixed(0)}
+    x: ${object3d.position.x.toFixed()} ${(object3d.position.x * 20).toFixed()}
+    y: ${object3d.position.y.toFixed()} ${(object3d.position.y * 20).toFixed()}
     z: ${o.positionZ.toFixed(0)}
     heading: ${heading}
     speed: ${o.speed.toFixed(1)}
@@ -83,180 +111,148 @@ const handleLocalObject = (
 
 const handleMovement = (
   delta: number,
-  gameObject: types.RemoteGameObject,
+  o: types.RemoteGameObject,
   object3d: THREE.Mesh
 ) => {
-  const o = gameObject;
-  const forceUp = Math.min(o.controlsUp, delta);
-  const forceDown = Math.min(o.controlsDown, delta);
-  const forceLeft = Math.min(o.controlsLeft, delta);
-  const forceRight = Math.min(o.controlsRight, delta);
-  const forceD = Math.min(o.controlsD, delta);
-  const forceF = Math.min(o.controlsF, delta);
   const p = parameters;
-  o.controlsUp -= forceUp;
-  o.controlsDown -= forceDown;
-  o.controlsLeft -= forceLeft;
-  o.controlsRight -= forceRight;
-  o.controlsF -= forceF;
-  o.controlsD -= forceD;
-  o.speed += forceUp * p.forceUpToSpeedFactor;
-  o.speed -= forceDown * p.forceDownToSpeedFactor;
-  o.rotationSpeed += forceLeft * p.forceLeftOrRightToRotationFactor;
-  o.rotationSpeed -= forceRight * p.forceLeftOrRightToRotationFactor;
-  o.verticalSpeed -= forceD * p.forceAscOrDescToVerticalSpeedFactor;
-  o.verticalSpeed += forceF * p.forceAscOrDescToVerticalSpeedFactor;
-  if (o.speed > p.maxSpeed) {
-    o.speed = p.maxSpeed;
+
+  //
+  // 1. INPUT → VELOCITY
+  //
+  const up = Math.min(o.controlsUp, delta);
+  const down = Math.min(o.controlsDown, delta);
+  const left = Math.min(o.controlsLeft, delta);
+  const right = Math.min(o.controlsRight, delta);
+  const d = Math.min(o.controlsD, delta);
+  const f = Math.min(o.controlsF, delta);
+
+  o.controlsUp -= up;
+  o.controlsDown -= down;
+  o.controlsLeft -= left;
+  o.controlsRight -= right;
+  o.controlsD -= d;
+  o.controlsF -= f;
+
+  o.speed += up * p.forceUpToSpeedFactor;
+  o.speed -= down * p.forceDownToSpeedFactor;
+
+  o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor;
+  o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor;
+
+  o.verticalSpeed -= d * p.forceAscOrDescToVerticalSpeedFactor;
+  o.verticalSpeed += f * p.forceAscOrDescToVerticalSpeedFactor;
+
+  //
+  // 2. CLAMP VELOCITIES
+  //
+  o.speed = Math.min(Math.max(o.speed, p.minSpeed), p.maxSpeed);
+  o.rotationSpeed = Math.min(
+    Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
+    p.maxRotationSpeedAbsolute
+  );
+  o.verticalSpeed = Math.min(
+    Math.max(o.verticalSpeed, -p.maxVerticalSpeedAbsolute),
+    p.maxVerticalSpeedAbsolute
+  );
+
+  //
+  // 3. APPLY DAMPING (time‑based exponential)
+  //
+  if (!left && !right) {
+    const decay = Math.exp(-p.rotationDecay * delta);
+    o.rotationSpeed *= decay;
+    if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
   }
-  if (o.speed < p.minSpeed) {
-    o.speed = p.minSpeed;
+
+  if (!d && !f) {
+    const decay = Math.exp(-p.verticalDecay * delta);
+    o.verticalSpeed *= decay;
+    if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
   }
-  if (o.rotationSpeed > p.maxRotationSpeedAbsolute) {
-    o.rotationSpeed = p.maxRotationSpeedAbsolute;
-  } else if (o.rotationSpeed < -p.maxRotationSpeedAbsolute) {
-    o.rotationSpeed = -p.maxRotationSpeedAbsolute;
-  }
-  if (o.verticalSpeed > p.maxVerticalSpeedAbsolute) {
-    o.verticalSpeed = p.maxVerticalSpeedAbsolute;
-  } else if (o.verticalSpeed < -p.maxVerticalSpeedAbsolute) {
-    o.verticalSpeed = -p.maxVerticalSpeedAbsolute;
-  }
+
+  //
+  // 4. INTEGRATE VELOCITIES → TRANSFORM
+  //
+  o.previousPosition = [
+    object3d.position.x.toFixed(0),
+    object3d.position.y.toFixed(0),
+    o.positionZ,
+  ];
+  o.previousRotation = object3d.rotation.z;
   object3d.rotateZ(o.rotationSpeed * p.rotationFactor * delta);
   object3d.translateY(o.speed * p.speedFactor * delta);
   o.positionZ += o.verticalSpeed * p.verticalSpeedFactor * delta;
-  if (!forceLeft && !forceRight) {
-    const rs = o.rotationSpeed;
-    if (rs !== 0) {
-      const decayed = rs * 0.99;
-      o.rotationSpeed = Math.abs(decayed) < 0.00001 ? 0 : decayed;
-    }
-  }
-  if (!forceD && !forceF) {
-    const vs = o.verticalSpeed;
-    if (vs !== 0) {
-      const decayed = vs * 0.99;
-      o.verticalSpeed = Math.abs(decayed) < 0.00001 ? 0 : decayed;
-    }
-  }
 };
+
+const world = new THREE.Vector3();
+const screen = new THREE.Vector3();
+const center = new THREE.Vector3();
 
 const handleDataBlock = (
   gameObject: types.RemoteGameObject,
   object3d: THREE.Mesh,
   camera: THREE.Camera,
-  viewProjection: THREE.Matrix4
+  width: number,
+  height: number
 ) => {
-  const o = gameObject;
-  if (!o.infoElement || !gameObject.dimensions) return;
+  if (
+    gameObject.previousPosition[0] === object3d.position.x.toFixed(0) &&
+    gameObject.previousPosition[1] === object3d.position.y.toFixed(0) &&
+    gameObject.previousRotation === object3d.rotation.z
+  ) {
+    return;
+  }
+  const container = gameObject.infoElement.containerRef?.current;
+  const row1 = gameObject.infoElement.row1Ref?.current;
+  const row2 = gameObject.infoElement.row2Ref?.current;
+  let lowestY = -Infinity;
 
-  //
-  // PREPARE VALUES
-  //
-  const infoElementPosition = v1.copy(object3d.position);
-  const infoElementDirection = v2.set(0, -1, 0);
-  const infoElementVector = v3.copy(gameObject.dimensions);
+  if (gameObject.corners2D && container && row1 && row2) {
+    for (let i = 0; i < 3; i++) {
+      const corner = gameObject.corners2D[i];
+      world.set(corner.x, corner.y, 0).applyMatrix4(object3d.matrixWorld);
+      screen.copy(world).project(camera);
+      const y = (1 - (screen.y * 0.5 + 0.5)) * height;
+      if (y > lowestY) lowestY = y;
+    }
+    object3d.getWorldPosition(center);
+    center.project(camera);
+    const x = (center.x * 0.5 + 0.5) * width;
 
-  //
-  // ROTATION ANGLES (Z-axis only)
-  //
-  const objAngle = object3d.rotation.z;
-  const camAngle = camera.rotation.z;
+    const halfWidth = container.offsetWidth * 0.5;
+    const tx = x - halfWidth;
+    const ty = lowestY;
 
-  //
-  // INVERTED OBJECT ROTATION
-  //
-  const invObjAngle = -objAngle;
+    container.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
 
-  //
-  // STEP 1:
-  // infoElementDirection = (cameraRotation - objectRotation) applied to (0, -1, 0)
-  //
-  const combinedAngle = camAngle + invObjAngle;
-  let cosA = Math.cos(combinedAngle);
-  let sinA = Math.sin(combinedAngle);
+    if (row1.textContent !== gameObject.username)
+      row1.textContent = gameObject.username;
 
-  infoElementDirection.set(
-    infoElementDirection.x * cosA - infoElementDirection.y * sinA,
-    infoElementDirection.x * sinA + infoElementDirection.y * cosA,
-    infoElementDirection.z
-  );
-
-  //
-  // STEP 2:
-  // Multiply dimensions by direction
-  //
-  infoElementVector.multiply(infoElementDirection);
-
-  //
-  // STEP 3:
-  // Divide by 2
-  //
-  infoElementVector.divideScalar(2);
-
-  //
-  // STEP 4:
-  // Apply object rotation to the vector
-  //
-  cosA = Math.cos(objAngle);
-  sinA = Math.sin(objAngle);
-
-  infoElementVector.set(
-    infoElementVector.x * cosA - infoElementVector.y * sinA,
-    infoElementVector.x * sinA + infoElementVector.y * cosA,
-    infoElementVector.z
-  );
-
-  //
-  // STEP 5:
-  // Add to object position
-  //
-  infoElementPosition.add(infoElementVector);
-
-  //
-  // STEP 6:
-  // Project to clip space
-  //
-  infoElementPosition.applyMatrix4(viewProjection);
-
-  //
-  // STEP 7:
-  // Update DOM
-  //
-  const container = o.infoElement.containerRef?.current;
-  const row1 = o.infoElement.row1Ref?.current;
-  const row2 = o.infoElement.row2Ref?.current;
-
-  if (container && row1 && row2) {
-    row1.textContent = gameObject.username;
-    row2.textContent = gameObject.health.toFixed(0);
-
-    container.style.transform = `translate(calc(${
-      globals.dimensions.canvasHalfWidth * infoElementPosition.x +
-      globals.dimensions.canvasHalfWidth
-    }px - 50%), ${
-      globals.dimensions.canvasHalfHeight * -infoElementPosition.y +
-      globals.dimensions.canvasHalfHeight +
-      parameters.infoTextOffsetValue
-    }px)`;
+    const healthText = gameObject.health.toFixed(0);
+    if (row2.textContent !== healthText) row2.textContent = healthText;
   }
 };
 
 const interpolatePositionAndRotaion = (
+  posAlpha: number,
+  rotAlpha: number,
   o: types.RemoteGameObject,
   object3d: THREE.Mesh
 ) => {
-  const alpha = parameters.interpolationAlpha;
-
   // position interpolation
-  object3d.position.lerp(o.backendPosition, alpha);
-  o.positionZ = (o.positionZ + o.backendPositionZ) * 0.5;
+  // console.log(
+  //   "--o.backendPosition:",
+  //   o.backendPosition.y.toFixed(),
+  //   (o.backendPosition.y * 20).toFixed()
+  // );
+  object3d.position.lerp(o.backendPosition, posAlpha);
+  o.positionZ += (o.backendPositionZ - o.positionZ) * posAlpha;
 
   // rotation interpolation
-  let diff = o.backendRotationZ - object3d.rotation.z;
-  if (diff > Math.PI) diff -= Math.PI * 2;
-  else if (diff < -Math.PI) diff += Math.PI * 2;
-  object3d.rotation.z += diff * alpha;
+  const current = normalizeAngle(object3d.rotation.z);
+  const target = normalizeAngle(o.backendRotationZ);
+  const diff = normalizeAngle(target - current);
+  object3d.rotation.z = current + diff * rotAlpha;
 };
 
 const handleLocalObjects = (
@@ -282,19 +278,18 @@ const handleObjects = (
   delta: number,
   camera: THREE.Camera,
   scene: THREE.Scene,
+  width: number,
+  height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   gameEventHandler: types.GameEventHandler,
   sendControlsData: (data: ArrayBuffer) => void
 ) => {
   deltaCumulative += delta;
-
-  camera.updateMatrixWorld();
-  (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
-  const viewProjection = m1.multiplyMatrices(
-    camera.projectionMatrix,
-    camera.matrixWorldInverse
-  );
+  const posAlpha = 1 - Math.exp(-positionAlpha * delta);
+  const rotAlpha = 1 - Math.exp(-rotationAlpha * delta);
+  const camPosAlpha = 1 - Math.exp(-cameraPositionAlpha * delta);
+  const camRotAlpha = 1 - Math.exp(-cameraRotationAlpha * delta);
 
   for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
     const o = globals.remoteObjects[i];
@@ -303,7 +298,6 @@ const handleObjects = (
         gameLogic.checkHealth(scene, o, gameEventHandler);
         if (o.isMe) {
           gameLogic.handleKeys(delta, o);
-          handleCamera(camera, o.object3d);
           handleInfoBox(o, o.object3d, infoBoxRef);
           if (deltaCumulative > parameters.clientSendInterval) {
             const controlsData = gatherControlsDataBinary(o, deltaCumulative);
@@ -316,9 +310,10 @@ const handleObjects = (
         handleMovement(delta, o, o.object3d);
         gameLogic.handleShot(scene, delta, o, o.object3d, gameEventHandler);
       }
-      interpolatePositionAndRotaion(o, o.object3d);
-      handleDataBlock(o, o.object3d, camera, viewProjection);
+      interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
+      handleDataBlock(o, o.object3d, camera, width, height);
       handleRadarBoxItem(o, o.object3d, radarBoxRef);
+      o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
     }
   }
 };
@@ -327,6 +322,8 @@ export const runFrame = (
   delta: number,
   camera: THREE.Camera,
   scene: THREE.Scene,
+  width: number,
+  height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   gameEventHandler: types.GameEventHandler,
@@ -337,116 +334,11 @@ export const runFrame = (
     delta,
     camera,
     scene,
+    width,
+    height,
     infoBoxRef,
     radarBoxRef,
     gameEventHandler,
     sendControlsData
   );
 };
-
-// const handleDataBlock = (
-//   gameObject: types.RemoteGameObject,
-//   object3d: THREE.Mesh,
-//   camera: THREE.Camera,
-//   viewProjection: THREE.Matrix4
-// ) => {
-//   const o = gameObject;
-//   if (o.infoElement && gameObject.dimensions) {
-//     v1.copy(object3d.position);
-//     v2.set(0, -1, 0);
-//     v3.copy(gameObject.dimensions);
-//     q1.copy(object3d.quaternion);
-//     q2.copy(object3d.quaternion);
-//     q2.invert();
-//     q3.copy(camera.quaternion);
-
-//     const infoElementPosition = v1;
-//     const infoElementDirection = v2;
-//     const gameObjectDimensions = v3;
-//     const gameObjectRotation = q1;
-//     const gameObjectRotationInverted = q2;
-//     const cameraRotation = q3;
-
-//     // let's calculate the position for the info text
-
-//     // we want the text to show below the object by a certain offset
-//     // let's first find the distance from the object center to the edge of the object
-//     // this needs to be in the opposite direction of where camera is rotated
-
-//     // we need to take into account the rotation of the object and the rotation of the camera
-//     // we apply camera rotation and inverse object rotation to a downwards pointing vector
-
-//     // old ->
-//     // infoElementDirection.applyQuaternion(gameObjectRotationInverted);
-//     // infoElementDirection.applyQuaternion(cameraRotation);
-//     // <-
-//     // new ->
-//     infoElementDirection.applyQuaternion(
-//       gameObjectRotationInverted.multiply(cameraRotation)
-//     );
-//     // <-
-
-//     // we now have the direction where we want to calculate the distance
-//     // from the center of the object to the edge of the object
-//     // let's multiply the object dimensions with that direction vector
-//     gameObjectDimensions.multiply(infoElementDirection);
-
-//     // now we have the width of the object in that direction
-//     const infoElementVector = gameObjectDimensions;
-
-//     // let's divide it and have the distance from the center to the edge
-//     infoElementVector.divideScalar(2);
-
-//     // now we need to remove the object rotation from the vector
-//     // and only regard the camera rotation for it to point to correct direction
-//     infoElementVector.applyQuaternion(gameObjectRotation);
-
-//     // let's add this vector to the position of the object
-//     infoElementPosition.add(infoElementVector);
-
-//     // now we have it positioned correctly on the bottom edge of the object
-//     // when viewing from the direction of the camera
-//     // let's project this position from the world space to the screen space
-//     // old ->
-//     // infoElementPosition.project(camera);
-//     // <-
-//     // new ->
-//     infoElementPosition.applyMatrix4(viewProjection);
-//     // <-
-
-//     const container = o.infoElement.containerRef?.current;
-//     const row1 = o.infoElement.row1Ref?.current;
-//     const row2 = o.infoElement.row2Ref?.current;
-//     if (container && row1 && row2) {
-//       row1.textContent = gameObject.username;
-
-//       row2.textContent = gameObject.health.toFixed(0);
-//       // row2.textContent = gameObject.health.toFixed(0);
-
-//       // let's put the info element on the screen to that position
-//       // with some offset to have it slightly below the object
-
-//       // old ->
-//       // container.style.left = `${
-//       //   globals.dimensions.canvasHalfWidth * infoElementPosition.x +
-//       //   globals.dimensions.canvasHalfWidth
-//       // }px`;
-//       // container.style.top = `${
-//       //   globals.dimensions.canvasHalfHeight * -infoElementPosition.y +
-//       //   globals.dimensions.canvasHalfHeight +
-//       //   parameters.infoTextOffsetValue
-//       // }px`;
-//       // <-
-//       // new ->
-//       container.style.transform = `translate(calc(${
-//         globals.dimensions.canvasHalfWidth * infoElementPosition.x +
-//         globals.dimensions.canvasHalfWidth
-//       }px - 50%), ${
-//         globals.dimensions.canvasHalfHeight * -infoElementPosition.y +
-//         globals.dimensions.canvasHalfHeight +
-//         parameters.infoTextOffsetValue
-//       }px)`;
-//       // <-
-//     }
-//   }
-// };

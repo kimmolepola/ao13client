@@ -28,9 +28,9 @@ const load = async <
 };
 
 export const loadBox = (fileName?: string, size?: [number, number, number]) => {
-  const width = size?.[0] || 10000;
-  const height = size?.[1] || 10000;
-  const depth = size?.[2] || 10000;
+  const width = size?.[0] || 1;
+  const height = size?.[1] || 1;
+  const depth = size?.[2] || 1;
   const createGeometry = () => new THREE.BoxGeometry(width, height, depth);
   const createMaterial = (x: THREE.Texture) => {
     const empty = new THREE.MeshBasicMaterial({
@@ -60,8 +60,8 @@ export const loadPlane = (
   fileName?: string,
   size?: [number, number, number]
 ) => {
-  const width = size?.[0] || 10000;
-  const height = size?.[1] || 10000;
+  const width = size?.[0] || 1;
+  const height = size?.[1] || 1;
   const createGeometry = () => new THREE.PlaneGeometry(width, height);
   const createMaterial = (x: THREE.Texture) =>
     new THREE.MeshBasicMaterial({
@@ -77,7 +77,7 @@ export const loadPlane = (
 
 export const loadBackground = () => {
   const createGeometry = (x: THREE.Texture) =>
-    new THREE.PlaneGeometry(x.image.width * 10000, x.image.height * 10000);
+    new THREE.PlaneGeometry(x.image.width * 1, x.image.height * 1);
   const createMaterial = (x: THREE.Texture) => {
     x.wrapS = THREE.MirroredRepeatWrapping;
     x.wrapT = THREE.MirroredRepeatWrapping;
@@ -95,8 +95,8 @@ export const loadBackground = () => {
 
 export const loadFighter = (color?: string) => {
   const createGeometry = (x: THREE.Texture) => {
-    const width = Math.min(5000, (x.image.width / x.image.height) * 5000);
-    const height = Math.min(5000, (x.image.height / x.image.width) * 5000);
+    const width = Math.min(1, x.image.width / x.image.height);
+    const height = Math.min(1, x.image.height / x.image.width);
     const depth = 1;
     return new THREE.BoxGeometry(width, height, depth);
   };

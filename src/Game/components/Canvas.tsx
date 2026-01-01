@@ -12,10 +12,11 @@ import { localLoad } from "../logic/rendering/localLoader";
 import { updateRenderedObjects } from "../logic/rendering/loader";
 import * as types from "src/types";
 
-const camera = new THREE.PerspectiveCamera(70, 1, 49990, 50001);
+const camera = new THREE.PerspectiveCamera(70, 1, 1, 10);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
+// renderer.setPixelRatio(window.devicePixelRatio);
 localLoad(scene, types.GameObjectType.BACKGROUND);
 
 const Canvas = ({
@@ -33,7 +34,7 @@ const Canvas = ({
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
   objectIds: string[];
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     camera.aspect = width / height;
@@ -46,12 +47,14 @@ const Canvas = ({
   }, [objectIds]);
 
   useEffect(() => {
-    const node = ref.current;
+    const node = canvasRef.current;
     node?.appendChild(renderer.domElement);
     startAnimation(
       camera,
       scene,
       renderer,
+      width,
+      height,
       infoBoxRef,
       radarBoxRef,
       gameEventHandler,
@@ -62,9 +65,9 @@ const Canvas = ({
       node?.removeChild(renderer.domElement);
       stopAnimation();
     };
-  }, [ref, infoBoxRef, radarBoxRef]);
+  }, [width, height, infoBoxRef, radarBoxRef]);
 
-  return <div ref={ref} className="absolute inset-0" style={style} />;
+  return <div ref={canvasRef} className="absolute inset-0" style={style} />;
 };
 
 export default memo(Canvas);

@@ -71,6 +71,9 @@ export const handleReceiveBaseState = (
           health: 100,
           positionZ: 1000,
           backendPositionZ: 1000,
+          corners2D: undefined,
+          previousPosition: ["0", "0", 0],
+          previousRotation: 0,
         });
       }
     }

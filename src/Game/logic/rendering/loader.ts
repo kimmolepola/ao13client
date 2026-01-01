@@ -19,8 +19,15 @@ const load = async (
   const size = new THREE.Vector3();
   mesh.geometry.boundingBox?.getSize(size);
   o.dimensions = size;
-  mesh.position.x = Math.random() * 500;
-  mesh.position.y = Math.random() * 500;
+  mesh.position.x = Math.random() * 1;
+  mesh.position.y = Math.random() * 1;
+  const bbox = new THREE.Box3().setFromObject(mesh);
+  o.corners2D = [
+    new THREE.Vector3(bbox.min.x, bbox.min.y, 0),
+    new THREE.Vector3(bbox.min.x, bbox.max.y, 0),
+    new THREE.Vector3(bbox.max.x, bbox.min.y, 0),
+    new THREE.Vector3(bbox.max.x, bbox.max.y, 0),
+  ];
 };
 
 export const remove = (scene: THREE.Scene, objectsIndex: number) => {

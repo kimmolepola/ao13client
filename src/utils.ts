@@ -1,8 +1,8 @@
 import * as parameters from "./parameters";
 
 export const decodeAxisValue = (encodedAxisValue: number) =>
-  (encodedAxisValue + parameters.networkToPositionAddition) *
-  parameters.networkToPositionFactor;
+  encodedAxisValue * parameters.networkToPositionFactor +
+  parameters.networkToPositionAddition;
 
 export const degreesToRadians = (degrees: number) => degrees * (Math.PI / 180);
 export const radiansToDegrees = (radians: number) => radians * (180 / Math.PI);

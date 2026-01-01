@@ -9,7 +9,7 @@ const RadarBox = ({
   objectIds: string[];
 }) => {
   return (
-    <div className="absolute left-5 top-5 w-[100px] h-[100px] bg-black opacity-70 overflow-clip">
+    <div className="absolute left-5 top-5 w-[100px] h-[100px] bg-black opacity-70 overflow-clip pointer-events-none">
       {objectIds.map((x) => (
         <RadarItem key={x} id={x} radarBoxRef={radarBoxRef} />
       ))}

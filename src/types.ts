@@ -201,6 +201,11 @@ export interface RemoteGameObject extends GameObject {
   shotDelay: number;
   positionZ: number;
   backendPositionZ: number;
+  corners2D:
+    | [THREE.Vector3, THREE.Vector3, THREE.Vector3, THREE.Vector3]
+    | undefined;
+  previousPosition: [string, string, number];
+  previousRotation: number;
 }
 
 export enum ClientDataType {

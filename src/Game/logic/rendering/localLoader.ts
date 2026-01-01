@@ -27,7 +27,7 @@ export const localLoad = (
     case types.GameObjectType.EXPLOSION:
       return loadMesh(scene, loadPlane, "explosion.png");
     case types.GameObjectType.BULLET:
-      return loadMesh(scene, loadBox, "bullet.png", [600, 600, 1]);
+      return loadMesh(scene, loadBox, "bullet.png", [0.1, 0.1, 1]);
     case types.GameObjectType.BACKGROUND:
       return loadMesh(scene, loadBackground);
     default:

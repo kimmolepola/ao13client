@@ -12,7 +12,7 @@ const InfoText = ({ gameObject }: { gameObject: types.RemoteGameObject }) => {
 
   return (
     <div
-      className="absolute text-white bg-black/30 rounded px-1 text-xs"
+      className="absolute text-white bg-black/30 rounded px-1 text-xs pointer-events-none"
       ref={containerRef}
     >
       <div ref={row1Ref} />

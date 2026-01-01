@@ -126,7 +126,7 @@ export const gameEventHandler = async (
       object3d?.position.copy(gameEvent.data.object3d.position);
       // object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
       object3d?.rotation.copy(gameEvent.data.object3d.rotation);
-      object3d?.translateY(5000);
+      object3d?.translateY(1);
       globals.localObjects.push({
         id,
         type,
