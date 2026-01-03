@@ -1,7 +1,7 @@
 // import * as THREE from "three";
 import * as types from "../../types";
 import * as parameters from "../../parameters";
-import * as debug from "./debug";
+import * as debug from "../debug/debug";
 import * as utils from "../../utils";
 
 // const axis = new THREE.Vector3(0, 0, 1);

@@ -102,8 +102,9 @@ export const loadFighter = (color?: string) => {
   };
   const createMaterial = (x: THREE.Texture) => {
     const empty = new THREE.MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
+      // transparent: true,
+      // opacity: 0,
+      // wireframe: true,
     });
     return [
       empty,

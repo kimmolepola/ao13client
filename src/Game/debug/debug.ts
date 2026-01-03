@@ -1,9 +1,79 @@
 import * as globals from "src/globals";
 // import * as netcodeGlobals from "./globals";
-import * as state from "./state";
+import * as state from "../netcode/state";
 import * as types from "../../types";
+import GUI from "lil-gui";
+import * as THREE from "three";
 
 export const debugOn = { value: false };
+
+let debugGuiIsEnabled = false;
+let gui: GUI | null = null;
+const camRot = {
+  pitch: 0, // rotate around camera X
+  yaw: 0, // rotate around camera Y
+  roll: 0, // rotate around camera Z
+};
+
+const last = { pitch: 0, yaw: 0, roll: 0 };
+function updateCamera(camera: THREE.Camera) {
+  const dp = camRot.pitch - last.pitch;
+  const dy = camRot.yaw - last.yaw;
+  const dr = camRot.roll - last.roll;
+  camera.rotateX(dp);
+  camera.rotateY(dy);
+  camera.rotateZ(dr);
+  last.pitch = camRot.pitch;
+  last.yaw = camRot.yaw;
+  last.roll = camRot.roll;
+}
+
+const createGUI = (camera: THREE.Camera) => {
+  gui = new GUI();
+  const cameraFolder = gui.addFolder("Camera");
+  cameraFolder.add(camera.position, "x", -10000, 10000);
+  cameraFolder.add(camera.position, "y", -10000, 10000);
+  cameraFolder.add(camera.position, "x", -10, 10);
+  cameraFolder.add(camera.position, "y", -10, 10);
+  cameraFolder.add(camera.position, "z", 0, 10);
+  cameraFolder
+    .add(camRot, "pitch", -Math.PI / 2, Math.PI / 2)
+    .onChange(() => updateCamera(camera));
+  cameraFolder
+    .add(camRot, "yaw", -Math.PI, Math.PI)
+    .onChange(() => updateCamera(camera));
+  cameraFolder
+    .add(camRot, "roll", -Math.PI, Math.PI)
+    .onChange(() => updateCamera(camera));
+
+  cameraFolder.open();
+};
+
+const removeGUI = () => {
+  gui?.reset();
+  gui?.destroy();
+};
+
+const handleObjects = () => {
+  globals.remoteObjects.forEach((x) =>
+    x.object3d?.material.forEach((xx: any, i) => {
+      xx.wireframe = i !== 4 && debugOn.value;
+      xx.needsUpdate = i !== 4 && debugOn.value;
+    })
+  );
+};
+
+export const handleDebugGui = (camera: THREE.Camera) => {
+  if (debugOn.value && !debugGuiIsEnabled) {
+    debugGuiIsEnabled = true;
+    createGUI(camera);
+    handleObjects();
+  } else if (!debugOn.value && debugGuiIsEnabled) {
+    debugGuiIsEnabled = false;
+    removeGUI();
+    handleObjects();
+  }
+};
 
 export const receiveState = (data: ArrayBuffer) => {
   !debugOn.value && (statistics.outOfSequence = 0);

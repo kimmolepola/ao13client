@@ -5,7 +5,7 @@ import * as types from "src/types";
 import * as utils from "src/utils";
 import * as parameters from "src/parameters";
 import * as globals from "src/globals";
-import * as debug from "../../netcode/debug";
+import * as debug from "../../debug/debug";
 import * as gameLogic from "../gameLogic";
 
 import { gatherControlsDataBinary } from "../../netcode/controls";
@@ -34,16 +34,19 @@ const handleCamera = (
   o: types.RemoteGameObject,
   object3d: THREE.Mesh
 ) => {
-  cameraTarget.x = object3d.position.x;
-  cameraTarget.y = object3d.position.y;
-  camera.position.lerp(cameraTarget, camPosAlpha);
+  debug.handleDebugGui(camera);
+  if (!debug.debugOn.value) {
+    cameraTarget.x = object3d.position.x;
+    cameraTarget.y = object3d.position.y;
+    camera.position.lerp(cameraTarget, camPosAlpha);
 
-  const current = normalizeAngle(camera.rotation.z);
-  const target = normalizeAngle(object3d.rotation.z);
-  const diff = normalizeAngle(target - current);
+    const current = normalizeAngle(camera.rotation.z);
+    const target = normalizeAngle(object3d.rotation.z);
+    const diff = normalizeAngle(target - current);
 
-  camera.rotation.z = current + diff * camRotAlpha;
-  // camera.translateY(1);
+    camera.rotation.z = current + diff * camRotAlpha;
+    // camera.translateY(1);
+  }
 };
 
 const handleRadarBoxItem = (

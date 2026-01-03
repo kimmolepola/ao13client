@@ -5,7 +5,7 @@ import { remoteObjects } from "src/globals";
 import * as types from "src/types";
 import { handleReceiveStateData } from "../../Game/netcode/state";
 
-import * as debug from "../../Game/netcode/debug";
+import * as debug from "../../Game/debug/debug";
 import { sendAck } from "./send";
 
 const sequenceNumberIsNewer = (newSeq: number, recentSeq: number | null) => {

@@ -17,6 +17,7 @@ const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
 // renderer.setPixelRatio(window.devicePixelRatio);
+
 localLoad(scene, types.GameObjectType.BACKGROUND);
 
 const Canvas = ({
