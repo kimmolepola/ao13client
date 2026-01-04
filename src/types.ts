@@ -153,7 +153,6 @@ export interface GameObject {
   type: GameObjectType;
   speed: number;
   object3d: THREE.Object3D | undefined;
-  dimensions?: THREE.Vector3 | undefined;
 }
 
 export interface LocalGameObject extends GameObject {
@@ -163,6 +162,8 @@ export interface LocalGameObject extends GameObject {
     | undefined;
   timeToLive: number;
 }
+
+export const fighterHalfHeight = 4;
 
 export interface RemoteGameObject extends GameObject {
   idOverNetwork: number;
@@ -201,11 +202,10 @@ export interface RemoteGameObject extends GameObject {
   shotDelay: number;
   positionZ: number;
   backendPositionZ: number;
-  corners2D:
-    | [THREE.Vector3, THREE.Vector3, THREE.Vector3, THREE.Vector3]
-    | undefined;
   previousPosition: [string, string, number];
   previousRotation: number;
+  halfHeight: number;
+  radius: number;
 }
 
 export enum ClientDataType {

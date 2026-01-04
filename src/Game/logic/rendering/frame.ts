@@ -27,6 +27,8 @@ const normalizeAngle = (a: number) => {
   return a;
 };
 
+const previousCameraPosition = new THREE.Vector3();
+let previousCameraRotation = NaN;
 const handleCamera = (
   camPosAlpha: number,
   camRotAlpha: number,
@@ -34,6 +36,9 @@ const handleCamera = (
   o: types.RemoteGameObject,
   object3d: THREE.Mesh
 ) => {
+  previousCameraPosition.copy(camera.position);
+  previousCameraRotation = camera.rotation.z;
+
   debug.handleDebugGui(camera);
   if (!debug.debugOn.value) {
     cameraTarget.x = object3d.position.x;
@@ -45,6 +50,7 @@ const handleCamera = (
     const diff = normalizeAngle(target - current);
 
     camera.rotation.z = current + diff * camRotAlpha;
+    // camera.translateX(1);
     // camera.translateY(1);
   }
 };
@@ -187,51 +193,47 @@ const handleMovement = (
   o.positionZ += o.verticalSpeed * p.verticalSpeedFactor * delta;
 };
 
-const world = new THREE.Vector3();
-const screen = new THREE.Vector3();
-const center = new THREE.Vector3();
-
+const down = new THREE.Vector3(0, -1, 0);
 const handleDataBlock = (
-  gameObject: types.RemoteGameObject,
+  o: types.RemoteGameObject,
   object3d: THREE.Mesh,
   camera: THREE.Camera,
   width: number,
   height: number
 ) => {
+  const position = object3d.position;
   if (
-    gameObject.previousPosition[0] === object3d.position.x.toFixed(0) &&
-    gameObject.previousPosition[1] === object3d.position.y.toFixed(0) &&
-    gameObject.previousRotation === object3d.rotation.z
+    camera.position.x === previousCameraPosition.x &&
+    camera.position.y === previousCameraPosition.y &&
+    camera.position.z === previousCameraPosition.z &&
+    camera.rotation.z === previousCameraRotation &&
+    o.previousPosition[0] === position.x.toFixed(0) &&
+    o.previousPosition[1] === position.y.toFixed(0) &&
+    o.previousRotation === object3d.rotation.z
   ) {
     return;
   }
-  const container = gameObject.infoElement.containerRef?.current;
-  const row1 = gameObject.infoElement.row1Ref?.current;
-  const row2 = gameObject.infoElement.row2Ref?.current;
-  let lowestY = -Infinity;
 
-  if (gameObject.corners2D && container && row1 && row2) {
-    for (let i = 0; i < 3; i++) {
-      const corner = gameObject.corners2D[i];
-      world.set(corner.x, corner.y, 0).applyMatrix4(object3d.matrixWorld);
-      screen.copy(world).project(camera);
-      const y = (1 - (screen.y * 0.5 + 0.5)) * height;
-      if (y > lowestY) lowestY = y;
-    }
-    object3d.getWorldPosition(center);
-    center.project(camera);
-    const x = (center.x * 0.5 + 0.5) * width;
+  const container = o.infoElement.containerRef?.current;
+  const row1 = o.infoElement.row1Ref?.current;
+  const row2 = o.infoElement.row2Ref?.current;
 
-    const halfWidth = container.offsetWidth * 0.5;
-    const tx = x - halfWidth;
-    const ty = lowestY;
+  if (container && row1 && row2) {
+    down.set(0, -1, 0);
+    down.applyQuaternion(camera.quaternion); // rotate into world space
+    const offsetPosition = position
+      .clone()
+      .setZ(object3d.position.z + o.halfHeight)
+      .add(down.multiplyScalar(o.radius));
+    offsetPosition.project(camera);
 
-    container.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
-
-    if (row1.textContent !== gameObject.username)
-      row1.textContent = gameObject.username;
-
-    const healthText = gameObject.health.toFixed(0);
+    const halfWidth = container.clientWidth * 0.5;
+    const x = (offsetPosition.x + 1) * 0.5 * width - halfWidth;
+    const y = (1 - offsetPosition.y) * 0.5 * height;
+    const username = o.username;
+    const healthText = o.health.toFixed(0);
+    container.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    if (row1.textContent !== username) row1.textContent = username;
     if (row2.textContent !== healthText) row2.textContent = healthText;
   }
 };
@@ -243,11 +245,6 @@ const interpolatePositionAndRotaion = (
   object3d: THREE.Mesh
 ) => {
   // position interpolation
-  // console.log(
-  //   "--o.backendPosition:",
-  //   o.backendPosition.y.toFixed(),
-  //   (o.backendPosition.y * 20).toFixed()
-  // );
   object3d.position.lerp(o.backendPosition, posAlpha);
   o.positionZ += (o.backendPositionZ - o.positionZ) * posAlpha;
 
@@ -314,9 +311,9 @@ const handleObjects = (
         gameLogic.handleShot(scene, delta, o, o.object3d, gameEventHandler);
       }
       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
+      o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
       handleDataBlock(o, o.object3d, camera, width, height);
       handleRadarBoxItem(o, o.object3d, radarBoxRef);
-      o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
     }
   }
 };

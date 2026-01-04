@@ -66,14 +66,14 @@ export const handleReceiveBaseState = (
             row2Ref: undefined,
           },
           object3d: undefined,
-          dimensions: undefined,
           shotDelay: 0,
           health: 100,
           positionZ: 1000,
           backendPositionZ: 1000,
-          corners2D: undefined,
           previousPosition: ["0", "0", 0],
           previousRotation: 0,
+          halfHeight: types.fighterHalfHeight,
+          radius: 1,
         });
       }
     }

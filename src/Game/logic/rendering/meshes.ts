@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import * as types from "../../../types";
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -97,7 +98,7 @@ export const loadFighter = (color?: string) => {
   const createGeometry = (x: THREE.Texture) => {
     const width = Math.min(1, x.image.width / x.image.height);
     const height = Math.min(1, x.image.height / x.image.width);
-    const depth = 1;
+    const depth = types.fighterHalfHeight * 2;
     return new THREE.BoxGeometry(width, height, depth);
   };
   const createMaterial = (x: THREE.Texture) => {

@@ -12,7 +12,7 @@ import { localLoad } from "../logic/rendering/localLoader";
 import { updateRenderedObjects } from "../logic/rendering/loader";
 import * as types from "src/types";
 
-const camera = new THREE.PerspectiveCamera(70, 1, 1, 10);
+const camera = new THREE.PerspectiveCamera(50, 1, 1, 10);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
