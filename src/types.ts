@@ -1,5 +1,6 @@
 import { RefObject } from "react";
 import * as THREE from "three";
+import * as parameters from "./parameters";
 
 export type RTCSdpType = "answer" | "offer" | "pranswer" | "rollback";
 
@@ -142,10 +143,11 @@ export enum Keys {
 }
 
 export enum GameObjectType {
-  EXPLOSION,
-  BULLET,
-  FIGHTER,
-  BACKGROUND,
+  Explosion,
+  Bullet,
+  Fighter,
+  Background,
+  Runway,
 }
 
 export interface GameObject {
@@ -156,19 +158,21 @@ export interface GameObject {
 }
 
 export interface LocalGameObject extends GameObject {
-  type: GameObjectType.BULLET | GameObjectType.EXPLOSION;
+  type: GameObjectType.Bullet | GameObjectType.Explosion;
   object3d:
     | THREE.Mesh<THREE.PlaneGeometry, THREE.Material | THREE.Material[]>
     | undefined;
   timeToLive: number;
 }
 
-export const fighterHalfHeight = 4;
+const f22HeightMeters = 5.1;
+export const fighterHalfHeight =
+  (1 / parameters.oneDistanceUnitInMeters) * (f22HeightMeters / 2);
 
 export interface RemoteGameObject extends GameObject {
   idOverNetwork: number;
   health: number;
-  type: GameObjectType.FIGHTER;
+  type: GameObjectType.Fighter;
   object3d: THREE.Mesh<THREE.BoxGeometry, THREE.Material[]> | undefined;
   isMe: boolean;
   isPlayer: boolean;

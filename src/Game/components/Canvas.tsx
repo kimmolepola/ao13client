@@ -12,13 +12,18 @@ import { localLoad } from "../logic/rendering/localLoader";
 import { updateRenderedObjects } from "../logic/rendering/loader";
 import * as types from "src/types";
 
-const camera = new THREE.PerspectiveCamera(50, 1, 1, 10);
+const camera = new THREE.PerspectiveCamera(
+  30,
+  undefined,
+  parameters.cameraDefaultZ - 10,
+  parameters.cameraDefaultZ + 1
+);
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
 // renderer.setPixelRatio(window.devicePixelRatio);
 
-localLoad(scene, types.GameObjectType.BACKGROUND);
+localLoad(scene, types.GameObjectType.Background);
 
 const Canvas = ({
   width,
@@ -46,6 +51,17 @@ const Canvas = ({
   useEffect(() => {
     updateRenderedObjects(objectIds, scene);
   }, [objectIds]);
+
+  useEffect(() => {
+    (async () => {
+      const box = new THREE.Box3();
+      const size = new THREE.Vector3();
+      const o = await localLoad(scene, types.GameObjectType.Runway);
+      o && box.setFromObject(o);
+      box.getSize(size);
+      console.log("--o:", size);
+    })();
+  }, []);
 
   useEffect(() => {
     const node = canvasRef.current;

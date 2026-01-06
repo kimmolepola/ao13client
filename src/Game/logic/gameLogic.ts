@@ -94,8 +94,8 @@ export const gameEventHandler = async (
     case types.EventType.HealthZero: {
       const id = uuidv4();
       const speed = 0;
-      const type = types.GameObjectType.EXPLOSION;
-      const object3d = await localLoad(scene, types.GameObjectType.EXPLOSION);
+      const type = types.GameObjectType.Explosion;
+      const object3d = await localLoad(scene, types.GameObjectType.Explosion);
       const timeToLive = 30000;
       if (gameEvent.data.object3d) {
         object3d?.position.copy(gameEvent.data.object3d.position);
@@ -117,14 +117,14 @@ export const gameEventHandler = async (
     case types.EventType.Shot: {
       const id = uuidv4();
       const speed = gameEvent.data.speed + parameters.bulletSpeed;
-      const type = types.GameObjectType.BULLET as types.GameObjectType.BULLET;
-      const object3d = await localLoad(scene, types.GameObjectType.BULLET);
+      const type = types.GameObjectType.Bullet as types.GameObjectType.Bullet;
+      const object3d = await localLoad(scene, types.GameObjectType.Bullet);
       const timeToLive = 1500;
       object3d?.geometry.computeBoundingBox();
       object3d?.position.copy(gameEvent.data.object3d.position);
       // object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
       object3d?.rotation.copy(gameEvent.data.object3d.rotation);
-      object3d?.translateY(1);
+      object3d?.translateY(0.5);
       globals.localObjects.push({
         id,
         type,

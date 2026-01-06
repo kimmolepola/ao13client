@@ -4,7 +4,6 @@ export const cameraPositionInterpolationAlpha = 0.05;
 export const cameraRotationInterpolationAlpha = 0.001;
 export const chatMessageTimeToLive = 60000;
 export const infoTextOffsetValue = 10;
-export const cameraDefaultZ = 9;
 export const sidepanelDefaultSize = 150;
 export const sidepanelMinimumSize = 90;
 export const shotDelay = 100;
@@ -32,7 +31,7 @@ export const maxSpeed = 25500;
 const speedToNetworkFactor = 2.57;
 export const networkToSpeedFactor = 1 / speedToNetworkFactor;
 
-// 1 distance unit is 20 meters. World size is 400x400 km
+// 1 distance unit is 20 meters. World size is 400x400 km. 400 km / 20 m = 20 000 distance units.
 export const oneDistanceUnitInMeters = 20;
 export const maxWorldCoordinateValue = 10000; // 1 unit is 20 meters
 export const minWorldCoordinateValue = -10000;
@@ -68,4 +67,9 @@ export const verticalSpeedFactor = 0.001;
 export const forceAscOrDescToVerticalSpeedFactor = 0.01;
 
 export const bulletSpeed = 2000;
-export const bulletSpeedReductionFactor = 0.99;
+export const bulletSpeedReductionFactor = 0.991;
+
+export const cameraDefaultZ = 80; // 160000 / oneDistanceUnitInMeters; // low orbit satellite altitude 160 - 2000 km. 160 km / 20 m = 8000
+const worldWidth = maxWorldCoordinateValue - minWorldCoordinateValue;
+const radarBoxWidth = 100; // 100 px
+export const worldToRadarPositionRatio = radarBoxWidth / worldWidth;

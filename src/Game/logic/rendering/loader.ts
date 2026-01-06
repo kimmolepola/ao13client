@@ -20,6 +20,7 @@ const load = async (
   mesh.position.y = Math.random() * 1;
   box.setFromObject(mesh);
   box.getSize(size);
+  console.log("--f:", size);
   o.radius = Math.sqrt(size.x * size.x + size.y * size.y) / 2;
   o.object3d = mesh;
   scene.add(mesh);

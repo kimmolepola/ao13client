@@ -69,8 +69,10 @@ const handleRadarBoxItem = (
   const radarItemStyle = radarBoxRef.current?.[o.id]?.current?.style;
   const objectPosition = object3d?.position;
   if (radarItemStyle && objectPosition) {
-    radarItemStyle.transform = `translate3d(${objectPosition.x / 1 + 50}px, ${
-      -objectPosition.y / 1 + 50
+    radarItemStyle.transform = `translate3d(${
+      objectPosition.x * parameters.worldToRadarPositionRatio + 50
+    }px, ${
+      -objectPosition.y * parameters.worldToRadarPositionRatio + 50
     }px, 0)`;
   }
 };
@@ -193,7 +195,8 @@ const handleMovement = (
   o.positionZ += o.verticalSpeed * p.verticalSpeedFactor * delta;
 };
 
-const down = new THREE.Vector3(0, -1, 0);
+// const down = new THREE.Vector3(0, -1, 0);
+const dataBlockPosition = new THREE.Vector3();
 const handleDataBlock = (
   o: types.RemoteGameObject,
   object3d: THREE.Mesh,
@@ -219,17 +222,19 @@ const handleDataBlock = (
   const row2 = o.infoElement.row2Ref?.current;
 
   if (container && row1 && row2) {
-    down.set(0, -1, 0);
-    down.applyQuaternion(camera.quaternion); // rotate into world space
-    const offsetPosition = position
-      .clone()
-      .setZ(object3d.position.z + o.halfHeight)
-      .add(down.multiplyScalar(o.radius));
-    offsetPosition.project(camera);
+    // down.set(0, -1, 0);
+    // down.applyQuaternion(camera.quaternion); // rotate into world space
+    // const offsetPosition = position
+    //   .clone()
+    //   .setZ(object3d.position.z + o.halfHeight)
+    //   .add(down.multiplyScalar(o.radius * 1.5));
+    // offsetPosition.project(camera);
+    dataBlockPosition.copy(position);
+    dataBlockPosition.project(camera);
 
     const halfWidth = container.clientWidth * 0.5;
-    const x = (offsetPosition.x + 1) * 0.5 * width - halfWidth;
-    const y = (1 - offsetPosition.y) * 0.5 * height;
+    const x = (dataBlockPosition.x + 1) * 0.5 * width - halfWidth;
+    const y = (1 - dataBlockPosition.y) * 0.5 * height;
     const username = o.username;
     const healthText = o.health.toFixed(0);
     container.style.transform = `translate3d(${x}px, ${y}px, 0)`;
@@ -312,7 +317,7 @@ const handleObjects = (
       }
       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
       o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
-      handleDataBlock(o, o.object3d, camera, width, height);
+      !o.isMe && handleDataBlock(o, o.object3d, camera, width, height);
       handleRadarBoxItem(o, o.object3d, radarBoxRef);
     }
   }

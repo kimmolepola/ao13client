@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import * as types from "../../../types";
+import * as parameters from "../../../parameters";
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -76,35 +77,81 @@ export const loadPlane = (
   );
 };
 
+const pixelsToDistanceUnits = (pixels: number, oneMeterInPixels: number) => {
+  const onePixelInMeters = 1 / oneMeterInPixels;
+  const oneMeterInDistanceUnits = 1 / parameters.oneDistanceUnitInMeters;
+  const onePixelInDistanceUnits = onePixelInMeters * oneMeterInDistanceUnits;
+  const distance = pixels * onePixelInDistanceUnits;
+  return distance;
+};
+
 export const loadBackground = () => {
-  const createGeometry = (x: THREE.Texture) =>
-    new THREE.PlaneGeometry(x.image.width * 1, x.image.height * 1);
+  const metersInPixel = 16;
+  const oneMeterInPixels = 1 / metersInPixel;
+  const createGeometry = (x: THREE.Texture) => {
+    const width = pixelsToDistanceUnits(x.image.width, oneMeterInPixels);
+    const height = pixelsToDistanceUnits(x.image.height, oneMeterInPixels);
+    return new THREE.PlaneGeometry(width, height);
+  };
   const createMaterial = (x: THREE.Texture) => {
-    x.wrapS = THREE.MirroredRepeatWrapping;
-    x.wrapT = THREE.MirroredRepeatWrapping;
-    x.repeat.set(120, 120);
+    // x.wrapS = THREE.MirroredRepeatWrapping;
+    // x.wrapT = THREE.MirroredRepeatWrapping;
+    // x.repeat.set(1, 1);
     return new THREE.MeshBasicMaterial({
       map: x,
     });
   };
   return load<THREE.PlaneGeometry, THREE.Material>(
-    "image1.jpeg",
+    "image1-1px4_5m.jpeg",
+    createGeometry,
+    createMaterial
+  );
+};
+
+export const loadRunway = () => {
+  // const metersInPixel = 4.5;
+  // const qoneMeterInPixels = 1 / metersInPixel;
+  const xMeters = 45;
+  const xPixels = 10;
+  const oneMeterInPixels = xPixels / xMeters;
+  console.log("--oneMeterInPixels:", oneMeterInPixels);
+  const createGeometry = (x: THREE.Texture) => {
+    const width = pixelsToDistanceUnits(x.image.width, oneMeterInPixels);
+    const height = pixelsToDistanceUnits(x.image.height, oneMeterInPixels);
+    console.log("--runway width:", width);
+    return new THREE.PlaneGeometry(width, height);
+  };
+  const createMaterial = (x: THREE.Texture) => {
+    return new THREE.MeshBasicMaterial({
+      map: x,
+      color: "yellow",
+    });
+  };
+  return load<THREE.PlaneGeometry, THREE.Material>(
+    "image2-1px4_5m.jpeg",
     createGeometry,
     createMaterial
   );
 };
 
 export const loadFighter = (color?: string) => {
+  const xMeters = 13.6;
+  const xPixels = 330;
+  const oneMeterInPixels = xPixels / xMeters;
+  console.log("--fighter oneMeterInPixels:", oneMeterInPixels);
   const createGeometry = (x: THREE.Texture) => {
-    const width = Math.min(1, x.image.width / x.image.height);
-    const height = Math.min(1, x.image.height / x.image.width);
+    const width = pixelsToDistanceUnits(x.image.width, oneMeterInPixels);
+    const height = pixelsToDistanceUnits(x.image.height, oneMeterInPixels);
     const depth = types.fighterHalfHeight * 2;
+    console.log("--width:", width);
+    console.log("--height:", height);
     return new THREE.BoxGeometry(width, height, depth);
   };
+
   const createMaterial = (x: THREE.Texture) => {
     const empty = new THREE.MeshBasicMaterial({
-      // transparent: true,
-      // opacity: 0,
+      transparent: true,
+      opacity: 0,
       // wireframe: true,
     });
     return [
