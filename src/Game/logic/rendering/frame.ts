@@ -33,7 +33,7 @@ const handleCamera = (
   camPosAlpha: number,
   camRotAlpha: number,
   camera: THREE.Camera,
-  o: types.RemoteGameObject,
+  o: types.SharedGameObject,
   object3d: THREE.Mesh
 ) => {
   previousCameraPosition.copy(camera.position);
@@ -56,7 +56,7 @@ const handleCamera = (
 };
 
 const handleRadarBoxItem = (
-  o: types.RemoteGameObject,
+  o: types.SharedGameObject,
   object3d: THREE.Mesh,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>
 ) => {
@@ -78,7 +78,7 @@ const handleRadarBoxItem = (
 };
 
 const handleInfoBox = (
-  o: types.RemoteGameObject,
+  o: types.SharedGameObject,
   object3d: THREE.Mesh,
   infoBoxRef: RefObject<HTMLDivElement>
 ) => {
@@ -122,7 +122,7 @@ const handleLocalObject = (
 
 const handleMovement = (
   delta: number,
-  o: types.RemoteGameObject,
+  o: types.SharedGameObject,
   object3d: THREE.Mesh
 ) => {
   const p = parameters;
@@ -198,7 +198,7 @@ const handleMovement = (
 // const down = new THREE.Vector3(0, -1, 0);
 const dataBlockPosition = new THREE.Vector3();
 const handleDataBlock = (
-  o: types.RemoteGameObject,
+  o: types.SharedGameObject,
   object3d: THREE.Mesh,
   camera: THREE.Camera,
   width: number,
@@ -246,7 +246,7 @@ const handleDataBlock = (
 const interpolatePositionAndRotaion = (
   posAlpha: number,
   rotAlpha: number,
-  o: types.RemoteGameObject,
+  o: types.SharedGameObject,
   object3d: THREE.Mesh
 ) => {
   // position interpolation
@@ -296,8 +296,8 @@ const handleObjects = (
   const camPosAlpha = 1 - Math.exp(-cameraPositionAlpha * delta);
   const camRotAlpha = 1 - Math.exp(-cameraRotationAlpha * delta);
 
-  for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
-    const o = globals.remoteObjects[i];
+  for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
+    const o = globals.sharedObjects[i];
     if (o && o.object3d) {
       if (o.object3d.visible) {
         gameLogic.checkHealth(scene, o, gameEventHandler);

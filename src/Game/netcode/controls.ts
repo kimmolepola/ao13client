@@ -21,7 +21,7 @@ let prevRoundingKeyD = 0;
 let prevRoundingKeyF = 0;
 
 export const gatherControlsDataBinary = (
-  o: types.RemoteGameObject,
+  o: types.SharedGameObject,
   deltaCumulative: number
 ) => {
   const factor = parameters.controlToNetworkFactor;

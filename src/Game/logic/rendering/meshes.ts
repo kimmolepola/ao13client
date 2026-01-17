@@ -114,11 +114,9 @@ export const loadRunway = () => {
   const xMeters = 45;
   const xPixels = 10;
   const oneMeterInPixels = xPixels / xMeters;
-  console.log("--oneMeterInPixels:", oneMeterInPixels);
   const createGeometry = (x: THREE.Texture) => {
     const width = pixelsToDistanceUnits(x.image.width, oneMeterInPixels);
     const height = pixelsToDistanceUnits(x.image.height, oneMeterInPixels);
-    console.log("--runway width:", width);
     return new THREE.PlaneGeometry(width, height);
   };
   const createMaterial = (x: THREE.Texture) => {
@@ -138,13 +136,10 @@ export const loadFighter = (color?: string) => {
   const xMeters = 13.6;
   const xPixels = 330;
   const oneMeterInPixels = xPixels / xMeters;
-  console.log("--fighter oneMeterInPixels:", oneMeterInPixels);
   const createGeometry = (x: THREE.Texture) => {
     const width = pixelsToDistanceUnits(x.image.width, oneMeterInPixels);
     const height = pixelsToDistanceUnits(x.image.height, oneMeterInPixels);
     const depth = types.fighterHalfHeight * 2;
-    console.log("--width:", width);
-    console.log("--height:", height);
     return new THREE.BoxGeometry(width, height, depth);
   };
 

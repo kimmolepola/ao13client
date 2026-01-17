@@ -6,10 +6,11 @@ import ConnectingBoxDiv from "./ConnectingBox";
 import InfoBox from "./InfoBox";
 import ControlButtons from "./ControlButtons";
 import RadarBox from "./RadarBox";
+import * as types from "src/types";
 
 const InfoTexts = () => (
   <>
-    {globals.remoteObjects.reduce((acc: JSX.Element[], cur) => {
+    {globals.sharedObjects.reduce((acc: JSX.Element[], cur) => {
       acc.push(<DataBlock key={cur.id} gameObject={cur} />);
       return acc;
     }, [])}
@@ -25,12 +26,14 @@ const Container = ({
   radarBoxRef,
   isConnectedToGameServer,
   objectIds,
+  staticObjects,
 }: {
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
   isConnectedToGameServer: boolean;
   objectIds: string[];
+  staticObjects: types.BaseStateStaticObject[];
 }) => {
   return (
     <div className="absolute inset-0 z-1" style={style}>
@@ -38,7 +41,11 @@ const Container = ({
       <ConnectingBox visible={!isConnectedToGameServer} />
       {isConnectedToGameServer && <InfoBox infoBoxRef={infoBoxRef} />}
       <ControlButtons />
-      <RadarBox radarBoxRef={radarBoxRef} objectIds={objectIds} />
+      <RadarBox
+        radarBoxRef={radarBoxRef}
+        objectIds={objectIds}
+        staticObjects={staticObjects}
+      />
     </div>
   );
 };

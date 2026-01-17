@@ -1,7 +1,7 @@
 import { useRef, memo } from "react";
 import * as types from "src/types";
 
-const InfoText = ({ gameObject }: { gameObject: types.RemoteGameObject }) => {
+const InfoText = ({ gameObject }: { gameObject: types.SharedGameObject }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);

@@ -3,7 +3,7 @@ import * as types from "src/types";
 
 export const handlePressed = (key: types.Keys) => {
   const index = globals.state.ownRemoteObjectIndex;
-  const o = index !== undefined && globals.remoteObjects[index];
+  const o = index !== undefined && globals.sharedObjects[index];
   if (o && !o.keyDowns.includes(key)) {
     o.keyDowns.push(key);
   }
@@ -11,7 +11,7 @@ export const handlePressed = (key: types.Keys) => {
 
 export const handleReleased = (key: types.Keys) => {
   const index = globals.state.ownRemoteObjectIndex;
-  const o = index !== undefined && globals.remoteObjects[index];
+  const o = index !== undefined && globals.sharedObjects[index];
   if (o) {
     const indexes = [];
     for (let i = 0; i < o.keyDowns.length; i++) {
@@ -25,7 +25,7 @@ export const handleReleased = (key: types.Keys) => {
 
 export const handleAllReleased = () => {
   const index = globals.state.ownRemoteObjectIndex;
-  const o = index !== undefined && globals.remoteObjects[index];
+  const o = index !== undefined && globals.sharedObjects[index];
   if (o) {
     o.keyDowns.splice(0, o.keyDowns.length);
   }

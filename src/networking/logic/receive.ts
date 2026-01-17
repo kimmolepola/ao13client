@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 
 import { chatMessageTimeToLive } from "src/parameters";
-import { remoteObjects } from "src/globals";
+import { sharedObjects } from "src/globals";
 import * as types from "src/types";
 import { handleReceiveStateData } from "../../Game/netcode/state";
 
@@ -22,22 +22,24 @@ let mostRecentSequenceNumber: number | null = null;
 export const onReceiveStringData = (
   data: types.StringData,
   handleReceiveBaseState: (
-    baseStateObjects: types.BaseStateObject[],
-    onChangeObjectIds: (value: string[]) => void
+    baseState: types.BaseState,
+    onChangeObjectIds: (value: string[]) => void,
+    onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
   ) => void,
   onChangeObjectIds: (value: string[]) => void,
-  setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>
+  setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
 ) => {
   switch (data.type) {
     case types.ServerDataType.BaseState: {
-      handleReceiveBaseState(data.data, onChangeObjectIds);
+      handleReceiveBaseState(data, onChangeObjectIds, onChangeStaticObjects);
       break;
     }
     case types.ServerDataType.ChatMessage_Server: {
       const message = {
         ...data,
         username:
-          remoteObjects.find((x) => x.id === data.userId)?.username || "",
+          sharedObjects.find((x) => x.id === data.userId)?.username || "",
       };
       setChatMessages((x) => [message, ...x]);
       setTimeout(

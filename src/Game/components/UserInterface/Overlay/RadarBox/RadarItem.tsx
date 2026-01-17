@@ -13,7 +13,7 @@ const RadarItem = ({
   if (radarBoxRef.current) {
     radarBoxRef.current[id] = ref;
   }
-  const isMe = globals.remoteObjects.find((x) => x.id === id)?.isMe;
+  const isMe = globals.sharedObjects.find((x) => x.id === id)?.isMe;
 
   return (
     <div

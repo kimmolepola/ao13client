@@ -1,8 +1,9 @@
 import * as types from "./types";
 
 export const accessToken: { value: string | undefined } = { value: undefined };
-export const remoteObjects: types.RemoteGameObject[] = [];
+export const sharedObjects: types.SharedGameObject[] = [];
 export const localObjects: types.LocalGameObject[] = [];
+export const staticObjects: types.StaticGameObject[] = [];
 export const gameServer: {
   connection: types.ConnectionObject | undefined;
 } = { connection: undefined };

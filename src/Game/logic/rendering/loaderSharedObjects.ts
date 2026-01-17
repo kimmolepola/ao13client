@@ -12,7 +12,7 @@ const size = new THREE.Vector3();
 const load = async (
   scene: THREE.Scene,
   meshLoadFn: MeshLoadFn,
-  o: types.RemoteGameObject
+  o: types.SharedGameObject
 ) => {
   const mesh = await meshLoadFn(o?.isMe ? "#FFD700" : undefined);
   mesh.geometry.computeBoundingBox();
@@ -20,14 +20,13 @@ const load = async (
   mesh.position.y = Math.random() * 1;
   box.setFromObject(mesh);
   box.getSize(size);
-  console.log("--f:", size);
   o.radius = Math.sqrt(size.x * size.x + size.y * size.y) / 2;
   o.object3d = mesh;
   scene.add(mesh);
 };
 
-export const remove = (scene: THREE.Scene, objectsIndex: number) => {
-  const os = globals.remoteObjects;
+const removeSharedObject = (scene: THREE.Scene, objectsIndex: number) => {
+  const os = globals.sharedObjects;
   const o = os[objectsIndex];
   if (o.object3d) {
     scene.remove(o.object3d);
@@ -35,18 +34,18 @@ export const remove = (scene: THREE.Scene, objectsIndex: number) => {
   os.splice(objectsIndex, 1);
 };
 
-export const updateRenderedObjects = (
+export const updateRenderedSharedObjects = (
   objectIds: string[],
   scene: THREE.Scene
 ) => {
-  const os = globals.remoteObjects;
+  const os = globals.sharedObjects;
   for (let i = os.length - 1; i >= 0; i--) {
     const o = os[i];
     if (objectIds.includes(o.id)) {
       const isFound = o.object3d && scene.children.includes(o.object3d);
       !isFound && load(scene, loadFighter, o);
     } else {
-      remove(scene, i);
+      removeSharedObject(scene, i);
     }
   }
 };

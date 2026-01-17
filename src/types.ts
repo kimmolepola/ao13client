@@ -153,8 +153,13 @@ export enum GameObjectType {
 export interface GameObject {
   id: string;
   type: GameObjectType;
-  speed: number;
-  object3d: THREE.Object3D | undefined;
+}
+
+export interface StaticGameObject extends GameObject {
+  type: GameObjectType.Runway;
+  object3d:
+    | THREE.Mesh<THREE.PlaneGeometry, THREE.Material | THREE.Material[]>
+    | undefined;
 }
 
 export interface LocalGameObject extends GameObject {
@@ -163,13 +168,14 @@ export interface LocalGameObject extends GameObject {
     | THREE.Mesh<THREE.PlaneGeometry, THREE.Material | THREE.Material[]>
     | undefined;
   timeToLive: number;
+  speed: number;
 }
 
 const f22HeightMeters = 5.1;
 export const fighterHalfHeight =
   (1 / parameters.oneDistanceUnitInMeters) * (f22HeightMeters / 2);
 
-export interface RemoteGameObject extends GameObject {
+export interface SharedGameObject extends GameObject {
   idOverNetwork: number;
   health: number;
   type: GameObjectType.Fighter;
@@ -178,6 +184,7 @@ export interface RemoteGameObject extends GameObject {
   isPlayer: boolean;
   username: string;
   score: number;
+  speed: number;
   controlsUp: number;
   controlsDown: number;
   controlsLeft: number;
@@ -233,12 +240,21 @@ export type ChatMessageFromClient = {
   text: string;
 };
 
-export type BaseStateObject = {
+export type BaseStateSharedObject = {
   id: string;
   idOverNetwork: number;
   isPlayer: boolean;
   username: string;
+  score: number;
 };
+
+export interface BaseStateStaticObject {
+  id: string;
+  type: 2;
+  x: number;
+  y: number;
+  rotation: number;
+}
 
 // State shape (1 + n * 1-17 bytes)
 // [
@@ -318,10 +334,17 @@ export type ReliableState = {
 
 export type BaseState = {
   type: ServerDataType.BaseState;
-  data: BaseStateObject[];
+  data: {
+    sharedObjects: BaseStateSharedObject[];
+    staticObjects: BaseStateStaticObject[];
+  };
 };
 
 export type StringData = ChatMessageFromServer | BaseState;
+
+export const BaseStateObjectTypes = {
+  2: GameObjectType.Runway,
+};
 
 export type Channel = {
   send: (stringData: string) => void;
@@ -348,7 +371,7 @@ export enum EventType {
 export type GameEvent =
   | {
       type: EventType.HealthZero;
-      data: RemoteGameObject;
+      data: SharedGameObject;
     }
   | {
       type: EventType.Shot;

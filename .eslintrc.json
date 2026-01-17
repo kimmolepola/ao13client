@@ -36,9 +36,9 @@
     "prefer-const": "warn",
     "prefer-template": "off",
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": ["warn"],
+    "@typescript-eslint/no-unused-vars": "warn",
     "no-shadow": "off",
-    "@typescript-eslint/no-shadow": ["warn"],
+    "@typescript-eslint/no-shadow": "warn",
     "react/react-in-jsx-scope": "off",
     "import/extensions": [
       "error",

@@ -5,33 +5,45 @@ import * as types from "src/types";
 import * as parameters from "src/parameters";
 
 export const handleReceiveBaseState = (
-  baseStateObjects: types.BaseStateObject[],
-  onChangeObjectIds: (value: string[]) => void
+  baseState: types.BaseState,
+  onChangeObjectIds: (value: string[]) => void,
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
 ) => {
   let objectIdsChanged = false;
 
-  const removeNonExistent = () => {
-    for (let i = 0; i < globals.remoteObjects.length; i++) {
-      const r = globals.remoteObjects[i];
-      const b = baseStateObjects.find((x) => x.id === r.id);
+  // const removeNonExistentSharedObjects = () => {
+  //   for (let i = 0; i < globals.sharedObjects.length; i++) {
+  //     const r = globals.sharedObjects[i];
+  //     const b = baseState.data.sharedObjects.find((x) => x.id === r.id);
+  //     if (!b) {
+  //       objectIdsChanged = true;
+  //       globals.sharedObjects.splice(i, 1);
+  //     }
+  //   }
+  // };
+
+  const handleNonExistentSharedObjects = () => {
+    for (let i = 0; i < globals.sharedObjects.length; i++) {
+      const r = globals.sharedObjects[i];
+      const b = baseState.data.sharedObjects.find((x) => x.id === r.id);
       if (!b) {
         objectIdsChanged = true;
-        globals.remoteObjects.splice(i, 1);
+        // globals.sharedObjects.splice(i, 1);
       }
     }
   };
 
-  const addNewOrUpdate = () => {
-    for (let i = 0; i < baseStateObjects.length; i++) {
-      const b = baseStateObjects[i];
-      const r = globals.remoteObjects.find((x) => x.id === b.id);
+  const addNewOrUpdateSharedObjects = () => {
+    for (let i = 0; i < baseState.data.sharedObjects.length; i++) {
+      const b = baseState.data.sharedObjects[i];
+      const r = globals.sharedObjects.find((x) => x.id === b.id);
       if (r) {
         r.idOverNetwork = b.idOverNetwork;
         r.username = b.username;
         r.isPlayer = b.isPlayer;
       } else {
         objectIdsChanged = true;
-        globals.remoteObjects.push({
+        globals.sharedObjects.push({
           id: b.id,
           idOverNetwork: b.idOverNetwork,
           isMe: b.id === globals.state.ownId,
@@ -81,22 +93,47 @@ export const handleReceiveBaseState = (
 
   const updateObjectIds = () => {
     if (objectIdsChanged) {
-      const ids = baseStateObjects.map((x) => x.id);
+      const ids = baseState.data.sharedObjects.map((x) => x.id);
       onChangeObjectIds(ids);
-      globals.state.ownRemoteObjectIndex = globals.remoteObjects.findIndex(
+      globals.state.ownRemoteObjectIndex = globals.sharedObjects.findIndex(
         (x) => x.isMe
       );
     }
   };
 
-  removeNonExistent();
-  addNewOrUpdate();
+  const updateStaticObjects = () => {
+    globals.staticObjects.length = 0;
+    baseState.data.staticObjects.forEach((x) => {
+      const type = types.BaseStateObjectTypes[x.type];
+      const existingStaticObject = globals.staticObjects.find(
+        (xx) => xx.id === x.id
+      );
+      if (!existingStaticObject && type === types.GameObjectType.Runway) {
+        globals.staticObjects.push({
+          id: x.id,
+          type,
+          object3d: undefined,
+        });
+      }
+    });
+  };
+
+  // removeNonExistentSharedObjects();
+  handleNonExistentSharedObjects();
+  addNewOrUpdateSharedObjects();
   updateObjectIds();
+
+  updateStaticObjects();
+  onChangeStaticObjects(baseState.data.staticObjects);
 };
 
-export const handleQuit = (onChangeObjectIds: (value: string[]) => void) => {
-  globals.remoteObjects.splice(0, globals.remoteObjects.length);
+export const handleQuit = (
+  onChangeObjectIds: (value: string[]) => void,
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+) => {
+  globals.sharedObjects.splice(0, globals.sharedObjects.length);
   onChangeObjectIds([]);
+  onChangeStaticObjects([]);
 };
 
 let previousTime: number | null = null;
@@ -105,8 +142,8 @@ export const handleReceiveState = (updateObjects: types.UpdateObject[]) => {
   const prev = previousTime ?? time - parameters.unreliableStateInterval;
   const delta = time - prev;
   previousTime = time;
-  for (let i = globals.remoteObjects.length - 1; i > -1; i--) {
-    const o = globals.remoteObjects[i];
+  for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
+    const o = globals.sharedObjects[i];
     const u = o && updateObjects[o.idOverNetwork];
     if (u) {
       o.health = u.health;

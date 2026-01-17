@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import * as types from "src/types";
-import { loadRunway, loadBackground, loadPlane, loadBox } from "./meshes";
+import { loadBackground, loadPlane, loadBox } from "./meshes";
 import * as globals from "src/globals";
 
 const loadMesh = async (
@@ -30,8 +30,6 @@ export const localLoad = (
       return loadMesh(scene, loadBox, "bullet.png", [0.2, 0.2, 0.2]);
     case types.GameObjectType.Background:
       return loadMesh(scene, loadBackground);
-    case types.GameObjectType.Runway:
-      return loadMesh(scene, loadRunway);
     default:
       break;
   }

@@ -55,7 +55,7 @@ const removeGUI = () => {
 };
 
 const handleObjects = () => {
-  globals.remoteObjects.forEach((x) =>
+  globals.sharedObjects.forEach((x) =>
     x.object3d?.material.forEach((xx: any, i) => {
       xx.wireframe = i !== 4 && debugOn.value;
       xx.needsUpdate = i !== 4 && debugOn.value;
@@ -116,7 +116,7 @@ export const debugDifferenceSignificance = (
 
 export const debug = (stateSequenceNumber: number) => {
   if (!debugOn.value) return;
-  console.log("RemoteGameObjects:", globals.remoteObjects);
+  console.log("RemoteGameObjects:", globals.sharedObjects);
   console.log("Received state sequence number:", stateSequenceNumber);
   console.log("RecentStates:", state.getRecentStateForDebug());
   console.log("GameServer:", globals.gameServer);

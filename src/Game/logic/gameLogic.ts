@@ -4,11 +4,11 @@ import { v4 as uuidv4 } from "uuid";
 import * as types from "src/types";
 import * as parameters from "src/parameters";
 import * as globals from "src/globals";
-import { localLoad, localRemove } from "./rendering/localLoader";
+import { localLoad, localRemove } from "./rendering/loaderLocalObjects";
 
 export const checkHealth = (
   scene: THREE.Scene,
-  remoteGameObject: types.RemoteGameObject,
+  remoteGameObject: types.SharedGameObject,
   gameEventHandler: types.GameEventHandler
 ) => {
   if (remoteGameObject.health <= 0) {
@@ -21,7 +21,7 @@ export const checkHealth = (
 
 export const handleKeys = (
   delta: number,
-  gameObject: types.RemoteGameObject
+  gameObject: types.SharedGameObject
 ) => {
   const o = gameObject;
   for (let i = 0; i < o.keyDowns.length; i++) {
@@ -64,7 +64,7 @@ export const handleKeys = (
 export const handleShot = (
   scene: THREE.Scene,
   delta: number,
-  gameObject: types.RemoteGameObject,
+  gameObject: types.SharedGameObject,
   object3d: THREE.Mesh,
   gameEventHandler: types.GameEventHandler
 ) => {

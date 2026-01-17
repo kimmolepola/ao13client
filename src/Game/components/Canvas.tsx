@@ -8,8 +8,9 @@ import {
 import { runFrame } from "../logic/rendering/frame";
 import { sendControlsData } from "src/networking/logic/send";
 import { gameEventHandler } from "../logic/gameLogic";
-import { localLoad } from "../logic/rendering/localLoader";
-import { updateRenderedObjects } from "../logic/rendering/loader";
+import { localLoad } from "../logic/rendering/loaderLocalObjects";
+import { updateRenderedSharedObjects } from "../logic/rendering/loaderSharedObjects";
+import { updateRenderedStaticObjects } from "../logic/rendering/loaderStaticObjects";
 import * as types from "src/types";
 
 const camera = new THREE.PerspectiveCamera(
@@ -21,7 +22,6 @@ const camera = new THREE.PerspectiveCamera(
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
-// renderer.setPixelRatio(window.devicePixelRatio);
 
 localLoad(scene, types.GameObjectType.Background);
 
@@ -32,6 +32,7 @@ const Canvas = ({
   infoBoxRef,
   radarBoxRef,
   objectIds,
+  staticObjects,
 }: {
   width: number;
   height: number;
@@ -39,6 +40,7 @@ const Canvas = ({
   infoBoxRef: RefObject<HTMLDivElement>;
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
   objectIds: string[];
+  staticObjects: types.BaseStateStaticObject[];
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -49,19 +51,12 @@ const Canvas = ({
   }, [width, height]);
 
   useEffect(() => {
-    updateRenderedObjects(objectIds, scene);
+    updateRenderedSharedObjects(objectIds, scene);
   }, [objectIds]);
 
   useEffect(() => {
-    (async () => {
-      const box = new THREE.Box3();
-      const size = new THREE.Vector3();
-      const o = await localLoad(scene, types.GameObjectType.Runway);
-      o && box.setFromObject(o);
-      box.getSize(size);
-      console.log("--o:", size);
-    })();
-  }, []);
+    updateRenderedStaticObjects(staticObjects, scene);
+  }, [staticObjects]);
 
   useEffect(() => {
     const node = canvasRef.current;

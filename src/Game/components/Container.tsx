@@ -32,17 +32,28 @@ const Container = ({
   const [isConnectedToGameServer, setIsConnectedToGameServer] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState<string>();
   const [objectIds, setObjectIds] = useState<string[]>([]);
+  const [staticObjects, setStaticObjects] = useState<
+    types.BaseStateStaticObject[]
+  >([]);
   const [chatMessages, setChatMessages] = useState<types.ChatMessage[]>([]);
 
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const radarBoxRef = useRef<{ [id: string]: RefObject<HTMLDivElement> }>({});
+
+  const onChangeStaticObjects = useCallback(
+    (value: types.BaseStateStaticObject[]) => {
+      setStaticObjects(value);
+    },
+    []
+  );
 
   const { disconnect } = useConnection(
     iceServers,
     setConnectionMessage,
     setIsConnectedToGameServer,
     setChatMessages,
-    setObjectIds
+    setObjectIds,
+    onChangeStaticObjects
   );
 
   const quit = useCallback(async () => {
@@ -81,6 +92,7 @@ const Container = ({
         infoBoxRef={infoBoxRef}
         radarBoxRef={radarBoxRef}
         objectIds={objectIds}
+        staticObjects={staticObjects}
       />
       <Overlay
         style={canvasStyle}
@@ -88,6 +100,7 @@ const Container = ({
         radarBoxRef={radarBoxRef}
         isConnectedToGameServer={isConnectedToGameServer}
         objectIds={objectIds}
+        staticObjects={staticObjects}
       />
       <Sidepanel
         username={user?.username}
