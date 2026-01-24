@@ -70,9 +70,11 @@ const handleRadarBoxItem = (
   const objectPosition = object3d?.position;
   if (radarItemStyle && objectPosition) {
     radarItemStyle.transform = `translate3d(${
-      objectPosition.x * parameters.worldToRadarPositionRatio + 50
+      objectPosition.x * globals.dimensions.worldToRadarPositionRatio +
+      globals.dimensions.radarBoxHalfWidth
     }px, ${
-      -objectPosition.y * parameters.worldToRadarPositionRatio + 50
+      -objectPosition.y * globals.dimensions.worldToRadarPositionRatio +
+      globals.dimensions.radarBoxHalfWidth
     }px, 0)`;
   }
 };
@@ -92,6 +94,8 @@ const handleInfoBox = (
     heading: ${heading}
     speed: ${o.speed.toFixed(1)}
     health: ${o.health.toFixed(0)}
+    fuel: ${o.fuel.toFixed(2)}
+    ammo: ${o.bullets}
     ${
       debug.debugOn.value
         ? `
@@ -313,7 +317,7 @@ const handleObjects = (
           }
         }
         handleMovement(delta, o, o.object3d);
-        gameLogic.handleShot(scene, delta, o, o.object3d, gameEventHandler);
+        gameLogic.handleShot(scene, delta, o, gameEventHandler);
       }
       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
       o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);

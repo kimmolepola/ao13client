@@ -85,18 +85,22 @@ const pixelsToDistanceUnits = (pixels: number, oneMeterInPixels: number) => {
   return distance;
 };
 
+const backgroundRepeat = 10;
 export const loadBackground = () => {
   const metersInPixel = 16;
   const oneMeterInPixels = 1 / metersInPixel;
   const createGeometry = (x: THREE.Texture) => {
-    const width = pixelsToDistanceUnits(x.image.width, oneMeterInPixels);
-    const height = pixelsToDistanceUnits(x.image.height, oneMeterInPixels);
+    const width =
+      pixelsToDistanceUnits(x.image.width, oneMeterInPixels) * backgroundRepeat;
+    const height =
+      pixelsToDistanceUnits(x.image.height, oneMeterInPixels) *
+      backgroundRepeat;
     return new THREE.PlaneGeometry(width, height);
   };
   const createMaterial = (x: THREE.Texture) => {
-    // x.wrapS = THREE.MirroredRepeatWrapping;
-    // x.wrapT = THREE.MirroredRepeatWrapping;
-    // x.repeat.set(1, 1);
+    x.wrapS = THREE.MirroredRepeatWrapping;
+    x.wrapT = THREE.MirroredRepeatWrapping;
+    x.repeat.set(backgroundRepeat, backgroundRepeat);
     return new THREE.MeshBasicMaterial({
       map: x,
     });
@@ -111,8 +115,8 @@ export const loadBackground = () => {
 export const loadRunway = () => {
   // const metersInPixel = 4.5;
   // const qoneMeterInPixels = 1 / metersInPixel;
-  const xMeters = 45;
-  const xPixels = 10;
+  const xMeters = 46;
+  const xPixels = 165;
   const oneMeterInPixels = xPixels / xMeters;
   const createGeometry = (x: THREE.Texture) => {
     const width = pixelsToDistanceUnits(x.image.width, oneMeterInPixels);
@@ -122,11 +126,12 @@ export const loadRunway = () => {
   const createMaterial = (x: THREE.Texture) => {
     return new THREE.MeshBasicMaterial({
       map: x,
-      color: "yellow",
+      color: "lightgrey",
+      transparent: true,
     });
   };
   return load<THREE.PlaneGeometry, THREE.Material>(
-    "image2-1px4_5m.jpeg",
+    "runway-165px-width.png",
     createGeometry,
     createMaterial
   );

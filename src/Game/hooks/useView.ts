@@ -14,11 +14,24 @@ const initialSidePanelGeometry = {
   size: parameters.sidepanelDefaultSize,
 };
 
+export const calculateRadarBoxSize = (windowInnerWidth: number) => {
+  const width = windowInnerWidth / parameters.windowToRadarBoxRatio;
+  return { width, height: width };
+};
+
+export const calculateWorldToRadarPositionRatio = (
+  windowInnerWidth: number
+) => {
+  const radarBoxWidth = calculateRadarBoxSize(windowInnerWidth).width;
+  return radarBoxWidth / parameters.worldWidth;
+};
+
 export const useView = () => {
   const [windowSize, setWindowSize] = useState(initialWindowSize);
   const [sidePanelGeometry, setSidePanelGeometry] = useState(
     initialSidePanelGeometry
   );
+  const [radarBoxSize, setRadarBoxSize] = useState({ width: 0, height: 0 });
 
   const canvasStyle = useMemo(() => {
     const { size, position } = sidePanelGeometry;
@@ -71,13 +84,19 @@ export const useView = () => {
       width: window.innerWidth,
       height: window.innerHeight,
     });
+    const rbSize = calculateRadarBoxSize(window.innerWidth);
+    setRadarBoxSize(rbSize);
+    globals.dimensions.radarBoxHalfWidth = rbSize.width * 0.5;
+    globals.dimensions.worldToRadarPositionRatio =
+      calculateWorldToRadarPositionRatio(window.innerWidth);
   }, []);
 
   const debouncedResize = useMemo(() => debounce(onResize, 200), [onResize]);
 
   useEffect(() => {
+    onResize();
     window.addEventListener("resize", debouncedResize);
-  }, [debouncedResize]);
+  }, [debouncedResize, onResize]);
 
   globals.dimensions.windowWidth = windowSize.width;
   globals.dimensions.windowHeight = windowSize.height;
@@ -89,6 +108,7 @@ export const useView = () => {
     canvasSize,
     sidePanelGeometry,
     windowSize,
+    radarBoxSize,
     onChangePosition,
     onChangeDiameter,
   };

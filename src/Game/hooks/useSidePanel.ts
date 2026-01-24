@@ -10,7 +10,7 @@ import * as types from "src/types";
 import * as globals from "src/globals";
 import * as parameters from "src/parameters";
 
-export const useResize = (
+export const useSidePanel = (
   position: types.SidepanelPosition,
   onChangePosition: (value: types.SidepanelPosition) => void,
   onChangeDiameter: (value: number) => void

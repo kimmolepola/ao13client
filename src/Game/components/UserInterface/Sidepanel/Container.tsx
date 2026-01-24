@@ -4,7 +4,7 @@ import clsx from "clsx";
 import Header from "./Header";
 import Chat from "./Chat/Container";
 import * as types from "src/types";
-import { useResize } from "../../../hooks/useResize";
+import { useSidePanel } from "../../../hooks/useSidePanel";
 
 import { sendStringData } from "src/networking/logic/send";
 
@@ -37,7 +37,7 @@ const Container = ({
   }, []);
 
   const [move, setMove] = useState(false);
-  const { onMouseDown, onTouchStart } = useResize(
+  const { onMouseDown, onTouchStart } = useSidePanel(
     position,
     onChangePosition,
     onChangeDiameter

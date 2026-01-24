@@ -65,7 +65,6 @@ export const handleShot = (
   scene: THREE.Scene,
   delta: number,
   gameObject: types.SharedGameObject,
-  object3d: THREE.Mesh,
   gameEventHandler: types.GameEventHandler
 ) => {
   const o = gameObject;
@@ -79,7 +78,7 @@ export const handleShot = (
       o.shotDelay += parameters.shotDelay;
       gameEventHandler(scene, {
         type: types.EventType.Shot,
-        data: { object3d, speed: o.speed },
+        data: gameObject,
       });
     }
   }
@@ -97,6 +96,7 @@ export const gameEventHandler = async (
       const type = types.GameObjectType.Explosion;
       const object3d = await localLoad(scene, types.GameObjectType.Explosion);
       const timeToLive = 30000;
+
       if (gameEvent.data.object3d) {
         object3d?.position.copy(gameEvent.data.object3d.position);
         gameEvent.data.object3d.visible = false;
@@ -115,23 +115,26 @@ export const gameEventHandler = async (
       break;
     }
     case types.EventType.Shot: {
-      const id = uuidv4();
-      const speed = gameEvent.data.speed + parameters.bulletSpeed;
-      const type = types.GameObjectType.Bullet as types.GameObjectType.Bullet;
-      const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-      const timeToLive = 1500;
-      object3d?.geometry.computeBoundingBox();
-      object3d?.position.copy(gameEvent.data.object3d.position);
-      // object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
-      object3d?.rotation.copy(gameEvent.data.object3d.rotation);
-      object3d?.translateY(0.5);
-      globals.localObjects.push({
-        id,
-        type,
-        speed,
-        object3d,
-        timeToLive,
-      });
+      const o = gameEvent.data;
+      if (o.bullets >= 1 && o.object3d) {
+        const id = uuidv4();
+        const speed = o.speed + parameters.bulletSpeed;
+        const type = types.GameObjectType.Bullet as types.GameObjectType.Bullet;
+        const object3d = await localLoad(scene, types.GameObjectType.Bullet);
+        const timeToLive = 1500;
+        object3d?.geometry.computeBoundingBox();
+        object3d?.position.copy(o.object3d.position);
+        // object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
+        object3d?.rotation.copy(o.object3d.rotation);
+        object3d?.translateY(0.5);
+        globals.localObjects.push({
+          id,
+          type,
+          speed,
+          object3d,
+          timeToLive,
+        });
+      }
       break;
     }
     default:

@@ -17,6 +17,8 @@ const load = async (
   const mesh = await meshLoadFn();
   mesh.position.x = bo.x;
   mesh.position.y = bo.y;
+  console.log("--xy:", bo.x, bo.y);
+  mesh.position.z = 0;
   mesh.rotation.setFromVector3(new THREE.Vector3(0, 0, bo.rotation));
   o.object3d = mesh;
   scene.add(mesh);

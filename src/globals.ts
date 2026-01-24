@@ -14,14 +14,19 @@ export const state: {
   ownId: undefined,
   ownRemoteObjectIndex: undefined,
 };
+
 export const dimensions: {
   windowWidth: number;
   windowHeight: number;
   canvasHalfWidth: number;
   canvasHalfHeight: number;
+  radarBoxHalfWidth: number;
+  worldToRadarPositionRatio: number;
 } = {
   windowWidth: window.innerWidth,
   windowHeight: window.innerHeight,
   canvasHalfWidth: window.innerWidth / 2,
   canvasHalfHeight: window.innerHeight / 2,
+  radarBoxHalfWidth: 0,
+  worldToRadarPositionRatio: 1,
 };

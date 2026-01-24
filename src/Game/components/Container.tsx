@@ -66,6 +66,7 @@ const Container = ({
     canvasSize,
     sidePanelGeometry,
     windowSize,
+    radarBoxSize,
     onChangeDiameter,
     onChangePosition,
   } = useView();
@@ -101,6 +102,7 @@ const Container = ({
         isConnectedToGameServer={isConnectedToGameServer}
         objectIds={objectIds}
         staticObjects={staticObjects}
+        radarBoxSize={radarBoxSize}
       />
       <Sidepanel
         username={user?.username}

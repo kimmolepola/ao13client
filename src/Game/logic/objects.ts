@@ -86,6 +86,8 @@ export const handleReceiveBaseState = (
           previousRotation: 0,
           halfHeight: types.fighterHalfHeight,
           radius: 1,
+          bullets: 0,
+          fuel: 0,
         });
       }
     }
@@ -151,6 +153,8 @@ export const handleReceiveState = (updateObjects: types.UpdateObject[]) => {
       o.backendPosition.setY(u.y);
       o.backendPositionZ = u.z;
       o.backendRotationZ = u.rotationZ;
+      o.fuel = u.fuel;
+      o.bullets = u.ordnanceChannel1.value;
       if (!o.isMe) {
         o.controlsUp += u.ctrlsUp ? delta : 0;
         o.controlsDown += u.ctrlsDown ? delta : 0;

@@ -27,6 +27,7 @@ const Container = ({
   isConnectedToGameServer,
   objectIds,
   staticObjects,
+  radarBoxSize,
 }: {
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
@@ -34,6 +35,7 @@ const Container = ({
   isConnectedToGameServer: boolean;
   objectIds: string[];
   staticObjects: types.BaseStateStaticObject[];
+  radarBoxSize: { width: number; height: number };
 }) => {
   return (
     <div className="absolute inset-0 z-1" style={style}>
@@ -45,6 +47,7 @@ const Container = ({
         radarBoxRef={radarBoxRef}
         objectIds={objectIds}
         staticObjects={staticObjects}
+        radarBoxSize={radarBoxSize}
       />
     </div>
   );
