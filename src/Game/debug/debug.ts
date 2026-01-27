@@ -169,7 +169,7 @@ export const debug = (stateSequenceNumber: number) => {
   });
 };
 
-export const debugSaveState = (updateObject: types.UpdateObject) => {
+export const debugSaveState = (updateObject: types.AuthoritativeState) => {
   if (!debugOn.value) return;
   console.log("SaveState:", updateObject);
 };

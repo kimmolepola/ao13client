@@ -55,7 +55,7 @@ export const onReceiveStringData = (
 
 export const onReceiveState = (
   data: ArrayBuffer,
-  handleReceiveState: (updateObjects: types.UpdateObject[]) => void
+  handleReceiveState: (receivedState: types.ReceivedState) => void
 ) => {
   debug.receiveState(data);
   const dataView = new DataView(data);

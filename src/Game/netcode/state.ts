@@ -32,7 +32,10 @@ const getTargetRecentState = (curSeq: number) => {
   return recentState;
 };
 
-const updateObjects: types.UpdateObject[] = []; // index is idOverNetwork
+const receivedState: { tick: number; state: types.AuthoritativeState[] } = {
+  tick: 0,
+  state: [],
+};
 
 const getinitialUpdateObject = () => ({
   exists: false,
@@ -62,9 +65,17 @@ const getinitialUpdateObject = () => ({
 });
 
 const initializeUpdateObjects = () => {
-  updateObjects.length = 0;
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-    updateObjects.push({ ...getinitialUpdateObject(), idOverNetwork: i });
+    receivedState.state[i] = {
+      ...getinitialUpdateObject(),
+      idOverNetwork: i,
+    };
+  }
+};
+
+const resetReceivedState = () => {
+  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+    receivedState.state[i].exists = false;
   }
 };
 
@@ -82,12 +93,6 @@ const initializeRecentStates = () => {
 export const initializeState = () => {
   initializeUpdateObjects();
   initializeRecentStates();
-};
-
-const resetUpdateObjects = () => {
-  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-    updateObjects[i].exists = false;
-  }
 };
 
 const resetRecentState = (seqNum: number) => {
@@ -191,9 +196,10 @@ const decodeOrdnanceByte2 = (byte1: number, byte2: number) => {
 };
 
 export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
-  resetUpdateObjects();
-
   const sequenceNumber = dataView.getUint8(0);
+
+  resetReceivedState();
+  receivedState.tick = sequenceNumber;
 
   save && resetRecentState(sequenceNumber);
   const recentState = getTargetRecentState(sequenceNumber);
@@ -239,7 +245,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       ? recentState.find((x) => x.idOverNetwork === idOverNetwork)
       : recentState[index];
 
-    const updateObject = updateObjects[idOverNetwork];
+    const updateObject = receivedState.state[idOverNetwork];
     updateObject.exists = true;
 
     if (controlsIsProvided) {
@@ -415,5 +421,5 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
 
   debug.statistics.objects = index;
 
-  return updateObjects;
+  return receivedState;
 };

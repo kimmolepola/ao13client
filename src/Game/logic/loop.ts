@@ -1,23 +1,16 @@
 import { RefObject } from "react";
 import * as THREE from "three";
 import * as types from "src/types";
-
-type RunFrame = (
-  delta: number,
-  camera: THREE.Camera,
-  scene: THREE.Scene,
-  width: number,
-  height: number,
-  infoBoxRef: RefObject<HTMLDivElement>,
-  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler,
-  sendControlsData: (data: ArrayBuffer) => void
-) => void;
+import { handleAnimationFrame } from "./rendering/frame";
+import { handleTick } from "./tick";
+import * as parameters from "src/parameters";
 
 let loopId: number | undefined;
 let previousTimestamp = 0;
+let cumulativeDelta = 0;
+const tickBuffer = new Uint8Array(1);
 
-const animate = (
+const loop = (
   timestamp: number,
   xLoopId: number,
   camera: THREE.Camera,
@@ -28,12 +21,30 @@ const animate = (
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   gameEventHandler: types.GameEventHandler,
-  sendControlsData: (data: ArrayBuffer) => void,
-  runFrame: RunFrame
+  sendControlsData: (data: ArrayBuffer) => void
 ) => {
+  const delta = timestamp - previousTimestamp;
+  cumulativeDelta += delta;
+  if (cumulativeDelta >= parameters.tickInterval) {
+    cumulativeDelta -= parameters.tickInterval;
+    handleTick(tickBuffer[0], sendControlsData);
+    tickBuffer[0]++;
+  }
+  handleAnimationFrame(
+    delta,
+    camera,
+    scene,
+    width,
+    height,
+    infoBoxRef,
+    radarBoxRef,
+    gameEventHandler
+  );
+  renderer.render(scene, camera);
+  previousTimestamp = timestamp;
   loopId === xLoopId &&
     requestAnimationFrame((x) =>
-      animate(
+      loop(
         x,
         xLoopId,
         camera,
@@ -44,27 +55,12 @@ const animate = (
         infoBoxRef,
         radarBoxRef,
         gameEventHandler,
-        sendControlsData,
-        runFrame
+        sendControlsData
       )
     );
-  const delta = timestamp - previousTimestamp;
-  runFrame(
-    delta,
-    camera,
-    scene,
-    width,
-    height,
-    infoBoxRef,
-    radarBoxRef,
-    gameEventHandler,
-    sendControlsData
-  );
-  previousTimestamp = timestamp;
-  renderer.render(scene, camera);
 };
 
-export const startAnimation = (
+export const startGameLoop = (
   camera: THREE.Camera,
   scene: THREE.Scene,
   renderer: THREE.Renderer,
@@ -73,13 +69,12 @@ export const startAnimation = (
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   gameEventHandler: types.GameEventHandler,
-  sendControlsData: (data: ArrayBuffer) => void,
-  runFrame: RunFrame
+  sendControlsData: (data: ArrayBuffer) => void
 ) => {
   const time = performance.now();
   previousTimestamp = time;
   loopId = time;
-  animate(
+  loop(
     time,
     time,
     camera,
@@ -90,11 +85,10 @@ export const startAnimation = (
     infoBoxRef,
     radarBoxRef,
     gameEventHandler,
-    sendControlsData,
-    runFrame
+    sendControlsData
   );
 };
 
-export const stopAnimation = () => {
+export const stopGameLoop = () => {
   loopId = undefined;
 };

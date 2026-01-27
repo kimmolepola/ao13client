@@ -1,11 +1,7 @@
 import { useEffect, useRef, memo, RefObject } from "react";
 import * as THREE from "three";
 import * as parameters from "src/parameters";
-import {
-  startAnimation,
-  stopAnimation,
-} from "src/Game/logic/rendering/animation";
-import { runFrame } from "../logic/rendering/frame";
+import { startGameLoop, stopGameLoop } from "src/Game/logic/loop";
 import { sendControlsData } from "src/networking/logic/send";
 import { gameEventHandler } from "../logic/gameLogic";
 import { localLoad } from "../logic/rendering/loaderLocalObjects";
@@ -61,7 +57,7 @@ const Canvas = ({
   useEffect(() => {
     const node = canvasRef.current;
     node?.appendChild(renderer.domElement);
-    startAnimation(
+    startGameLoop(
       camera,
       scene,
       renderer,
@@ -70,12 +66,11 @@ const Canvas = ({
       infoBoxRef,
       radarBoxRef,
       gameEventHandler,
-      sendControlsData,
-      runFrame
+      sendControlsData
     );
     return () => {
       node?.removeChild(renderer.domElement);
-      stopAnimation();
+      stopGameLoop();
     };
   }, [width, height, infoBoxRef, radarBoxRef]);
 

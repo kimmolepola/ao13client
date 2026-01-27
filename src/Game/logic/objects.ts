@@ -139,7 +139,7 @@ export const handleQuit = (
 };
 
 let previousTime: number | null = null;
-export const handleReceiveState = (updateObjects: types.UpdateObject[]) => {
+export const handleReceiveState = (receivedState: types.ReceivedState) => {
   const time = Date.now();
   const prev = previousTime ?? time - parameters.unreliableStateInterval;
   const delta = time - prev;

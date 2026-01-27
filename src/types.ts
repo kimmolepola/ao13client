@@ -53,7 +53,7 @@ export const reliableStateOffsets = {
 
 export const unreliableStateSingleObjectMaxBytes = 17;
 
-export type UpdateObject = {
+export type AuthoritativeState = {
   exists: boolean;
   idOverNetwork: number;
   ctrlsUp: boolean;
@@ -80,11 +80,16 @@ export type UpdateObject = {
   ordnanceChannel2: { id: number | undefined; value: number };
 };
 
+export type ReceivedState = {
+  tick: number;
+  state: AuthoritativeState[]; // state index is idOverNetwork
+};
+
 export type RecentStates = {
   // The objects in the UpdateObject[] array are in the order they were in the received data.
   // If the received object data does not have idOverNetwork, the idOverNetwork will be looked from
   // the object in the UpdateObject[] array that has the same index as the received object.
-  [sequenceNumber: number]: UpdateObject[];
+  [sequenceNumber: number]: AuthoritativeState[];
 };
 
 export enum SidepanelPosition {

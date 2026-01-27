@@ -1,3 +1,4 @@
+export const tickInterval = 50;
 export const objectPositionInterpolationAlpha = 0.001;
 export const objectRotationInterpolationAlpha = 0.01;
 export const cameraPositionInterpolationAlpha = 0.05;

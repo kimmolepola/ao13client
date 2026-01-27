@@ -291,8 +291,7 @@ const handleObjects = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler,
-  sendControlsData: (data: ArrayBuffer) => void
+  gameEventHandler: types.GameEventHandler
 ) => {
   deltaCumulative += delta;
   const posAlpha = 1 - Math.exp(-positionAlpha * delta);
@@ -308,13 +307,6 @@ const handleObjects = (
         if (o.isMe) {
           gameLogic.handleKeys(delta, o);
           handleInfoBox(o, o.object3d, infoBoxRef);
-          if (deltaCumulative > parameters.clientSendInterval) {
-            const controlsData = gatherControlsDataBinary(o, deltaCumulative);
-            deltaCumulative = 0;
-            if (controlsData) {
-              sendControlsData(controlsData);
-            }
-          }
         }
         handleMovement(delta, o, o.object3d);
         gameLogic.handleShot(scene, delta, o, gameEventHandler);
@@ -327,7 +319,7 @@ const handleObjects = (
   }
 };
 
-export const runFrame = (
+export const handleAnimationFrame = (
   delta: number,
   camera: THREE.Camera,
   scene: THREE.Scene,
@@ -335,8 +327,7 @@ export const runFrame = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler,
-  sendControlsData: (data: ArrayBuffer) => void
+  gameEventHandler: types.GameEventHandler
 ) => {
   handleLocalObjects(delta, scene, gameEventHandler);
   handleObjects(
@@ -347,7 +338,50 @@ export const runFrame = (
     height,
     infoBoxRef,
     radarBoxRef,
-    gameEventHandler,
-    sendControlsData
+    gameEventHandler
   );
 };
+
+// const handleObjects = (
+//   delta: number,
+//   camera: THREE.Camera,
+//   scene: THREE.Scene,
+//   width: number,
+//   height: number,
+//   infoBoxRef: RefObject<HTMLDivElement>,
+//   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+//   gameEventHandler: types.GameEventHandler,
+//   sendControlsData: (data: ArrayBuffer) => void
+// ) => {
+//   deltaCumulative += delta;
+//   const posAlpha = 1 - Math.exp(-positionAlpha * delta);
+//   const rotAlpha = 1 - Math.exp(-rotationAlpha * delta);
+//   const camPosAlpha = 1 - Math.exp(-cameraPositionAlpha * delta);
+//   const camRotAlpha = 1 - Math.exp(-cameraRotationAlpha * delta);
+
+//   for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
+//     const o = globals.sharedObjects[i];
+//     if (o && o.object3d) {
+//       if (o.object3d.visible) {
+//         gameLogic.checkHealth(scene, o, gameEventHandler);
+//         if (o.isMe) {
+//           gameLogic.handleKeys(delta, o);
+//           handleInfoBox(o, o.object3d, infoBoxRef);
+//           if (deltaCumulative > parameters.clientSendInterval) {
+//             const controlsData = gatherControlsDataBinary(o, deltaCumulative);
+//             deltaCumulative = 0;
+//             if (controlsData) {
+//               sendControlsData(controlsData);
+//             }
+//           }
+//         }
+//         handleMovement(delta, o, o.object3d);
+//         gameLogic.handleShot(scene, delta, o, gameEventHandler);
+//       }
+//       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
+//       o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
+//       !o.isMe && handleDataBlock(o, o.object3d, camera, width, height);
+//       handleRadarBoxItem(o, o.object3d, radarBoxRef);
+//     }
+//   }
+// };
