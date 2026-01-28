@@ -227,6 +227,43 @@ export interface SharedGameObject extends GameObject {
   bullets: number;
 }
 
+export type TickStateObject = GameObject & {
+  idOverNetwork: number;
+  health: number;
+  type: GameObjectType.Fighter;
+  x: number;
+  y: number;
+  score: number;
+  speed: number;
+  controlsUp: number;
+  controlsDown: number;
+  controlsLeft: number;
+  controlsRight: number;
+  controlsSpace: number;
+  controlsF: number;
+  controlsD: number;
+  controlsOverChannelsUp: number;
+  controlsOverChannelsDown: number;
+  controlsOverChannelsLeft: number;
+  controlsOverChannelsRight: number;
+  controlsOverChannelsSpace: number;
+  controlsOverChannelsD: number;
+  controlsOverChannelsF: number;
+  rotationSpeed: number;
+  verticalSpeed: number;
+  backendX: number;
+  backendY: number;
+  backendRotationZ: number;
+  keyDowns: Keys[];
+  shotDelay: number;
+  positionZ: number;
+  backendPositionZ: number;
+  previousPosition: [string, string, number];
+  previousRotation: number;
+  fuel: number;
+  bullets: number;
+};
+
 export enum ClientDataType {
   ChatMessage_Client = "ChatMessage_Client",
 }

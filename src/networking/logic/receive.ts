@@ -75,8 +75,8 @@ export const onReceiveState = (
 
   if (isNewer || save) {
     mostRecentSequenceNumber = sequenceNumber;
-    const updateObjects = handleReceiveStateData(dataView, save);
-    isNewer && updateObjects && handleReceiveState(updateObjects);
+    const receivedState = handleReceiveStateData(dataView, save);
+    isNewer && receivedState && handleReceiveState(receivedState);
   }
   if (!isNewer) {
     debug.statistics.outOfSequence++;

@@ -87,6 +87,56 @@ const handleControlsData = (
   }
 };
 
+// outer array index is tickNumber
+// inner array index is idOverNetwork
+const ticks: types.TickStateObject[][] = [];
+
+export const initializeTicks = () => {
+  ticks.length = 0;
+  for (let i = 0; i < parameters.stateMaxSequenceNumber + 1; i++) {
+    ticks[i] = [];
+    for (let ii = 0; i < parameters.maxRemoteObjects; i++) {
+      ticks[i][ii] = {
+        id: "",
+        idOverNetwork: ii,
+        health: 255,
+        type: types.GameObjectType.Fighter,
+        x: 0,
+        y: 0,
+        score: 0,
+        speed: 0,
+        controlsUp: 0,
+        controlsDown: 0,
+        controlsLeft: 0,
+        controlsRight: 0,
+        controlsSpace: 0,
+        controlsF: 0,
+        controlsD: 0,
+        controlsOverChannelsUp: 0,
+        controlsOverChannelsDown: 0,
+        controlsOverChannelsLeft: 0,
+        controlsOverChannelsRight: 0,
+        controlsOverChannelsSpace: 0,
+        controlsOverChannelsD: 0,
+        controlsOverChannelsF: 0,
+        rotationSpeed: 0,
+        verticalSpeed: 0,
+        backendX: 0,
+        backendY: 0,
+        backendRotationZ: 0,
+        keyDowns: [],
+        shotDelay: 0,
+        positionZ: 0,
+        backendPositionZ: 0,
+        previousPosition: ["0", "0", 0],
+        previousRotation: 0,
+        fuel: 0,
+        bullets: 0,
+      };
+    }
+  }
+};
+
 export const handleTick = (
   tickNumber: number,
   sendControlsData: (data: ArrayBuffer) => void
@@ -100,6 +150,69 @@ export const handleTick = (
         }
         handleMovement(o, o.object3d);
       }
+      const oo = ticks[tickNumber][o.idOverNetwork];
+      oo.id = o.id;
+      oo.idOverNetwork = o.idOverNetwork;
+      oo.health = o.health;
+      oo.type = o.type;
+      oo.x = o.object3d.position.x;
+      oo.y = o.object3d.position.y;
+      oo.score = o.score;
+      oo.speed = o.speed;
+      oo.controlsUp = o.controlsUp;
+      oo.controlsDown = o.controlsDown;
+      oo.controlsLeft = o.controlsLeft;
+      oo.controlsRight = o.controlsRight;
+      oo.controlsSpace = o.controlsSpace;
+      oo.controlsF = o.controlsF;
+      oo.controlsD = o.controlsD;
+      oo.controlsOverChannelsUp = o.controlsOverChannelsUp;
+      oo.controlsOverChannelsDown = o.controlsOverChannelsDown;
+      oo.controlsOverChannelsLeft = o.controlsOverChannelsLeft;
+      oo.controlsOverChannelsRight = o.controlsOverChannelsRight;
+      oo.controlsOverChannelsSpace = o.controlsOverChannelsSpace;
+      oo.controlsOverChannelsD = o.controlsOverChannelsD;
+      oo.controlsOverChannelsF = o.controlsOverChannelsF;
+      oo.rotationSpeed = o.rotationSpeed;
+      oo.verticalSpeed = o.verticalSpeed;
+      oo.backendX = o.backendPosition.x;
+      oo.backendY = o.backendPosition.y;
+      oo.backendRotationZ = o.backendRotationZ;
+      oo.keyDowns = [...o.keyDowns];
+      oo.shotDelay = o.shotDelay;
+      oo.positionZ = o.positionZ;
+      oo.backendPositionZ = o.backendPositionZ;
+      oo.previousPosition[0] = o.previousPosition[0];
+      oo.previousPosition[1] = o.previousPosition[1];
+      oo.previousPosition[2] = o.previousPosition[2];
+      oo.previousRotation = o.previousRotation;
+      oo.fuel = o.fuel;
+      oo.bullets = o.bullets;
     }
+  }
+};
+
+export function isSeqHigher(oldSeq: number, newSeq: number): boolean {
+  // Normalize to 0–255
+  const A = oldSeq & 0xff;
+  const B = newSeq & 0xff;
+
+  // Compute forward distance in modulo-256 space
+  const diff = (B - A) & 0xff;
+
+  // If diff is 1..127, B is newer; if 128..255, A is newer or equal
+  return diff !== 0 && diff < 128;
+}
+
+let previousAuthoritativeStateTick = 0;
+export const handleReceiveAuthoritativeState = (
+  receivedState: types.ReceivedState
+) => {
+  const isHigher = isSeqHigher(
+    previousAuthoritativeStateTick,
+    receivedState.tick
+  );
+  if (isHigher) {
+    previousAuthoritativeStateTick = receivedState.tick;
   }
 };

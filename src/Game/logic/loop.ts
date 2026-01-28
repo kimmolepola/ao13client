@@ -2,7 +2,7 @@ import { RefObject } from "react";
 import * as THREE from "three";
 import * as types from "src/types";
 import { handleAnimationFrame } from "./rendering/frame";
-import { handleTick } from "./tick";
+import { handleTick, initializeTicks } from "./tick";
 import * as parameters from "src/parameters";
 
 let loopId: number | undefined;
@@ -71,6 +71,7 @@ export const startGameLoop = (
   gameEventHandler: types.GameEventHandler,
   sendControlsData: (data: ArrayBuffer) => void
 ) => {
+  initializeTicks();
   const time = performance.now();
   previousTimestamp = time;
   loopId = time;

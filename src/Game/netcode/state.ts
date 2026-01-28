@@ -32,7 +32,7 @@ const getTargetRecentState = (curSeq: number) => {
   return recentState;
 };
 
-const receivedState: { tick: number; state: types.AuthoritativeState[] } = {
+const receivedState: types.ReceivedState = {
   tick: 0,
   state: [],
 };

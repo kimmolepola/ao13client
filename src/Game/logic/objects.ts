@@ -3,6 +3,7 @@ import * as THREE from "three";
 import * as globals from "src/globals";
 import * as types from "src/types";
 import * as parameters from "src/parameters";
+import { handleReceiveAuthoritativeState } from "./tick";
 
 export const handleReceiveBaseState = (
   baseState: types.BaseState,
@@ -138,32 +139,34 @@ export const handleQuit = (
   onChangeStaticObjects([]);
 };
 
-let previousTime: number | null = null;
-export const handleReceiveState = (receivedState: types.ReceivedState) => {
-  const time = Date.now();
-  const prev = previousTime ?? time - parameters.unreliableStateInterval;
-  const delta = time - prev;
-  previousTime = time;
-  for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
-    const o = globals.sharedObjects[i];
-    const u = o && updateObjects[o.idOverNetwork];
-    if (u) {
-      o.health = u.health;
-      o.backendPosition.setX(u.x);
-      o.backendPosition.setY(u.y);
-      o.backendPositionZ = u.z;
-      o.backendRotationZ = u.rotationZ;
-      o.fuel = u.fuel;
-      o.bullets = u.ordnanceChannel1.value;
-      if (!o.isMe) {
-        o.controlsUp += u.ctrlsUp ? delta : 0;
-        o.controlsDown += u.ctrlsDown ? delta : 0;
-        o.controlsLeft += u.ctrlsLeft ? delta : 0;
-        o.controlsRight += u.ctrlsRight ? delta : 0;
-        o.controlsSpace += u.ctrlsSpace ? delta : 0;
-        o.controlsD += u.ctrlsD ? delta : 0;
-        o.controlsF += u.ctrlsF ? delta : 0;
-      }
-    }
-  }
-};
+export const handleReceiveState = handleReceiveAuthoritativeState;
+
+// let previousTime: number | null = null;
+// export const handleReceiveState = (receivedState: types.ReceivedState) => {
+//   const time = Date.now();
+//   const prev = previousTime ?? time - parameters.unreliableStateInterval;
+//   const delta = time - prev;
+//   previousTime = time;
+//   for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
+//     const o = globals.sharedObjects[i];
+//     const u = o && updateObjects[o.idOverNetwork];
+//     if (u) {
+//       o.health = u.health;
+//       o.backendPosition.setX(u.x);
+//       o.backendPosition.setY(u.y);
+//       o.backendPositionZ = u.z;
+//       o.backendRotationZ = u.rotationZ;
+//       o.fuel = u.fuel;
+//       o.bullets = u.ordnanceChannel1.value;
+//       if (!o.isMe) {
+//         o.controlsUp += u.ctrlsUp ? delta : 0;
+//         o.controlsDown += u.ctrlsDown ? delta : 0;
+//         o.controlsLeft += u.ctrlsLeft ? delta : 0;
+//         o.controlsRight += u.ctrlsRight ? delta : 0;
+//         o.controlsSpace += u.ctrlsSpace ? delta : 0;
+//         o.controlsD += u.ctrlsD ? delta : 0;
+//         o.controlsF += u.ctrlsF ? delta : 0;
+//       }
+//     }
+//   }
+// };
