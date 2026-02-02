@@ -55,6 +55,11 @@ export const handleKeys = (
         o.controlsF += delta;
         o.controlsOverChannelsF += delta;
         break;
+      case types.Keys.E:
+        o.controlsE += delta;
+        o.controlsOverChannelsE += delta;
+        break;
+
       default:
         break;
     }

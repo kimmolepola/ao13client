@@ -8,8 +8,6 @@ import * as globals from "src/globals";
 import * as debug from "../../debug/debug";
 import * as gameLogic from "../gameLogic";
 
-import { gatherControlsDataBinary } from "../../netcode/controls";
-
 const positionAlpha = parameters.objectPositionInterpolationAlpha;
 const rotationAlpha = parameters.objectRotationInterpolationAlpha;
 const cameraPositionAlpha = parameters.cameraPositionInterpolationAlpha;

@@ -47,6 +47,8 @@ const convertKeyToControl = (key: string) => {
       return types.Keys.D;
     case "KeyF":
       return types.Keys.F;
+    case "KeyE":
+      return types.Keys.E;
     default:
       return null;
   }

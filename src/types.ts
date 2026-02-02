@@ -38,21 +38,6 @@ export type SidePanelGeometry = {
   diameter: number;
 };
 
-// 2 bytes for sequence number, 1 byte for associated reliable-state sequence number
-export const unreliableStateInfoBytes = 3;
-
-export const reliableStateSingleObjectBytes = 14;
-export const reliableStateOffsets = {
-  idOverNetwork: 0,
-  health: 1,
-  positionX: 2,
-  positionY: 6,
-  positionZ: 10,
-  angleZ: 12,
-};
-
-export const unreliableStateSingleObjectMaxBytes = 17;
-
 export type AuthoritativeState = {
   exists: boolean;
   idOverNetwork: number;
@@ -146,6 +131,7 @@ export enum Keys {
   Space = "space",
   D = "d",
   F = "f",
+  E = "e",
 }
 
 export enum GameObjectType {
@@ -198,6 +184,7 @@ export interface SharedGameObject extends GameObject {
   controlsSpace: number;
   controlsF: number;
   controlsD: number;
+  controlsE: number;
   controlsOverChannelsUp: number;
   controlsOverChannelsDown: number;
   controlsOverChannelsLeft: number;
@@ -205,10 +192,10 @@ export interface SharedGameObject extends GameObject {
   controlsOverChannelsSpace: number;
   controlsOverChannelsD: number;
   controlsOverChannelsF: number;
+  controlsOverChannelsE: number;
   rotationSpeed: number;
   verticalSpeed: number;
   backendPosition: THREE.Vector3;
-  // backendQuaternion: THREE.Quaternion;
   backendRotationZ: number;
   keyDowns: Keys[];
   infoElement: {
@@ -301,6 +288,55 @@ export interface BaseStateStaticObject {
   rotation: number;
 }
 
+export type BaseState = {
+  type: ServerDataType.BaseState;
+  data: {
+    sharedObjects: BaseStateSharedObject[];
+    staticObjects: BaseStateStaticObject[];
+  };
+};
+
+export type StringData = ChatMessageFromServer | BaseState;
+
+export const BaseStateObjectTypes = {
+  2: GameObjectType.Runway,
+};
+
+export type Channel = {
+  send: (stringData: string) => void;
+};
+
+export type Signaling = {
+  remoteId: string;
+  description?: RTCSessionDescription | null;
+  candidate?: RTCIceCandidate | null;
+};
+
+export type InitialGameObject = {
+  username: string;
+  score: number;
+  isPlayer: boolean;
+};
+
+export enum EventType {
+  HealthZero,
+  Shot,
+  RemoveLocalObjectIndexes,
+}
+
+export type GameEvent =
+  | {
+      type: EventType.HealthZero;
+      data: SharedGameObject;
+    }
+  | {
+      type: EventType.Shot;
+      data: SharedGameObject;
+    }
+  | { type: EventType.RemoveLocalObjectIndexes; data: number[] };
+
+export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
+
 // State shape (1 + n * 1-23 bytes)
 // [
 //   Uint8 sequence number (1 byte)
@@ -386,127 +422,25 @@ export interface BaseStateStaticObject {
 //   ]
 // ]
 
-// Controls shape (1-5 bytes)
+// Controls shape (2-3 bytes) big endian
 // [
-//     Uint8 providedControls1to7 (1:up 2:down 3:left 4:right 5:space 6:keyD 7:keyF)
+//     Uint8 tickNumber
 //     Uint8
-//       1-4 providedControl1?
-//       5-8 providedControl2?
+//       1: up
+//       2: up
+//       3: down
+//       4: down
+//       5: left
+//       6: left
+//       7: right
+//       8: right
 //     Uint8
-//       1-4 providedControl3?
-//       5-8 providedControl4?
-//     Uint8
-//       1-4 providedControl5?
-//       5-8 providedControl6?
-//     Uint8
-//       1-4 providedControl7?
-// ]
-
-export type UpdateBinary = ArrayBuffer;
-export type ReliableStateBinary = ArrayBuffer;
-
-export type ReliableState = {
-  id: string;
-  score: number;
-  health: number;
-  rotationSpeed: number;
-  verticalSpeed: number;
-  speed: number;
-  positionX: number;
-  positionY: number;
-  positionZ: number;
-  angleZ: number;
-  // quaternionX: number;
-  // quaternionY: number;
-  // quaternionZ: number;
-  // quaternionW: number;
-};
-
-export type BaseState = {
-  type: ServerDataType.BaseState;
-  data: {
-    sharedObjects: BaseStateSharedObject[];
-    staticObjects: BaseStateStaticObject[];
-  };
-};
-
-export type StringData = ChatMessageFromServer | BaseState;
-
-export const BaseStateObjectTypes = {
-  2: GameObjectType.Runway,
-};
-
-export type Channel = {
-  send: (stringData: string) => void;
-};
-
-export type Signaling = {
-  remoteId: string;
-  description?: RTCSessionDescription | null;
-  candidate?: RTCIceCandidate | null;
-};
-
-export type InitialGameObject = {
-  username: string;
-  score: number;
-  isPlayer: boolean;
-};
-
-export enum EventType {
-  HealthZero,
-  Shot,
-  RemoveLocalObjectIndexes,
-}
-
-export type GameEvent =
-  | {
-      type: EventType.HealthZero;
-      data: SharedGameObject;
-    }
-  | {
-      type: EventType.Shot;
-      data: SharedGameObject;
-    }
-  | { type: EventType.RemoveLocalObjectIndexes; data: number[] };
-
-export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
-
-// OLD State shape (1 + n * 1-17 bytes)
-// [
-//   Uint8 sequence number (1 byte)
-//   ...game object data (1-17 bytes each): [                                           bytes cumulative max
-//     Uint8 providedValues1to8                                                         1
-//       1: idOverNetwork                                                               |
-//       2: controls                                                                    |
-//       3: health                                                                      |
-//       4: positionX                                                                   |
-//       5: positionY                                                                   |
-//       6: positionZ                                                                   |
-//       7: angleZ                                                                      |
-//       8: providedBytesForPositionAndAngle                                            |
-//     Uint8 idOverNetwork? #1                                                          2
-//     Uint8 controls? #2 (1:up 2:down 3:left 4:right 5:space 6:keyD 7:keyF)            3
-//     Uint8 health? #3                                                                 4
-//     Uint8 providedBytesForPositionAndAngle? #4 (6 bits in use)                       5
-//       1&2 positionX:                                                                 |
-//         [00]: 1 byte                                                                 |
-//         [01]: 2 bytes                                                                |
-//         [10]: 3 bytes                                                                |
-//         [11]: 4 bytes                                                                |
-//       3&4 positionY:                                                                 |
-//         [00]: 1 byte                                                                 |
-//         [01]: 2 bytes                                                                |
-//         [10]: 3 bytes                                                                |
-//         [11]: 4 bytes                                                                |
-//       5 positionZ:                                                                   |
-//         [0]: 1 byte                                                                  |
-//         [1]: 2 bytes                                                                 |
-//       6 angleZ:                                                                      |
-//         [0]: 1 byte                                                                  |
-//         [1]: 2 bytes                                                                 |
-//     Uint8*1-4 positionX? #3 (unit is cm * positonToNetworkFactor (0.01) = meter)     9
-//     Uint8*1-4 positionY? #4 (unit is cm * positonToNetworkFactor (0.01) = meter)     13
-//     Uint8*1-2 positionZ? #5 (unit is feet)                                           15
-//     Uint8*1-2 angleZ? #6                                                             17
-//   ]
+//       1: space
+//       2: space
+//       3: keyD
+//       4: keyD
+//       5: keyF
+//       6: keyF
+//       7: keyE
+//       8: keyE
 // ]

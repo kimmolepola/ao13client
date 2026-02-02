@@ -79,9 +79,10 @@ const handleMovement = (o: types.SharedGameObject, object3d: THREE.Mesh) => {
 
 const handleControlsData = (
   o: types.SharedGameObject,
-  sendControlsData: (data: ArrayBuffer) => void
+  sendControlsData: (data: ArrayBuffer) => void,
+  tickNumber: number
 ) => {
-  const controlsData = gatherControlsDataBinary(o);
+  const controlsData = gatherControlsDataBinary(o, tickNumber);
   if (controlsData) {
     sendControlsData(controlsData);
   }
@@ -146,7 +147,7 @@ export const handleTick = (
     if (o && o.object3d) {
       if (o.object3d.visible) {
         if (o.isMe) {
-          handleControlsData(o, sendControlsData);
+          handleControlsData(o, sendControlsData, tickNumber);
         }
         handleMovement(o, o.object3d);
       }
@@ -188,6 +189,18 @@ export const handleTick = (
       oo.previousRotation = o.previousRotation;
       oo.fuel = o.fuel;
       oo.bullets = o.bullets;
+    }
+  }
+};
+
+const ticksAreDifferent = (receivedState: types.ReceivedState) => {
+  const localTick = ticks[receivedState.tick];
+
+  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+    const r = receivedState.state[i];
+    const l = localTick[i];
+    if (r.exists) {
+      // if (r.ctrlsD !== l.controlsOverChannelsD)
     }
   }
 };
