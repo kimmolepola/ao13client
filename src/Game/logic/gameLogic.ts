@@ -7,12 +7,11 @@ import * as globals from "src/globals";
 import { localLoad, localRemove } from "./rendering/loaderLocalObjects";
 
 export const checkHealth = (
-  scene: THREE.Scene,
   remoteGameObject: types.SharedGameObject,
-  gameEventHandler: types.GameEventHandler
+  handleGameEvent: (e: types.GameEvent) => void
 ) => {
   if (remoteGameObject.health <= 0) {
-    gameEventHandler(scene, {
+    handleGameEvent({
       type: types.EventType.HealthZero,
       data: remoteGameObject,
     });
@@ -28,35 +27,35 @@ export const handleKeys = (
     const key = o.keyDowns[i];
     switch (key) {
       case types.Keys.Up:
-        o.controlsUp += delta;
+        o.inputsUp += delta;
         o.controlsOverChannelsUp += delta;
         break;
       case types.Keys.Down:
-        o.controlsDown += delta;
+        o.inputsDown += delta;
         o.controlsOverChannelsDown += delta;
         break;
       case types.Keys.Left:
-        o.controlsLeft += delta;
+        o.inputsLeft += delta;
         o.controlsOverChannelsLeft += delta;
         break;
       case types.Keys.Right:
-        o.controlsRight += delta;
+        o.inputsRight += delta;
         o.controlsOverChannelsRight += delta;
         break;
       case types.Keys.Space:
-        o.controlsSpace += delta;
+        o.inputsSpace += delta;
         o.controlsOverChannelsSpace += delta;
         break;
       case types.Keys.D:
-        o.controlsD += delta;
+        o.inputsD += delta;
         o.controlsOverChannelsD += delta;
         break;
       case types.Keys.F:
-        o.controlsF += delta;
+        o.inputsF += delta;
         o.controlsOverChannelsF += delta;
         break;
       case types.Keys.E:
-        o.controlsE += delta;
+        o.inputsE += delta;
         o.controlsOverChannelsE += delta;
         break;
 
@@ -67,21 +66,20 @@ export const handleKeys = (
 };
 
 export const handleShot = (
-  scene: THREE.Scene,
   delta: number,
   gameObject: types.SharedGameObject,
-  gameEventHandler: types.GameEventHandler
+  handleGameEvent: (e: types.GameEvent) => void
 ) => {
   const o = gameObject;
-  if (o.controlsSpace) {
-    const timeQuantity = o.controlsSpace > delta ? delta : o.controlsSpace;
-    o.controlsSpace -= timeQuantity;
+  if (o.inputsSpace) {
+    const timeQuantity = o.inputsSpace > delta ? delta : o.inputsSpace;
+    o.inputsSpace -= timeQuantity;
 
     //shooting
     if (o.shotDelay - timeQuantity <= 0) {
       // shoot
       o.shotDelay += parameters.shotDelay;
-      gameEventHandler(scene, {
+      handleGameEvent({
         type: types.EventType.Shot,
         data: gameObject,
       });
@@ -121,7 +119,7 @@ export const gameEventHandler = async (
     }
     case types.EventType.Shot: {
       const o = gameEvent.data;
-      if (o.bullets >= 1 && o.object3d) {
+      if (o.bulletCount >= 1 && o.object3d) {
         const id = uuidv4();
         const speed = o.speed + parameters.bulletSpeed;
         const type = types.GameObjectType.Bullet as types.GameObjectType.Bullet;

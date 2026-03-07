@@ -40,13 +40,14 @@ const receivedState: types.ReceivedState = {
 const getinitialUpdateObject = () => ({
   exists: false,
   idOverNetwork: 0,
-  ctrlsUp: false,
-  ctrlsDown: false,
-  ctrlsLeft: false,
-  ctrlsRight: false,
-  ctrlsSpace: false,
-  ctrlsD: false,
-  ctrlsF: false,
+  inputsUp: 0,
+  inputsDown: 0,
+  inputsLeft: 0,
+  inputsRight: 0,
+  inputsSpace: 0,
+  inputsD: 0,
+  inputsF: 0,
+  inputsE: 0,
   health: 0,
   xDifferenceSignificance: 0,
   yDifferenceSignificance: 0,
@@ -62,6 +63,7 @@ const getinitialUpdateObject = () => ({
   fuel: 0,
   ordnanceChannel1: { id: undefined, value: 0 },
   ordnanceChannel2: { id: undefined, value: 0 },
+  eventsEncoded: 0,
 });
 
 const initializeUpdateObjects = () => {
@@ -195,6 +197,10 @@ const decodeOrdnanceByte2 = (byte1: number, byte2: number) => {
   return ((byte1 & 0x0f) << 8) | byte2;
 };
 
+const getTwoBitValue = (byte: number, position: number) => {
+  return (byte >> position) & 0b11;
+};
+
 export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   const sequenceNumber = dataView.getUint8(0);
 
@@ -217,25 +223,24 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     const providedValues1to8 = getNextByte();
 
     const values9to16IsProvided = getBit(providedValues1to8, 0);
-    const controlsIsProvided = getBit(providedValues1to8, 1);
-    const fuelIsProvided = getBit(providedValues1to8, 2);
+    const inputs1IsProvided = getBit(providedValues1to8, 1);
+    const inputs2IsProvided = getBit(providedValues1to8, 2);
+    const eventsIsProvided = getBit(providedValues1to8, 3);
     const providedBytesForPositionAndRotationIsProvided = getBit(
       providedValues1to8,
-      3
+      4
     );
-    const xIsProvided = getBit(providedValues1to8, 4);
-    const yIsProvided = getBit(providedValues1to8, 5);
-    const zIsProvided = getBit(providedValues1to8, 6);
+    const xIsProvided = getBit(providedValues1to8, 5);
+    const yIsProvided = getBit(providedValues1to8, 6);
     const rotationZIsProvided = getBit(providedValues1to8, 7);
+
     const possibleValues9to16Byte = values9to16IsProvided ? getNextByte() : 0;
-    const idIsProvided =
-      values9to16IsProvided && getBit(possibleValues9to16Byte, 0);
-    const healthIsProvided =
-      values9to16IsProvided && getBit(possibleValues9to16Byte, 1);
-    const ordnanceChannel1IsProvided =
-      values9to16IsProvided && getBit(possibleValues9to16Byte, 2);
-    const ordnanceChannel2IsProvided =
-      values9to16IsProvided && getBit(possibleValues9to16Byte, 3);
+    const idIsProvided = getBit(possibleValues9to16Byte, 0);
+    const zIsProvided = getBit(possibleValues9to16Byte, 1);
+    const healthIsProvided = getBit(possibleValues9to16Byte, 2);
+    const fuelIsProvided = getBit(possibleValues9to16Byte, 3);
+    const ordnanceChannel1IsProvided = getBit(possibleValues9to16Byte, 4);
+    const ordnanceChannel2IsProvided = getBit(possibleValues9to16Byte, 5);
 
     const idOverNetwork = idIsProvided
       ? getNextByte()
@@ -248,26 +253,44 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     const updateObject = receivedState.state[idOverNetwork];
     updateObject.exists = true;
 
-    if (controlsIsProvided) {
-      const controls = getNextByte();
-      updateObject.ctrlsUp = getBit(controls, 0);
-      updateObject.ctrlsDown = getBit(controls, 1);
-      updateObject.ctrlsLeft = getBit(controls, 2);
-      updateObject.ctrlsRight = getBit(controls, 3);
-      updateObject.ctrlsSpace = getBit(controls, 4);
-      updateObject.ctrlsD = getBit(controls, 5);
-      updateObject.ctrlsF = getBit(controls, 6);
+    if (inputs1IsProvided) {
+      const inputs = getNextByte();
+      updateObject.inputsUp = getTwoBitValue(inputs, 0);
+      updateObject.inputsDown = getTwoBitValue(inputs, 2);
+      updateObject.inputsLeft = getTwoBitValue(inputs, 4);
+      updateObject.inputsRight = getTwoBitValue(inputs, 6);
     } else if (recentObjectState) {
-      updateObject.ctrlsUp = recentObjectState.ctrlsUp;
-      updateObject.ctrlsDown = recentObjectState.ctrlsDown;
-      updateObject.ctrlsLeft = recentObjectState.ctrlsLeft;
-      updateObject.ctrlsRight = recentObjectState.ctrlsRight;
-      updateObject.ctrlsSpace = recentObjectState.ctrlsSpace;
-      updateObject.ctrlsD = recentObjectState.ctrlsD;
-      updateObject.ctrlsF = recentObjectState.ctrlsF;
+      updateObject.inputsUp = recentObjectState.inputsUp;
+      updateObject.inputsDown = recentObjectState.inputsDown;
+      updateObject.inputsLeft = recentObjectState.inputsLeft;
+      updateObject.inputsRight = recentObjectState.inputsRight;
     } else {
       debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
       return;
+    }
+
+    if (inputs2IsProvided) {
+      const inputs = getNextByte();
+      updateObject.inputsSpace = getTwoBitValue(inputs, 0);
+      updateObject.inputsD = getTwoBitValue(inputs, 2);
+      updateObject.inputsF = getTwoBitValue(inputs, 4);
+      updateObject.inputsE = getTwoBitValue(inputs, 6);
+    } else if (recentObjectState) {
+      updateObject.inputsSpace = recentObjectState.inputsSpace;
+      updateObject.inputsD = recentObjectState.inputsD;
+      updateObject.inputsF = recentObjectState.inputsF;
+      updateObject.inputsE = recentObjectState.inputsE;
+    } else {
+      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
+      return;
+    }
+
+    if (eventsIsProvided) {
+      updateObject.eventsEncoded = getNextByte();
+    } else if (recentObjectState) {
+      updateObject.eventsEncoded = recentObjectState.eventsEncoded;
+    } else {
+      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
     }
 
     if (healthIsProvided) {

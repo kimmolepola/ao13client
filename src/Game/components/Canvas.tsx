@@ -21,6 +21,10 @@ camera.position.setZ(parameters.cameraDefaultZ);
 
 localLoad(scene, types.GameObjectType.Background);
 
+const gameEventHandlerWrapper = (gameEvent: types.GameEvent) => {
+  gameEventHandler(scene, gameEvent);
+};
+
 const Canvas = ({
   width,
   height,
@@ -65,7 +69,7 @@ const Canvas = ({
       height,
       infoBoxRef,
       radarBoxRef,
-      gameEventHandler,
+      gameEventHandlerWrapper,
       sendControlsData
     );
     return () => {

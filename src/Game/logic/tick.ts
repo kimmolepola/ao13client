@@ -3,8 +3,15 @@ import * as parameters from "src/parameters";
 import * as types from "src/types";
 import * as globals from "src/globals";
 import { gatherControlsDataBinary } from "../netcode/controls";
+import { gameEventHandler } from "./gameLogic";
 
 const tickDuration = 50;
+
+// outer array index is tickNumber
+// inner array index is idOverNetwork
+const ticks: types.TickStateObject[][] = [];
+
+let latestReceivedState: types.ReceivedState | undefined;
 
 const handleMovement = (o: types.SharedGameObject, object3d: THREE.Mesh) => {
   const p = parameters;
@@ -12,19 +19,19 @@ const handleMovement = (o: types.SharedGameObject, object3d: THREE.Mesh) => {
   //
   // 1. INPUT → VELOCITY
   //
-  const up = Math.min(o.controlsUp, tickDuration);
-  const down = Math.min(o.controlsDown, tickDuration);
-  const left = Math.min(o.controlsLeft, tickDuration);
-  const right = Math.min(o.controlsRight, tickDuration);
-  const d = Math.min(o.controlsD, tickDuration);
-  const f = Math.min(o.controlsF, tickDuration);
+  const up = Math.min(o.inputsUp, tickDuration);
+  const down = Math.min(o.inputsDown, tickDuration);
+  const left = Math.min(o.inputsLeft, tickDuration);
+  const right = Math.min(o.inputsRight, tickDuration);
+  const d = Math.min(o.inputsD, tickDuration);
+  const f = Math.min(o.inputsF, tickDuration);
 
-  o.controlsUp -= up;
-  o.controlsDown -= down;
-  o.controlsLeft -= left;
-  o.controlsRight -= right;
-  o.controlsD -= d;
-  o.controlsF -= f;
+  o.inputsUp -= up;
+  o.inputsDown -= down;
+  o.inputsLeft -= left;
+  o.inputsRight -= right;
+  o.inputsD -= d;
+  o.inputsF -= f;
 
   o.speed += up * p.forceUpToSpeedFactor;
   o.speed -= down * p.forceDownToSpeedFactor;
@@ -88,10 +95,6 @@ const handleControlsData = (
   }
 };
 
-// outer array index is tickNumber
-// inner array index is idOverNetwork
-const ticks: types.TickStateObject[][] = [];
-
 export const initializeTicks = () => {
   ticks.length = 0;
   for (let i = 0; i < parameters.stateMaxSequenceNumber + 1; i++) {
@@ -106,20 +109,14 @@ export const initializeTicks = () => {
         y: 0,
         score: 0,
         speed: 0,
-        controlsUp: 0,
-        controlsDown: 0,
-        controlsLeft: 0,
-        controlsRight: 0,
-        controlsSpace: 0,
-        controlsF: 0,
-        controlsD: 0,
-        controlsOverChannelsUp: 0,
-        controlsOverChannelsDown: 0,
-        controlsOverChannelsLeft: 0,
-        controlsOverChannelsRight: 0,
-        controlsOverChannelsSpace: 0,
-        controlsOverChannelsD: 0,
-        controlsOverChannelsF: 0,
+        inputsUp: 0,
+        inputsDown: 0,
+        inputsLeft: 0,
+        inputsRight: 0,
+        inputsSpace: 0,
+        inputsF: 0,
+        inputsD: 0,
+        inputsE: 0,
         rotationSpeed: 0,
         verticalSpeed: 0,
         backendX: 0,
@@ -132,16 +129,151 @@ export const initializeTicks = () => {
         previousPosition: ["0", "0", 0],
         previousRotation: 0,
         fuel: 0,
-        bullets: 0,
+        bulletCount: 0,
+        eventsEncoded: 0,
+        bullets: [],
       };
+    }
+  }
+};
+
+// const ticksAreDifferent = (receivedState: types.ReceivedState) => {
+//   const localTick = ticks[receivedState.tick];
+
+//   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+//     const r = receivedState.state[i];
+//     const l = localTick[i];
+//     if (r.exists) {
+//       // if (r.ctrlsD !== l.controlsOverChannelsD)
+//     }
+//   }
+// };
+
+const getBit = (value: number, bitPosition: number) =>
+  !!((value >> bitPosition) & 1);
+
+const eventDifferenceDepthFor: number[] = [];
+
+const rollbackSimulate = (
+  receivedState: types.ReceivedState,
+  seq: number,
+  eventDepth: number, // 1 | 2 | 3 | 4
+  handleGameEvent: (e: types.GameEvent) => void
+) => {
+  const tick = ticks[seq];
+  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+    if (eventDifferenceDepthFor[i] >= eventDepth) {
+      const o = tick[i];
+      const r = receivedState.state[i];
+      const ordnance1 = getBit(r.eventsEncoded, eventDepth - 1);
+      const ordnance2 = getBit(r.eventsEncoded, eventDepth - 1 + 4);
+      ordnance1 && handleGameEvent({ type: types.EventType.Shot, data: o });
+      ordnance2 && handleGameEvent({ type: types.EventType.Shot2, data: o });
+    }
+  }
+};
+
+const handleEventsRollback = (
+  tick: types.TickStateObject[],
+  receivedState: types.ReceivedState,
+  pTick: types.TickStateObject[],
+  ppTick: types.TickStateObject[],
+  pppTick: types.TickStateObject[],
+  ppppTick: types.TickStateObject[],
+  handleGameEvent: (e: types.GameEvent) => void
+) => {
+  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+    const o = tick[i];
+    const r = receivedState.state[i];
+    if (r.eventsEncoded !== o.eventsEncoded) {
+      const o1Ordnance1 = getBit(o.eventsEncoded, 0);
+      const o2Ordnance1 = getBit(o.eventsEncoded, 1);
+      const o3Ordnance1 = getBit(o.eventsEncoded, 2);
+      const o4Ordnance1 = getBit(o.eventsEncoded, 3);
+      const o1Ordnance2 = getBit(o.eventsEncoded, 4);
+      const o2Ordnance2 = getBit(o.eventsEncoded, 5);
+      const o3Ordnance2 = getBit(o.eventsEncoded, 6);
+      const o4Ordnance2 = getBit(o.eventsEncoded, 7);
+      const r1Ordnance1 = getBit(r.eventsEncoded, 0);
+      const r2Ordnance1 = getBit(r.eventsEncoded, 1);
+      const r3Ordnance1 = getBit(r.eventsEncoded, 2);
+      const r4Ordnance1 = getBit(r.eventsEncoded, 3);
+      const r1Ordnance2 = getBit(r.eventsEncoded, 4);
+      const r2Ordnance2 = getBit(r.eventsEncoded, 5);
+      const r3Ordnance2 = getBit(r.eventsEncoded, 6);
+      const r4Ordnance2 = getBit(r.eventsEncoded, 7);
+
+      o4Ordnance1 !== r4Ordnance1 &&
+        handleGameEvent({ type: types.EventType.Shot, data: ppppTick[i] });
+      o4Ordnance2 !== r4Ordnance2 &&
+        handleGameEvent({ type: types.EventType.Shot2, data: ppppTick[i] });
+
+      o3Ordnance1 !== r3Ordnance1 &&
+        handleGameEvent({ type: types.EventType.Shot, data: pppTick[i] });
+      o3Ordnance2 !== r3Ordnance2 &&
+        handleGameEvent({ type: types.EventType.Shot2, data: pppTick[i] });
+
+      o2Ordnance1 !== r2Ordnance1 &&
+        handleGameEvent({ type: types.EventType.Shot, data: ppTick[i] });
+      o2Ordnance2 !== r2Ordnance2 &&
+        handleGameEvent({ type: types.EventType.Shot2, data: ppTick[i] });
+
+      o1Ordnance1 !== r1Ordnance1 &&
+        handleGameEvent({ type: types.EventType.Shot, data: pTick[i] });
+      o1Ordnance2 !== r1Ordnance2 &&
+        handleGameEvent({ type: types.EventType.Shot2, data: pTick[i] });
+
+      o.eventsEncoded = r.eventsEncoded;
+    }
+  }
+};
+
+const getPrevSeq = (seq: number) => {
+  return (seq - 1) & 0xff;
+};
+
+function seq8Subtract(a: number, b: number) {
+  return (a - b + 256) & 0xff;
+}
+
+const doPossibleRollback = (handleGameEvent: (e: types.GameEvent) => void) => {
+  if (latestReceivedState) {
+    const seq = latestReceivedState.tick;
+    const pSeq = getPrevSeq(seq);
+    const ppSeq = getPrevSeq(pSeq);
+    const pppSeq = getPrevSeq(ppSeq);
+    const ppppSeq = getPrevSeq(pppSeq);
+    const tick = ticks[seq];
+    const pTick = ticks[pSeq];
+    const ppTick = ticks[ppSeq];
+    const pppTick = ticks[pppSeq];
+    const ppppTick = ticks[ppppSeq];
+    handleEventsRollback(
+      tick,
+      latestReceivedState,
+      pTick,
+      ppTick,
+      pppTick,
+      ppppTick,
+      handleGameEvent
+    );
+    for (let i = highest; highest > 0; i--) {
+      rollbackSimulate(
+        latestReceivedState,
+        seq8Subtract(latestReceivedState.tick, i),
+        i,
+        handleGameEvent
+      );
     }
   }
 };
 
 export const handleTick = (
   tickNumber: number,
+  handleGameEvent: (e: types.GameEvent) => void,
   sendControlsData: (data: ArrayBuffer) => void
 ) => {
+  doPossibleRollback(handleGameEvent);
   for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
     const o = globals.sharedObjects[i];
     if (o && o.object3d) {
@@ -160,20 +292,14 @@ export const handleTick = (
       oo.y = o.object3d.position.y;
       oo.score = o.score;
       oo.speed = o.speed;
-      oo.controlsUp = o.controlsUp;
-      oo.controlsDown = o.controlsDown;
-      oo.controlsLeft = o.controlsLeft;
-      oo.controlsRight = o.controlsRight;
-      oo.controlsSpace = o.controlsSpace;
-      oo.controlsF = o.controlsF;
-      oo.controlsD = o.controlsD;
-      oo.controlsOverChannelsUp = o.controlsOverChannelsUp;
-      oo.controlsOverChannelsDown = o.controlsOverChannelsDown;
-      oo.controlsOverChannelsLeft = o.controlsOverChannelsLeft;
-      oo.controlsOverChannelsRight = o.controlsOverChannelsRight;
-      oo.controlsOverChannelsSpace = o.controlsOverChannelsSpace;
-      oo.controlsOverChannelsD = o.controlsOverChannelsD;
-      oo.controlsOverChannelsF = o.controlsOverChannelsF;
+      oo.inputsUp = o.inputsUp;
+      oo.inputsDown = o.inputsDown;
+      oo.inputsLeft = o.inputsLeft;
+      oo.inputsRight = o.inputsRight;
+      oo.inputsSpace = o.inputsSpace;
+      oo.inputsF = o.inputsF;
+      oo.inputsD = o.inputsD;
+      oo.inputsE = o.inputsE;
       oo.rotationSpeed = o.rotationSpeed;
       oo.verticalSpeed = o.verticalSpeed;
       oo.backendX = o.backendPosition.x;
@@ -188,19 +314,7 @@ export const handleTick = (
       oo.previousPosition[2] = o.previousPosition[2];
       oo.previousRotation = o.previousRotation;
       oo.fuel = o.fuel;
-      oo.bullets = o.bullets;
-    }
-  }
-};
-
-const ticksAreDifferent = (receivedState: types.ReceivedState) => {
-  const localTick = ticks[receivedState.tick];
-
-  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-    const r = receivedState.state[i];
-    const l = localTick[i];
-    if (r.exists) {
-      // if (r.ctrlsD !== l.controlsOverChannelsD)
+      oo.bulletCount = o.bullets;
     }
   }
 };
@@ -217,15 +331,13 @@ export function isSeqHigher(oldSeq: number, newSeq: number): boolean {
   return diff !== 0 && diff < 128;
 }
 
-let previousAuthoritativeStateTick = 0;
 export const handleReceiveAuthoritativeState = (
   receivedState: types.ReceivedState
 ) => {
-  const isHigher = isSeqHigher(
-    previousAuthoritativeStateTick,
-    receivedState.tick
-  );
+  const isHigher = latestReceivedState
+    ? isSeqHigher(latestReceivedState.tick, receivedState.tick)
+    : true;
   if (isHigher) {
-    previousAuthoritativeStateTick = receivedState.tick;
+    latestReceivedState = receivedState;
   }
 };

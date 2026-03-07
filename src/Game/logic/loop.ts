@@ -20,14 +20,14 @@ const loop = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler,
+  handleGameEvent: (e: types.GameEvent) => void,
   sendControlsData: (data: ArrayBuffer) => void
 ) => {
   const delta = timestamp - previousTimestamp;
   cumulativeDelta += delta;
   if (cumulativeDelta >= parameters.tickInterval) {
     cumulativeDelta -= parameters.tickInterval;
-    handleTick(tickBuffer[0], sendControlsData);
+    handleTick(tickBuffer[0], handleGameEvent, sendControlsData);
     tickBuffer[0]++;
   }
   handleAnimationFrame(
@@ -38,7 +38,7 @@ const loop = (
     height,
     infoBoxRef,
     radarBoxRef,
-    gameEventHandler
+    handleGameEvent
   );
   renderer.render(scene, camera);
   previousTimestamp = timestamp;
@@ -54,7 +54,7 @@ const loop = (
         height,
         infoBoxRef,
         radarBoxRef,
-        gameEventHandler,
+        handleGameEvent,
         sendControlsData
       )
     );
@@ -68,7 +68,7 @@ export const startGameLoop = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler,
+  handleGameEvent: (e: types.GameEvent) => void,
   sendControlsData: (data: ArrayBuffer) => void
 ) => {
   initializeTicks();
@@ -85,7 +85,7 @@ export const startGameLoop = (
     height,
     infoBoxRef,
     radarBoxRef,
-    gameEventHandler,
+    handleGameEvent,
     sendControlsData
   );
 };

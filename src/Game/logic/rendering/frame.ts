@@ -132,19 +132,19 @@ const handleMovement = (
   //
   // 1. INPUT → VELOCITY
   //
-  const up = Math.min(o.controlsUp, delta);
-  const down = Math.min(o.controlsDown, delta);
-  const left = Math.min(o.controlsLeft, delta);
-  const right = Math.min(o.controlsRight, delta);
-  const d = Math.min(o.controlsD, delta);
-  const f = Math.min(o.controlsF, delta);
+  const up = Math.min(o.inputsUp, delta);
+  const down = Math.min(o.inputsDown, delta);
+  const left = Math.min(o.inputsLeft, delta);
+  const right = Math.min(o.inputsRight, delta);
+  const d = Math.min(o.inputsD, delta);
+  const f = Math.min(o.inputsF, delta);
 
-  o.controlsUp -= up;
-  o.controlsDown -= down;
-  o.controlsLeft -= left;
-  o.controlsRight -= right;
-  o.controlsD -= d;
-  o.controlsF -= f;
+  o.inputsUp -= up;
+  o.inputsDown -= down;
+  o.inputsLeft -= left;
+  o.inputsRight -= right;
+  o.inputsD -= d;
+  o.inputsF -= f;
 
   o.speed += up * p.forceUpToSpeedFactor;
   o.speed -= down * p.forceDownToSpeedFactor;
@@ -264,8 +264,7 @@ const interpolatePositionAndRotaion = (
 
 const handleLocalObjects = (
   delta: number,
-  scene: THREE.Scene,
-  gameEventHandler: types.GameEventHandler
+  handleGameEvent: (e: types.GameEvent) => void
 ) => {
   for (let i = globals.localObjects.length - 1; i > -1; i--) {
     const o = globals.localObjects[i];
@@ -274,7 +273,7 @@ const handleLocalObjects = (
       remove && localObjectsRemoveIndexes.push(i);
     }
   }
-  gameEventHandler(scene, {
+  handleGameEvent({
     type: types.EventType.RemoveLocalObjectIndexes,
     data: localObjectsRemoveIndexes,
   });
@@ -289,7 +288,7 @@ const handleObjects = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler
+  handleGameEvent: (e: types.GameEvent) => void
 ) => {
   deltaCumulative += delta;
   const posAlpha = 1 - Math.exp(-positionAlpha * delta);
@@ -301,13 +300,13 @@ const handleObjects = (
     const o = globals.sharedObjects[i];
     if (o && o.object3d) {
       if (o.object3d.visible) {
-        gameLogic.checkHealth(scene, o, gameEventHandler);
+        gameLogic.checkHealth(o, handleGameEvent);
         if (o.isMe) {
           gameLogic.handleKeys(delta, o);
           handleInfoBox(o, o.object3d, infoBoxRef);
         }
         handleMovement(delta, o, o.object3d);
-        gameLogic.handleShot(scene, delta, o, gameEventHandler);
+        gameLogic.handleShot(delta, o, handleGameEvent);
       }
       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
       o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
@@ -325,9 +324,9 @@ export const handleAnimationFrame = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler
+  handleGameEvent: (e: types.GameEvent) => void
 ) => {
-  handleLocalObjects(delta, scene, gameEventHandler);
+  handleLocalObjects(delta, handleGameEvent);
   handleObjects(
     delta,
     camera,
@@ -336,7 +335,7 @@ export const handleAnimationFrame = (
     height,
     infoBoxRef,
     radarBoxRef,
-    gameEventHandler
+    handleGameEvent
   );
 };
 
