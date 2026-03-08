@@ -62,8 +62,10 @@ export type AuthoritativeState = {
   rotationZEncoded: number;
   rotationZ: number;
   fuel: number;
-  ordnanceChannel1: { id: number | undefined; value: number };
-  ordnanceChannel2: { id: number | undefined; value: number };
+  ordnanceChannel1Id: number | undefined;
+  ordnanceChannel1Value: number;
+  ordnanceChannel2Id: number | undefined;
+  ordnanceChannel2Value: number;
   eventsEncoded: number;
 };
 
@@ -205,17 +207,18 @@ export interface SharedGameObject extends GameObject {
   halfHeight: number;
   radius: number;
   fuel: number;
-  bullets: number;
+  bulletCount: number;
 }
 
 export type TickStateObject = GameObject & {
+  rollback: boolean;
   idOverNetwork: number;
-  health: number;
   type: GameObjectType.Fighter;
+  health: number;
   x: number;
   y: number;
-  score: number;
-  speed: number;
+  z: number;
+  rotationZ: number;
   inputsUp: number;
   inputsDown: number;
   inputsLeft: number;
@@ -224,22 +227,28 @@ export type TickStateObject = GameObject & {
   inputsF: number;
   inputsD: number;
   inputsE: number;
-  rotationSpeed: number;
-  verticalSpeed: number;
-  backendX: number;
-  backendY: number;
-  backendRotationZ: number;
-  keyDowns: Keys[];
-  shotDelay: number;
-  positionZ: number;
-  backendPositionZ: number;
-  previousPosition: [string, string, number];
-  previousRotation: number;
   fuel: number;
   bulletCount: number;
+  speed: number;
+  rotationSpeed: number;
+  verticalSpeed: number;
   eventsEncoded: number;
-  bullets: number[];
+  ordnanceChannel1Id: number | undefined;
+  ordnanceChannel1Value: number;
+  ordnanceChannel2Id: number | undefined;
+  ordnanceChannel2Value: number;
 };
+
+export type TickLocalObjects = (GameObjectType.Bullet | number)[];
+// [type, x, y, z, rotationZ, speed, timeToLive, originId, type, x, y, z, rotationZ, speed, timeToLive, originId, ...]
+// type: GameObjectType.Bullet;
+// x: number;
+// y: number;
+// z: number;
+// rotationZ: number;
+// speed: number;
+// timeToLive: number;
+// originId: number;
 
 export enum ClientDataType {
   ChatMessage_Client = "ChatMessage_Client",
@@ -312,7 +321,10 @@ export enum EventType {
   HealthZero,
   Shot,
   Shot2,
+  ShotRollback,
+  ShotRollback2,
   RemoveLocalObjectIndexes,
+  CollisionLocalObject,
 }
 
 export type GameEvent =
@@ -322,13 +334,24 @@ export type GameEvent =
     }
   | {
       type: EventType.Shot;
-      data: TickStateObject;
+      data: SharedGameObject;
     }
   | {
-      type: EventType.Shot2;
-      data: TickStateObject;
+      type: EventType.ShotRollback;
+      sequenceNumber: number;
+      latestSequenceNumber: number;
+      originId: number;
+      ticks: TickStateObject[][];
+      ticksLocalObjects: TickLocalObjects[];
+    }
+  | {
+      type: EventType.ShotRollback2;
     }
   | { type: EventType.RemoveLocalObjectIndexes; data: number[] };
+// | {
+//     type: EventType.CollisionLocalObject;
+//     data: [currentObject: TickStateObject, otherObject: TickLocalObject];
+//   };
 
 export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
 

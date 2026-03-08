@@ -1,4 +1,6 @@
 export const tickInterval = 50;
+export const collisionMaxDistance = 0.7;
+export const collisionMaxDistanceLocalObject = 0.1;
 export const controlsInterval = 1000 / 60;
 export const objectPositionInterpolationAlpha = 0.001;
 export const objectRotationInterpolationAlpha = 0.01;
@@ -69,7 +71,8 @@ export const verticalSpeedFactor = 0.001;
 export const forceAscOrDescToVerticalSpeedFactor = 0.01;
 
 export const bulletSpeed = 2000;
-export const bulletSpeedReductionFactor = 0.991;
+export const bulletSpeedReductionFactor = 0.99;
+export const bulletTimeToLive = 3000;
 
 export const cameraDefaultZ = 80; // 160000 / oneDistanceUnitInMeters; // low orbit satellite altitude 160 - 2000 km. 160 km / 20 m = 8000
 export const worldWidth = maxWorldCoordinateValue - minWorldCoordinateValue;

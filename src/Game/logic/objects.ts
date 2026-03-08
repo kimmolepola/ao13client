@@ -88,7 +88,7 @@ export const handleReceiveBaseState = (
           previousRotation: 0,
           halfHeight: types.fighterHalfHeight,
           radius: 1,
-          bullets: 0,
+          bulletCount: 0,
           fuel: 0,
         });
       }

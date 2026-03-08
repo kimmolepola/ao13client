@@ -93,7 +93,7 @@ const handleInfoBox = (
     speed: ${o.speed.toFixed(1)}
     health: ${o.health.toFixed(0)}
     fuel: ${o.fuel.toFixed(2)}
-    ammo: ${o.bullets}
+    ammo: ${o.bulletCount}
     ${
       debug.debugOn.value
         ? `
