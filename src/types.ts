@@ -50,23 +50,22 @@ export type AuthoritativeState = {
   inputsF: number; // 0-3
   inputsE: number; // 0-3
   health: number;
-  xDifferenceSignificance: number;
-  yDifferenceSignificance: number;
-  zDifferenceSignificance: number;
-  rotationZDifferenceSignificance: number;
   xEncoded: number;
   yEncoded: number;
   x: number;
   y: number;
   z: number;
+  speed: number;
   rotationZEncoded: number;
   rotationZ: number;
+  rotationSpeed: number;
   fuel: number;
   ordnanceChannel1Id: number | undefined;
   ordnanceChannel1Value: number;
   ordnanceChannel2Id: number | undefined;
   ordnanceChannel2Value: number;
   eventsEncoded: number;
+  verticalSpeed: number;
 };
 
 export type ReceivedState = {
@@ -128,14 +127,14 @@ export type ChatMessage = {
 };
 
 export enum Keys {
-  Up = "up",
-  Down = "down",
-  Left = "left",
-  Right = "right",
-  Space = "space",
-  D = "d",
-  F = "f",
-  E = "e",
+  ArrowUp = "ArrowUp",
+  ArrowDown = "ArrowDown",
+  ArrowLeft = "ArrowLeft",
+  ArrowRight = "ArrowRight",
+  Space = "Space",
+  KeyD = "KeyD",
+  KeyF = "KeyF",
+  KeyE = "KeyE",
 }
 
 export enum GameObjectType {
@@ -339,7 +338,7 @@ export type GameEvent =
   | {
       type: EventType.ShotRollback;
       sequenceNumber: number;
-      latestSequenceNumber: number;
+      localTickNumber: number;
       originId: number;
       ticks: TickStateObject[][];
       ticksLocalObjects: TickLocalObjects[];

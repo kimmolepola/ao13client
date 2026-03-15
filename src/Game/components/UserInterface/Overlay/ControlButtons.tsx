@@ -27,13 +27,13 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
     switch (control) {
       case types.Keys.Space:
         return <TfiTarget />;
-      case types.Keys.Left:
+      case types.Keys.ArrowLeft:
         return <TfiArrowCircleLeft />;
-      case types.Keys.Right:
+      case types.Keys.ArrowRight:
         return <TfiArrowCircleRight />;
-      case types.Keys.Up:
+      case types.Keys.ArrowUp:
         return <TfiArrowCircleUp />;
-      case types.Keys.Down:
+      case types.Keys.ArrowDown:
         return <TfiArrowCircleDown />;
       default:
         return null;
@@ -44,6 +44,8 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
     <div
       className="text-red-900 text-[40px] select-none"
       onTouchStart={onPressed}
+      onTouchEnd={onReleased}
+      onTouchCancel={onReleased}
       onMouseDown={onPressed}
       onMouseUp={onReleased}
       onContextMenu={onContextMenu}
@@ -56,13 +58,13 @@ const ControlButton = ({ control }: { control: types.Keys }) => {
 const ControlButtons = () => {
   return (
     <div className="landscape:hidden absolute left-0 right-0 bottom-8 flex flex-col gap-4 items-center">
-      <ControlButton control={types.Keys.Up} />
+      <ControlButton control={types.Keys.ArrowUp} />
       <div className="w-full flex justify-evenly">
-        <ControlButton control={types.Keys.Left} />
+        <ControlButton control={types.Keys.ArrowLeft} />
         <ControlButton control={types.Keys.Space} />
-        <ControlButton control={types.Keys.Right} />
+        <ControlButton control={types.Keys.ArrowRight} />
       </div>
-      <ControlButton control={types.Keys.Down} />
+      <ControlButton control={types.Keys.ArrowDown} />
     </div>
   );
 };

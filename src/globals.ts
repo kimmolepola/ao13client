@@ -30,3 +30,6 @@ export const dimensions: {
   radarBoxHalfWidth: 0,
   worldToRadarPositionRatio: 1,
 };
+
+export const keys: Record<string, boolean> = {};
+export const curKeyValues: Record<string, number> = {};

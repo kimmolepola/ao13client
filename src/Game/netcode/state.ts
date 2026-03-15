@@ -49,21 +49,22 @@ const getinitialUpdateObject = () => ({
   inputsF: 0,
   inputsE: 0,
   health: 0,
-  xDifferenceSignificance: 0,
-  yDifferenceSignificance: 0,
-  zDifferenceSignificance: 0,
-  rotationZDifferenceSignificance: 0,
   xEncoded: 0,
   yEncoded: 0,
   x: 0,
   y: 0,
   z: 0,
+  speed: 0,
   rotationZEncoded: 0,
   rotationZ: 0,
+  rotationSpeed: 0,
   fuel: 0,
-  ordnanceChannel1: { id: undefined, value: 0 },
-  ordnanceChannel2: { id: undefined, value: 0 },
+  ordnanceChannel1Id: undefined,
+  ordnanceChannel1Value: 0,
+  ordnanceChannel2Id: undefined,
+  ordnanceChannel2Value: 0,
   eventsEncoded: 0,
+  verticalSpeed: 0,
 });
 
 const initializeUpdateObjects = () => {
@@ -219,187 +220,172 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     return value;
   };
 
+  const getNext2Bytes = () => {
+    const value = dataView.getUint16(offset);
+    offset += 2;
+    return value;
+  };
+
   while (offset < dataView.byteLength) {
     const providedValues1to8 = getNextByte();
 
-    const values9to16IsProvided = getBit(providedValues1to8, 0);
+    const providedValues9to16IsProvided = getBit(providedValues1to8, 0);
     const inputs1IsProvided = getBit(providedValues1to8, 1);
-    const inputs2IsProvided = getBit(providedValues1to8, 2);
-    const eventsIsProvided = getBit(providedValues1to8, 3);
-    const providedBytesForPositionAndRotationIsProvided = getBit(
-      providedValues1to8,
-      4
-    );
-    const xIsProvided = getBit(providedValues1to8, 5);
-    const yIsProvided = getBit(providedValues1to8, 6);
-    const rotationZIsProvided = getBit(providedValues1to8, 7);
+    const xA = getBit(providedValues1to8, 2);
+    const xB = getBit(providedValues1to8, 3);
+    const yA = getBit(providedValues1to8, 4);
+    const yB = getBit(providedValues1to8, 5);
+    const rotationZIsProvided = getBit(providedValues1to8, 6);
+    const rotationSpeedIsProvided = getBit(providedValues1to8, 7);
 
-    const possibleValues9to16Byte = values9to16IsProvided ? getNextByte() : 0;
-    const idIsProvided = getBit(possibleValues9to16Byte, 0);
-    const zIsProvided = getBit(possibleValues9to16Byte, 1);
-    const healthIsProvided = getBit(possibleValues9to16Byte, 2);
-    const fuelIsProvided = getBit(possibleValues9to16Byte, 3);
-    const ordnanceChannel1IsProvided = getBit(possibleValues9to16Byte, 4);
-    const ordnanceChannel2IsProvided = getBit(possibleValues9to16Byte, 5);
+    const providedBytesPositionX =
+      !xA && !xB ? 0 : xA && !xA ? 1 : !xA && xB ? 2 : 4;
+    const providedBytesPositionY =
+      !yA && !yB ? 0 : yA && !yA ? 1 : !yA && yB ? 2 : 4;
 
-    const idOverNetwork = idIsProvided
+    const providedValues9to16 = providedValues9to16IsProvided
+      ? getNextByte()
+      : 0;
+
+    const providedValues17to24IsProvided = getBit(providedValues9to16, 0);
+    const idOverNetworkIsProvided = getBit(providedValues9to16, 1);
+    const speedIsProvided = getBit(providedValues9to16, 2);
+    const eventsIsProvided = getBit(providedValues9to16, 3);
+    const healthIsProvided = getBit(providedValues9to16, 4);
+    const fuelIsProvided = getBit(providedValues9to16, 5);
+
+    const providedValues17to24 = providedValues17to24IsProvided
+      ? getNextByte()
+      : 0;
+
+    const inputs2IsProvided = getBit(providedValues17to24, 0);
+    const verticalSpeedIsProvided = getBit(providedValues17to24, 1);
+    const positionZIsProvided = getBit(providedValues17to24, 2);
+    const ordnanceChannel1IsProvided = getBit(providedValues17to24, 3);
+    const ordnanceChannel2IsProvided = getBit(providedValues17to24, 4);
+
+    const idOverNetwork = idOverNetworkIsProvided
       ? getNextByte()
       : recentState[index]?.idOverNetwork || 0;
 
-    const recentObjectState = idIsProvided
+    const possibleRecentObjectState = idOverNetworkIsProvided
       ? recentState.find((x) => x.idOverNetwork === idOverNetwork)
       : recentState[index];
 
-    const updateObject = receivedState.state[idOverNetwork];
-    updateObject.exists = true;
+    const allValuesAreProvided =
+      inputs1IsProvided &&
+      xA &&
+      xB &&
+      yA &&
+      yB &&
+      rotationZIsProvided &&
+      rotationSpeedIsProvided &&
+      speedIsProvided &&
+      eventsIsProvided &&
+      healthIsProvided &&
+      fuelIsProvided &&
+      inputs2IsProvided &&
+      verticalSpeedIsProvided &&
+      positionZIsProvided &&
+      ordnanceChannel1IsProvided &&
+      ordnanceChannel2IsProvided;
+
+    if (!possibleRecentObjectState && !allValuesAreProvided) {
+      debug.debugNoRecentObjectState(
+        idOverNetworkIsProvided,
+        idOverNetwork,
+        index
+      );
+      return;
+    }
+    const recent = possibleRecentObjectState!;
+
+    const upd = receivedState.state[idOverNetwork];
+    upd.exists = true;
 
     if (inputs1IsProvided) {
       const inputs = getNextByte();
-      updateObject.inputsUp = getTwoBitValue(inputs, 0);
-      updateObject.inputsDown = getTwoBitValue(inputs, 2);
-      updateObject.inputsLeft = getTwoBitValue(inputs, 4);
-      updateObject.inputsRight = getTwoBitValue(inputs, 6);
-    } else if (recentObjectState) {
-      updateObject.inputsUp = recentObjectState.inputsUp;
-      updateObject.inputsDown = recentObjectState.inputsDown;
-      updateObject.inputsLeft = recentObjectState.inputsLeft;
-      updateObject.inputsRight = recentObjectState.inputsRight;
+      upd.inputsUp = getTwoBitValue(inputs, 0);
+      upd.inputsDown = getTwoBitValue(inputs, 2);
+      upd.inputsLeft = getTwoBitValue(inputs, 4);
+      upd.inputsRight = getTwoBitValue(inputs, 6);
     } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
+      upd.inputsUp = recent.inputsUp;
+      upd.inputsDown = recent.inputsDown;
+      upd.inputsLeft = recent.inputsLeft;
+      upd.inputsRight = recent.inputsRight;
     }
 
-    if (inputs2IsProvided) {
-      const inputs = getNextByte();
-      updateObject.inputsSpace = getTwoBitValue(inputs, 0);
-      updateObject.inputsD = getTwoBitValue(inputs, 2);
-      updateObject.inputsF = getTwoBitValue(inputs, 4);
-      updateObject.inputsE = getTwoBitValue(inputs, 6);
-    } else if (recentObjectState) {
-      updateObject.inputsSpace = recentObjectState.inputsSpace;
-      updateObject.inputsD = recentObjectState.inputsD;
-      updateObject.inputsF = recentObjectState.inputsF;
-      updateObject.inputsE = recentObjectState.inputsE;
-    } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
-    }
-
-    if (eventsIsProvided) {
-      updateObject.eventsEncoded = getNextByte();
-    } else if (recentObjectState) {
-      updateObject.eventsEncoded = recentObjectState.eventsEncoded;
-    } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-    }
-
-    if (healthIsProvided) {
-      updateObject.health = getNextByte();
-    } else if (recentObjectState) {
-      updateObject.health = recentObjectState.health;
-    } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
-    }
-
-    if (fuelIsProvided) {
-      updateObject.fuel = getNextByte();
-    } else if (recentObjectState) {
-      updateObject.fuel = recentObjectState.fuel;
-    } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
-    }
-
-    if (providedBytesForPositionAndRotationIsProvided) {
-      const providedBytesForPositionAndAngle = getNextByte();
-      updateObject.xDifferenceSignificance =
-        getBits(providedBytesForPositionAndAngle, 0, 2) + 1;
-      updateObject.yDifferenceSignificance =
-        getBits(providedBytesForPositionAndAngle, 2, 2) + 1;
-      updateObject.zDifferenceSignificance =
-        getBits(providedBytesForPositionAndAngle, 4, 1) + 1;
-      updateObject.rotationZDifferenceSignificance =
-        getBits(providedBytesForPositionAndAngle, 5, 1) + 1;
-    } else if (recentObjectState) {
-      updateObject.xDifferenceSignificance =
-        recentObjectState.xDifferenceSignificance;
-      updateObject.yDifferenceSignificance =
-        recentObjectState.yDifferenceSignificance;
-      updateObject.zDifferenceSignificance =
-        recentObjectState.zDifferenceSignificance;
-      updateObject.rotationZDifferenceSignificance =
-        recentObjectState.rotationZDifferenceSignificance;
-    } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
-    }
-
-    let xEncoded = recentObjectState?.xEncoded || 0;
-    let yEncoded = recentObjectState?.yEncoded || 0;
-    let z = recentObjectState?.z || 0;
-    let encodedRotationZ = recentObjectState?.rotationZEncoded || 0;
-
-    if (xIsProvided) {
+    let xEncoded = recent.xEncoded;
+    if (providedBytesPositionX) {
       xEncoded = replaceWithChange(
         xEncoded,
-        updateObject.xDifferenceSignificance,
+        providedBytesPositionX,
         dataView,
         offset,
         "x"
       );
-      offset += updateObject.xDifferenceSignificance;
+      offset += providedBytesPositionX;
+    }
+    if (upd.xEncoded !== xEncoded) {
+      upd.xEncoded = xEncoded;
+      upd.x = utils.decodeAxisValue(upd.xEncoded);
     }
 
-    if (yIsProvided) {
+    let yEncoded = recent.yEncoded;
+    if (providedBytesPositionY) {
       yEncoded = replaceWithChange(
         yEncoded,
-        updateObject.yDifferenceSignificance,
+        providedBytesPositionY,
         dataView,
         offset,
         "y"
       );
-      offset += updateObject.yDifferenceSignificance;
+      offset += providedBytesPositionY;
+    }
+    if (upd.yEncoded !== yEncoded) {
+      upd.yEncoded = yEncoded;
+      upd.y = utils.decodeAxisValue(yEncoded);
     }
 
-    if (zIsProvided) {
-      z = replaceWithChange(
-        z,
-        updateObject.zDifferenceSignificance,
-        dataView,
-        offset,
-        "z"
-      );
-      offset += updateObject.zDifferenceSignificance;
+    const rotationZEncoded = rotationZIsProvided
+      ? getNext2Bytes()
+      : recent.rotationZEncoded;
+    if (upd.rotationZEncoded !== rotationZEncoded) {
+      upd.rotationZEncoded = rotationZEncoded;
+      upd.rotationZ = utils.decodeAngle(rotationZEncoded);
     }
 
-    if (rotationZIsProvided) {
-      encodedRotationZ = replaceWithChange(
-        encodedRotationZ,
-        updateObject.rotationZDifferenceSignificance,
-        dataView,
-        offset,
-        "rotationZ"
-      );
-      offset += updateObject.rotationZDifferenceSignificance;
+    upd.rotationSpeed = rotationSpeedIsProvided
+      ? getNextByte()
+      : recent.rotationSpeed;
+
+    upd.speed = speedIsProvided ? getNext2Bytes() : recent.speed;
+
+    upd.eventsEncoded = eventsIsProvided ? getNextByte() : recent.eventsEncoded;
+
+    upd.health = healthIsProvided ? getNextByte() : recent.health;
+
+    upd.fuel = fuelIsProvided ? getNextByte() : recent.fuel;
+
+    if (inputs2IsProvided) {
+      const inputs2 = getNextByte();
+      upd.inputsSpace = getTwoBitValue(inputs2, 0);
+      upd.inputsD = getTwoBitValue(inputs2, 2);
+      upd.inputsF = getTwoBitValue(inputs2, 4);
+      upd.inputsE = getTwoBitValue(inputs2, 6);
+    } else {
+      upd.inputsSpace = recent.inputsSpace;
+      upd.inputsD = recent.inputsD;
+      upd.inputsF = recent.inputsF;
+      upd.inputsE = recent.inputsE;
     }
 
-    if (updateObject.xEncoded !== xEncoded) {
-      updateObject.xEncoded = xEncoded;
-      updateObject.x = utils.decodeAxisValue(xEncoded);
-    }
+    upd.verticalSpeed = verticalSpeedIsProvided
+      ? getNextByte()
+      : recent.verticalSpeed;
 
-    if (updateObject.yEncoded !== yEncoded) {
-      updateObject.yEncoded = yEncoded;
-      updateObject.y = utils.decodeAxisValue(yEncoded);
-      // console.log("--y:", updateObject.y.toFixed(2));
-    }
-
-    updateObject.z = z;
-    if (updateObject.rotationZEncoded !== encodedRotationZ) {
-      updateObject.rotationZEncoded = encodedRotationZ;
-      updateObject.rotationZ = utils.decodeAngle(encodedRotationZ);
-    }
+    upd.z = positionZIsProvided ? getNext2Bytes() : recent.z;
 
     if (ordnanceChannel1IsProvided) {
       const byte1 = getNextByte();
@@ -407,15 +393,11 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       const value = result.twoBytes
         ? decodeOrdnanceByte2(byte1, getNextByte())
         : result.value;
-      updateObject.ordnanceChannel1.id = result.id;
-      updateObject.ordnanceChannel1.value = value;
-    } else if (recentObjectState) {
-      updateObject.ordnanceChannel1.id = recentObjectState.ordnanceChannel1.id;
-      updateObject.ordnanceChannel1.value =
-        recentObjectState.ordnanceChannel1.value;
+      upd.ordnanceChannel1Id = result.id;
+      upd.ordnanceChannel1Value = value;
     } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
+      upd.ordnanceChannel1Id = recent.ordnanceChannel1Id;
+      upd.ordnanceChannel1Value = recent.ordnanceChannel1Value;
     }
 
     if (ordnanceChannel2IsProvided) {
@@ -424,20 +406,16 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       const value = result.twoBytes
         ? decodeOrdnanceByte2(byte1, getNextByte())
         : result.value;
-      updateObject.ordnanceChannel2.id = result.id;
-      updateObject.ordnanceChannel2.value = value;
-    } else if (recentObjectState) {
-      updateObject.ordnanceChannel2.id = recentObjectState.ordnanceChannel2.id;
-      updateObject.ordnanceChannel2.value =
-        recentObjectState.ordnanceChannel2.value;
+      upd.ordnanceChannel2Id = result.id;
+      upd.ordnanceChannel2Value = value;
     } else {
-      debug.debugNoRecentObjectState(idIsProvided, idOverNetwork, index);
-      return;
+      upd.ordnanceChannel2Id = recent.ordnanceChannel2Id;
+      upd.ordnanceChannel2Value = recent.ordnanceChannel2Value;
     }
 
     if (save) {
-      save && recentStates[sequenceNumber].push({ ...updateObject });
-      save && debug.debugSaveState(updateObject);
+      save && recentStates[sequenceNumber].push({ ...upd });
+      save && debug.debugSaveState(upd);
     }
     index++;
   }

@@ -50,19 +50,19 @@ export const handleKeys = (
   for (let i = 0; i < o.keyDowns.length; i++) {
     const key = o.keyDowns[i];
     switch (key) {
-      case types.Keys.Up:
+      case types.Keys.ArrowUp:
         o.inputsUp += delta;
         // o.controlsOverChannelsUp += delta;
         break;
-      case types.Keys.Down:
+      case types.Keys.ArrowDown:
         o.inputsDown += delta;
         // o.controlsOverChannelsDown += delta;
         break;
-      case types.Keys.Left:
+      case types.Keys.ArrowLeft:
         o.inputsLeft += delta;
         // o.controlsOverChannelsLeft += delta;
         break;
-      case types.Keys.Right:
+      case types.Keys.ArrowRight:
         o.inputsRight += delta;
         // o.controlsOverChannelsRight += delta;
         break;
@@ -70,15 +70,15 @@ export const handleKeys = (
         o.inputsSpace += delta;
         // o.controlsOverChannelsSpace += delta;
         break;
-      case types.Keys.D:
+      case types.Keys.KeyD:
         o.inputsD += delta;
         // o.controlsOverChannelsD += delta;
         break;
-      case types.Keys.F:
+      case types.Keys.KeyF:
         o.inputsF += delta;
         // o.controlsOverChannelsF += delta;
         break;
-      case types.Keys.E:
+      case types.Keys.KeyE:
         o.inputsE += delta;
         // o.controlsOverChannelsE += delta;
         break;
@@ -115,6 +115,10 @@ export const handleShot = (
 function next8bit(n: number): number {
   return (n + 1) & 0xff;
 }
+
+const getNextSeq = (seq: number) => {
+  return (seq + 1) & 0xff;
+};
 
 export const gameEventHandler = async (
   scene: THREE.Scene,
@@ -171,7 +175,7 @@ export const gameEventHandler = async (
     case types.EventType.ShotRollback: {
       const dst = parameters.collisionMaxDistanceLocalObject;
       const seq = gameEvent.sequenceNumber;
-      const latestSeq = gameEvent.latestSequenceNumber;
+      const localTickNumber = gameEvent.localTickNumber;
       const originId = gameEvent.originId;
       const ticks = gameEvent.ticks;
       const o = ticks[seq][originId];
@@ -187,7 +191,8 @@ export const gameEventHandler = async (
       o3d.translateY(1);
 
       let curSeq = seq;
-      while (timeToLive > 0 && curSeq !== gameEvent.latestSequenceNumber) {
+      const nextLocalTickNumber = getNextSeq(localTickNumber);
+      while (timeToLive > 0 && curSeq !== nextLocalTickNumber) {
         for (let i = 0; i < parameters.maxRemoteObjects; i++) {
           const obj = ticks[curSeq][i];
           if (
@@ -214,7 +219,7 @@ export const gameEventHandler = async (
       }
 
       if (timeToLive) {
-        gameEvent.ticksLocalObjects[latestSeq].push(
+        gameEvent.ticksLocalObjects[localTickNumber].push(
           type,
           o3d.position.x,
           o3d.position.y,
@@ -225,17 +230,9 @@ export const gameEventHandler = async (
           originId
         );
 
-        const id = originId.toString() + gameEvent.sequenceNumber;
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
         object3d?.position.set(o3d.position.x, o3d.position.y, 0);
         object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
-        // globals.localObjects.push({
-        //   id,
-        //   type,
-        //   speed,
-        //   object3d,
-        //   timeToLive,
-        // });
       }
       break;
     }

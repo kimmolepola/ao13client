@@ -316,6 +316,20 @@ const handleObjects = (
   }
 };
 
+const keys = globals.keys;
+const curKeyValues = globals.curKeyValues;
+const Keys = types.Keys;
+const handleKeys = () => {
+  keys[Keys.ArrowUp] && curKeyValues[Keys.ArrowUp]++;
+  keys[Keys.ArrowDown] && curKeyValues[Keys.ArrowDown]++;
+  keys[Keys.ArrowLeft] && curKeyValues[Keys.ArrowLeft]++;
+  keys[Keys.ArrowRight] && curKeyValues[Keys.ArrowRight]++;
+  keys[Keys.Space] && curKeyValues[Keys.Space]++;
+  keys[Keys.KeyD] && curKeyValues[Keys.KeyD]++;
+  keys[Keys.KeyF] && curKeyValues[Keys.KeyF]++;
+  keys[Keys.KeyE] && curKeyValues[Keys.KeyE]++;
+};
+
 export const handleAnimationFrame = (
   delta: number,
   camera: THREE.Camera,
@@ -326,6 +340,7 @@ export const handleAnimationFrame = (
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   handleGameEvent: (e: types.GameEvent) => void
 ) => {
+  handleKeys();
   handleLocalObjects(delta, handleGameEvent);
   handleObjects(
     delta,
