@@ -31,13 +31,15 @@ const isColliding = (
 };
 
 export const checkHealth = (
+  sequenceNumber: number,
   remoteGameObject: types.SharedGameObject,
   handleGameEvent: (e: types.GameEvent) => void
 ) => {
   if (remoteGameObject.health <= 0) {
     handleGameEvent({
       type: types.EventType.HealthZero,
-      data: remoteGameObject,
+      o: remoteGameObject,
+      sequenceNumber,
     });
   }
 };
@@ -90,6 +92,7 @@ export const handleKeys = (
 };
 
 export const handleShot = (
+  sequenceNumber: number,
   delta: number,
   gameObject: types.SharedGameObject,
   handleGameEvent: (e: types.GameEvent) => void
@@ -105,7 +108,8 @@ export const handleShot = (
       o.shotDelay += parameters.shotDelay;
       handleGameEvent({
         type: types.EventType.Shot,
-        data: gameObject,
+        o: gameObject,
+        sequenceNumber,
       });
     }
   }
@@ -126,22 +130,23 @@ export const gameEventHandler = async (
 ) => {
   switch (gameEvent.type) {
     case types.EventType.HealthZero: {
-      const id = uuidv4();
       const speed = 0;
       const type = types.GameObjectType.Explosion;
       const object3d = await localLoad(scene, types.GameObjectType.Explosion);
       const timeToLive = 30000;
 
-      if (gameEvent.data.object3d) {
-        object3d?.position.copy(gameEvent.data.object3d.position);
-        gameEvent.data.object3d.visible = false;
+      if (gameEvent.o.object3d) {
+        object3d?.position.copy(gameEvent.o.object3d.position);
+        gameEvent.o.object3d.visible = false;
       }
       globals.localObjects.push({
-        id,
+        id: "explosion" + gameEvent.o.idOverNetwork + gameEvent.sequenceNumber,
         type,
         speed,
         object3d,
         timeToLive,
+        originId: gameEvent.o.idOverNetwork,
+        positionZ: gameEvent.o.positionZ,
       });
       break;
     }
@@ -150,24 +155,27 @@ export const gameEventHandler = async (
       break;
     }
     case types.EventType.Shot: {
-      const o = gameEvent.data;
+      const o = gameEvent.o;
       if (o.bulletCount >= 1 && o.object3d) {
-        const id = uuidv4();
         const speed = o.speed + parameters.bulletSpeed;
         const type = types.GameObjectType.Bullet as types.GameObjectType.Bullet;
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-        const timeToLive = 1500;
-        object3d?.geometry.computeBoundingBox();
+        const timeToLive = bulletTickToLive;
         object3d?.position.copy(o.object3d.position);
-        // object3d?.quaternion.copy(gameEvent.data.object3d.quaternion);
-        object3d?.rotation.copy(o.object3d.rotation);
-        object3d?.translateY(0.5);
+        object3d?.setRotationFromAxisAngle(utils.AXIS_Z, o.object3d.rotation.z);
+        object3d?.translateY(1);
         globals.localObjects.push({
-          id,
+          id:
+            "bullet" +
+            o.idOverNetwork +
+            gameEvent.sequenceNumber +
+            "local-event",
           type,
           speed,
           object3d,
           timeToLive,
+          positionZ: o.positionZ,
+          originId: o.idOverNetwork,
         });
       }
       break;
@@ -219,20 +227,18 @@ export const gameEventHandler = async (
       }
 
       if (timeToLive) {
-        gameEvent.ticksLocalObjects[localTickNumber].push(
-          type,
-          o3d.position.x,
-          o3d.position.y,
-          z,
-          rotationZ,
-          speed,
-          timeToLive,
-          originId
-        );
-
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
         object3d?.position.set(o3d.position.x, o3d.position.y, 0);
         object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
+        globals.localObjects.push({
+          type,
+          object3d,
+          positionZ: z,
+          speed,
+          timeToLive,
+          originId,
+          id: "bullet" + originId + seq,
+        });
       }
       break;
     }

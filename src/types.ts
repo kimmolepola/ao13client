@@ -164,6 +164,8 @@ export interface LocalGameObject extends GameObject {
     | undefined;
   timeToLive: number;
   speed: number;
+  positionZ: number;
+  originId: number;
 }
 
 const f22HeightMeters = 5.1;
@@ -329,11 +331,13 @@ export enum EventType {
 export type GameEvent =
   | {
       type: EventType.HealthZero;
-      data: SharedGameObject;
+      o: SharedGameObject;
+      sequenceNumber: number;
     }
   | {
       type: EventType.Shot;
-      data: SharedGameObject;
+      o: SharedGameObject;
+      sequenceNumber: number;
     }
   | {
       type: EventType.ShotRollback;
