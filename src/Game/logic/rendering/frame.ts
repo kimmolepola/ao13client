@@ -300,13 +300,13 @@ const handleObjects = (
     const o = globals.sharedObjects[i];
     if (o && o.object3d) {
       if (o.object3d.visible) {
-        gameLogic.checkHealth(o, handleGameEvent);
+        // gameLogic.checkHealth(o, handleGameEvent);
         if (o.isMe) {
           gameLogic.handleKeys(delta, o);
           handleInfoBox(o, o.object3d, infoBoxRef);
         }
         handleMovement(delta, o, o.object3d);
-        gameLogic.handleShot(delta, o, handleGameEvent);
+        // gameLogic.handleShot(delta, o, handleGameEvent);
       }
       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
       o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
@@ -316,18 +316,27 @@ const handleObjects = (
   }
 };
 
+const Key = types.Key;
 const keys = globals.keys;
 const curKeyValues = globals.curKeyValues;
-const Keys = types.Keys;
-const handleKeys = () => {
-  keys[Keys.ArrowUp] && curKeyValues[Keys.ArrowUp]++;
-  keys[Keys.ArrowDown] && curKeyValues[Keys.ArrowDown]++;
-  keys[Keys.ArrowLeft] && curKeyValues[Keys.ArrowLeft]++;
-  keys[Keys.ArrowRight] && curKeyValues[Keys.ArrowRight]++;
-  keys[Keys.Space] && curKeyValues[Keys.Space]++;
-  keys[Keys.KeyD] && curKeyValues[Keys.KeyD]++;
-  keys[Keys.KeyF] && curKeyValues[Keys.KeyF]++;
-  keys[Keys.KeyE] && curKeyValues[Keys.KeyE]++;
+const curTickKeyValues = globals.curTickKeyValues;
+
+const handleKey = (key: types.Key, delta: number) => {
+  if (keys[key]) {
+    curKeyValues[key] += delta;
+    curTickKeyValues[key] += delta;
+  }
+};
+
+const handleKeys = (delta: number) => {
+  handleKey(Key.ArrowUp, delta);
+  handleKey(Key.ArrowDown, delta);
+  handleKey(Key.ArrowLeft, delta);
+  handleKey(Key.ArrowRight, delta);
+  handleKey(Key.Space, delta);
+  handleKey(Key.KeyD, delta);
+  handleKey(Key.KeyF, delta);
+  handleKey(Key.KeyE, delta);
 };
 
 export const handleAnimationFrame = (
@@ -340,7 +349,7 @@ export const handleAnimationFrame = (
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   handleGameEvent: (e: types.GameEvent) => void
 ) => {
-  handleKeys();
+  handleKeys(delta);
   handleLocalObjects(delta, handleGameEvent);
   handleObjects(
     delta,

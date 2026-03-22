@@ -33,3 +33,4 @@ export const dimensions: {
 
 export const keys: Record<string, boolean> = {};
 export const curKeyValues: Record<string, number> = {};
+export const curTickKeyValues: Record<string, number> = {};

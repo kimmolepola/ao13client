@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { v4 as uuidv4 } from "uuid";
 
 import * as types from "src/types";
 import * as parameters from "src/parameters";
@@ -11,7 +10,7 @@ const bulletTickToLive = parameters.bulletTimeToLive / parameters.tickInterval;
 
 const o3d = utils.object3d;
 
-const isColliding = (
+export const isColliding = (
   a_x: number,
   a_y: number,
   a_z: number,
@@ -52,35 +51,35 @@ export const handleKeys = (
   for (let i = 0; i < o.keyDowns.length; i++) {
     const key = o.keyDowns[i];
     switch (key) {
-      case types.Keys.ArrowUp:
+      case types.Key.ArrowUp:
         o.inputsUp += delta;
         // o.controlsOverChannelsUp += delta;
         break;
-      case types.Keys.ArrowDown:
+      case types.Key.ArrowDown:
         o.inputsDown += delta;
         // o.controlsOverChannelsDown += delta;
         break;
-      case types.Keys.ArrowLeft:
+      case types.Key.ArrowLeft:
         o.inputsLeft += delta;
         // o.controlsOverChannelsLeft += delta;
         break;
-      case types.Keys.ArrowRight:
+      case types.Key.ArrowRight:
         o.inputsRight += delta;
         // o.controlsOverChannelsRight += delta;
         break;
-      case types.Keys.Space:
+      case types.Key.Space:
         o.inputsSpace += delta;
         // o.controlsOverChannelsSpace += delta;
         break;
-      case types.Keys.KeyD:
+      case types.Key.KeyD:
         o.inputsD += delta;
         // o.controlsOverChannelsD += delta;
         break;
-      case types.Keys.KeyF:
+      case types.Key.KeyF:
         o.inputsF += delta;
         // o.controlsOverChannelsF += delta;
         break;
-      case types.Keys.KeyE:
+      case types.Key.KeyE:
         o.inputsE += delta;
         // o.controlsOverChannelsE += delta;
         break;

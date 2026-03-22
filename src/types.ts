@@ -126,7 +126,7 @@ export type ChatMessage = {
   username: string;
 };
 
-export enum Keys {
+export enum Key {
   ArrowUp = "ArrowUp",
   ArrowDown = "ArrowDown",
   ArrowLeft = "ArrowLeft",
@@ -194,7 +194,7 @@ export interface SharedGameObject extends GameObject {
   verticalSpeed: number;
   backendPosition: THREE.Vector3;
   backendRotationZ: number;
-  keyDowns: Keys[];
+  keyDowns: Key[];
   infoElement: {
     containerRef: RefObject<HTMLDivElement> | undefined;
     row1Ref: RefObject<HTMLDivElement> | undefined;

@@ -1,15 +1,11 @@
-import * as THREE from "three";
 import * as parameters from "src/parameters";
 import * as types from "src/types";
 import * as globals from "src/globals";
 import { gatherControlsDataBinary } from "../netcode/controls";
-import { gameEventHandler } from "./gameLogic";
 import * as utils from "src/utils";
 
 const object3d = utils.object3d;
 const axis = utils.AXIS_Z;
-
-const tickDuration = 50;
 
 // outer array index is tickNumber
 // inner array index is idOverNetwork
@@ -19,190 +15,6 @@ const ticks: types.TickStateObject[][] = [];
 const ticksLocalObjects: types.TickLocalObjects[] = [];
 
 let latestReceivedState: types.ReceivedState | undefined;
-
-const xhandleMovement = (o: types.SharedGameObject, object3d: THREE.Mesh) => {
-  const p = parameters;
-
-  //
-  // 1. INPUT → VELOCITY
-  //
-  const up = Math.min(o.inputsUp, tickDuration);
-  const down = Math.min(o.inputsDown, tickDuration);
-  const left = Math.min(o.inputsLeft, tickDuration);
-  const right = Math.min(o.inputsRight, tickDuration);
-  const d = Math.min(o.inputsD, tickDuration);
-  const f = Math.min(o.inputsF, tickDuration);
-
-  o.inputsUp -= up;
-  o.inputsDown -= down;
-  o.inputsLeft -= left;
-  o.inputsRight -= right;
-  o.inputsD -= d;
-  o.inputsF -= f;
-
-  o.speed += up * p.forceUpToSpeedFactor;
-  o.speed -= down * p.forceDownToSpeedFactor;
-
-  o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor;
-  o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor;
-
-  o.verticalSpeed -= d * p.forceAscOrDescToVerticalSpeedFactor;
-  o.verticalSpeed += f * p.forceAscOrDescToVerticalSpeedFactor;
-
-  //
-  // 2. CLAMP VELOCITIES
-  //
-  o.speed = Math.min(Math.max(o.speed, p.minSpeed), p.maxSpeed);
-  o.rotationSpeed = Math.min(
-    Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
-    p.maxRotationSpeedAbsolute
-  );
-  o.verticalSpeed = Math.min(
-    Math.max(o.verticalSpeed, -p.maxVerticalSpeedAbsolute),
-    p.maxVerticalSpeedAbsolute
-  );
-
-  //
-  // 3. APPLY DAMPING (time‑based exponential)
-  //
-  if (!left && !right) {
-    const decay = Math.exp(-p.rotationDecay * tickDuration);
-    o.rotationSpeed *= decay;
-    if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
-  }
-
-  if (!d && !f) {
-    const decay = Math.exp(-p.verticalDecay * tickDuration);
-    o.verticalSpeed *= decay;
-    if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
-  }
-
-  //
-  // 4. INTEGRATE VELOCITIES → TRANSFORM
-  //
-  o.previousPosition = [
-    object3d.position.x.toFixed(0),
-    object3d.position.y.toFixed(0),
-    o.positionZ,
-  ];
-  o.previousRotation = object3d.rotation.z;
-  object3d.rotateZ(o.rotationSpeed * p.rotationFactor * tickDuration);
-  object3d.translateY(o.speed * p.speedFactor * tickDuration);
-  o.positionZ += o.verticalSpeed * p.verticalSpeedFactor * tickDuration;
-};
-
-const handleControlsData = (
-  o: types.SharedGameObject,
-  sendControlsData: (data: ArrayBuffer) => void,
-  tickNumber: number
-) => {
-  const controlsData = gatherControlsDataBinary(o, tickNumber);
-  if (controlsData) {
-    sendControlsData(controlsData);
-  }
-};
-
-const handleMovement = (
-  currentTickObject: types.TickStateObject,
-  previousTickObject: types.TickStateObject,
-  up: number,
-  down: number,
-  left: number,
-  right: number,
-  keyD: number,
-  keyF: number
-) => {
-  const p = parameters;
-  const prev = previousTickObject;
-  const o = currentTickObject;
-
-  //
-  // 1. INPUT → VELOCITY
-  //
-  o.speed = prev.speed;
-  o.speed += up * p.forceUpToSpeedFactor;
-  o.speed -= down * p.forceDownToSpeedFactor;
-
-  o.rotationSpeed = prev.rotationSpeed;
-  o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor;
-  o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor;
-
-  o.verticalSpeed = prev.verticalSpeed;
-  o.verticalSpeed += keyF * p.forceAscOrDescToVerticalSpeedFactor;
-  o.verticalSpeed -= keyD * p.forceAscOrDescToVerticalSpeedFactor;
-
-  //
-  // 2. CLAMP VELOCITIES
-  //
-  o.speed = Math.min(Math.max(o.speed, p.minSpeed), p.maxSpeed);
-  o.rotationSpeed = Math.min(
-    Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
-    p.maxRotationSpeedAbsolute
-  );
-  o.verticalSpeed = Math.min(
-    Math.max(o.verticalSpeed, -p.maxVerticalSpeedAbsolute),
-    p.maxVerticalSpeedAbsolute
-  );
-
-  //
-  // 3. APPLY DAMPING (time‑based exponential)
-  //
-  if (!left && !right) {
-    const decay = Math.exp(-p.rotationDecay * p.tickInterval);
-    o.rotationSpeed *= decay;
-    if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
-  }
-
-  if (!keyD && !keyF) {
-    const decay = Math.exp(-p.verticalDecay * p.tickInterval);
-    o.verticalSpeed *= decay;
-    if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
-  }
-
-  object3d.position.set(prev.x, prev.y, 0);
-  object3d.setRotationFromAxisAngle(axis, prev.rotationZ);
-  object3d.rotateZ(o.rotationSpeed * p.rotationFactor * p.tickInterval);
-  object3d.translateY(o.speed * p.speedFactor * p.tickInterval);
-  o.x = object3d.position.x;
-  o.y = object3d.position.y;
-  o.rotationZ = object3d.rotation.z;
-
-  o.z = prev.z;
-  o.z += o.verticalSpeed * p.verticalSpeedFactor * p.tickInterval;
-};
-
-const handleShot = (
-  currentTickNumber: number,
-  currentTickObject: types.TickStateObject,
-  previousTickObject: types.TickStateObject,
-  inputs: types.InputsWithBytes,
-  gameEventHandler: types.GameEventHandler
-) => {
-  const c = currentTickObject;
-  const p = previousTickObject;
-
-  c.ordnance1Event = false;
-  let delay = p.shotDelay;
-  delay -= parameters.tickInterval;
-  if (delay <= 0) {
-    if (inputs.inputs.space) {
-      // shoot
-      delay += parameters.shotDelay;
-      c.ordnance1Event = true;
-      gameEventHandler({
-        type: types.EventType.Shot,
-        data: {
-          gameObject: c,
-          tickLocalObjects: localObjects[currentTickNumber],
-        },
-      });
-    }
-  }
-  if (delay >= -parameters.shotDelay) {
-    delay -= parameters.tickInterval;
-  }
-  c.shotDelay = delay;
-};
 
 export const initializeTicks = () => {
   ticks.length = 0;
@@ -244,41 +56,44 @@ export const initializeTicks = () => {
   }
 };
 
-// const ticksAreDifferent = (receivedState: types.ReceivedState) => {
-//   const localTick = ticks[receivedState.tick];
+export const handleTick = (
+  tickNumber: number,
+  handleGameEvent: (e: types.GameEvent) => void,
+  sendControlsData: (data: ArrayBuffer) => void
+) => {
+  const ownIdOverNetwork = globals.state.ownRemoteObjectIndex;
+  const ownTickObj = ownIdOverNetwork
+    ? ticks[tickNumber][ownIdOverNetwork]
+    : undefined;
+  handleControlsData(sendControlsData, tickNumber, ownTickObj);
+  handleSimulation(tickNumber, handleGameEvent);
+};
 
-//   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-//     const r = receivedState.state[i];
-//     const l = localTick[i];
-//     if (r.exists) {
-//       // if (r.ctrlsD !== l.controlsOverChannelsD)
-//     }
-//   }
-// };
+export const handleReceiveAuthoritativeState = (
+  receivedState: types.ReceivedState
+) => {
+  const isHigher = latestReceivedState
+    ? isSeqHigher(latestReceivedState.tick, receivedState.tick)
+    : true;
+  if (isHigher) {
+    latestReceivedState = receivedState;
+  }
+};
+
+const isSeqHigher = (oldSeq: number, newSeq: number) => {
+  // Normalize to 0–255
+  const A = oldSeq & 0xff;
+  const B = newSeq & 0xff;
+
+  // Compute forward distance in modulo-256 space
+  const diff = (B - A) & 0xff;
+
+  // If diff is 1..127, B is newer; if 128..255, A is newer or equal
+  return diff !== 0 && diff < 128;
+};
 
 const getBit = (value: number, bitPosition: number) =>
   !!((value >> bitPosition) & 1);
-
-const eventDifferenceDepthFor: number[] = [];
-
-// const rollbackSimulate = (
-//   receivedState: types.ReceivedState,
-//   seq: number,
-//   eventDepth: number, // 1 | 2 | 3 | 4
-//   handleGameEvent: (e: types.GameEvent) => void
-// ) => {
-//   const tick = ticks[seq];
-//   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-//     if (eventDifferenceDepthFor[i] >= eventDepth) {
-//       const o = tick[i];
-//       const r = receivedState.state[i];
-//       const ordnance1 = getBit(r.eventsEncoded, eventDepth - 1);
-//       const ordnance2 = getBit(r.eventsEncoded, eventDepth - 1 + 4);
-//       ordnance1 && handleGameEvent({ type: types.EventType.Shot, data: o });
-//       ordnance2 && handleGameEvent({ type: types.EventType.Shot2, data: o });
-//     }
-//   }
-// };
 
 const handleEventsRollback = (
   localTickNumber: number,
@@ -377,19 +192,21 @@ const deadReckon = (
   prev: types.TickStateObject,
   cur: types.TickStateObject
 ) => {
-  const up = prev.inputsUp * multiplier;
-  const down = prev.inputsDown * multiplier;
-  const left = prev.inputsLeft * multiplier;
-  const right = prev.inputsRight * multiplier;
-  const keyD = prev.inputsD * multiplier;
-  const keyF = prev.inputsF * multiplier;
-  cur.inputsUp = up;
-  cur.inputsDown = down;
-  cur.inputsLeft = left;
-  cur.inputsRight = right;
-  cur.inputsD = keyD;
-  cur.inputsF = keyF;
-  handleMovement(cur, prev, up, down, left, right, keyD, keyF);
+  if (cur.idOverNetwork !== globals.state.ownRemoteObjectIndex) {
+    const up = prev.inputsUp * multiplier;
+    const down = prev.inputsDown * multiplier;
+    const left = prev.inputsLeft * multiplier;
+    const right = prev.inputsRight * multiplier;
+    const keyD = prev.inputsD * multiplier;
+    const keyF = prev.inputsF * multiplier;
+    cur.inputsUp = up;
+    cur.inputsDown = down;
+    cur.inputsLeft = left;
+    cur.inputsRight = right;
+    cur.inputsD = keyD;
+    cur.inputsF = keyF;
+  }
+  handleMovement(cur, prev);
 };
 
 const handleSimulationRollback = (
@@ -455,7 +272,22 @@ const handleSimulationRollback = (
   }
 };
 
-const handleRollback = (
+const applyCurState = (tickNumber: number, idOverNetwork: number) => {
+  const t = ticks[tickNumber][idOverNetwork];
+  const o = globals.sharedObjects[idOverNetwork];
+  o.backendPosition.x = t.x;
+  o.backendPosition.y = t.y;
+  o.backendPositionZ = t.z;
+  o.backendRotationZ = t.rotationZ;
+  o.bulletCount = t.ordnanceChannel1Value;
+  o.fuel = t.fuel;
+  o.health = t.health;
+  o.rotationSpeed = t.rotationSpeed;
+  o.speed = t.speed;
+  o.verticalSpeed = t.verticalSpeed;
+};
+
+const handleSimulation = (
   tickNumber: number,
   handleGameEvent: (e: types.GameEvent) => void
 ) => {
@@ -483,6 +315,7 @@ const handleRollback = (
       ppppSeq,
       handleGameEvent
     );
+    applyCurState(tickNumber, i);
   }
 };
 
@@ -494,120 +327,315 @@ const getNextSeq = (seq: number) => {
   return (seq + 1) & 0xff;
 };
 
-function seq8Subtract(a: number, b: number) {
-  return (a - b + 256) & 0xff;
-}
-
-const handleAuthoritativeState = () => {
-  if (!latestReceivedState) return;
-
-  const seq = latestReceivedState.tick;
-  const receivedState = latestReceivedState.state;
-
-  const tick = ticks[seq];
-
-  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-    const o = tick[i];
-    const r = receivedState[i];
-    o.rollback = false;
-    if (
-      o.inputsUp !== r.inputsUp ||
-      o.inputsDown !== r.inputsDown ||
-      o.inputsLeft !== r.inputsLeft ||
-      o.inputsRight !== r.inputsRight ||
-      o.x !== r.x ||
-      o.y !== r.y
-    ) {
-      o.rollback = true;
-    }
-    o.inputsUp = r.inputsUp;
-    o.inputsDown = r.inputsDown;
-    o.inputsLeft = r.inputsLeft;
-    o.inputsRight = r.inputsRight;
-    o.inputsSpace = r.inputsSpace;
-    o.inputsD = r.inputsD;
-    o.inputsF = r.inputsF;
-    o.inputsE = r.inputsE;
-    o.x = r.x;
-    o.y = r.y;
-    o.z = r.z;
-    o.rotationZ = r.rotationZ;
-    o.health = r.health;
-    o.fuel = r.fuel;
-  }
-};
-
-export const handleTick = (
+const handleControlsData = (
+  sendControlsData: (data: ArrayBuffer) => void,
   tickNumber: number,
-  handleGameEvent: (e: types.GameEvent) => void,
-  sendControlsData: (data: ArrayBuffer) => void
+  ownTickObj: types.TickStateObject | undefined
 ) => {
-  handleRollback(tickNumber, handleGameEvent);
-  for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
-    const o = globals.sharedObjects[i];
-    if (o && o.object3d) {
-      if (o.object3d.visible) {
-        if (o.isMe) {
-          handleControlsData(o, sendControlsData, tickNumber);
-          // TODO controls to tick object
-        }
-        xhandleMovement(o, o.object3d);
-      }
-      const oo = ticks[tickNumber][o.idOverNetwork];
-      oo.id = o.id;
-      oo.idOverNetwork = o.idOverNetwork;
-      oo.health = o.health;
-      oo.type = o.type;
-      oo.x = o.object3d.position.x;
-      oo.y = o.object3d.position.y;
-      // oo.score = o.score;
-      oo.speed = o.speed;
-      oo.inputsUp = o.inputsUp;
-      oo.inputsDown = o.inputsDown;
-      oo.inputsLeft = o.inputsLeft;
-      oo.inputsRight = o.inputsRight;
-      oo.inputsSpace = o.inputsSpace;
-      oo.inputsF = o.inputsF;
-      oo.inputsD = o.inputsD;
-      oo.inputsE = o.inputsE;
-      oo.rotationSpeed = o.rotationSpeed;
-      oo.verticalSpeed = o.verticalSpeed;
-      // oo.backendX = o.backendPosition.x;
-      // oo.backendY = o.backendPosition.y;
-      // oo.backendRotationZ = o.backendRotationZ;
-      // oo.keyDowns = [...o.keyDowns];
-      // oo.shotDelay = o.shotDelay;
-      // oo.positionZ = o.positionZ;
-      // oo.backendPositionZ = o.backendPositionZ;
-      // oo.previousPosition[0] = o.previousPosition[0];
-      // oo.previousPosition[1] = o.previousPosition[1];
-      // oo.previousPosition[2] = o.previousPosition[2];
-      // oo.previousRotation = o.previousRotation;
-      oo.fuel = o.fuel;
-      oo.bulletCount = o.bulletCount;
-    }
+  const controlsData = gatherControlsDataBinary(tickNumber, ownTickObj);
+  if (controlsData) {
+    sendControlsData(controlsData);
   }
 };
 
-export function isSeqHigher(oldSeq: number, newSeq: number): boolean {
-  // Normalize to 0–255
-  const A = oldSeq & 0xff;
-  const B = newSeq & 0xff;
-
-  // Compute forward distance in modulo-256 space
-  const diff = (B - A) & 0xff;
-
-  // If diff is 1..127, B is newer; if 128..255, A is newer or equal
-  return diff !== 0 && diff < 128;
-}
-
-export const handleReceiveAuthoritativeState = (
-  receivedState: types.ReceivedState
+const p = parameters;
+const handleMovement = (
+  currentTickObject: types.TickStateObject,
+  previousTickObject: types.TickStateObject
 ) => {
-  const isHigher = latestReceivedState
-    ? isSeqHigher(latestReceivedState.tick, receivedState.tick)
-    : true;
-  if (isHigher) {
-    latestReceivedState = receivedState;
+  const prev = previousTickObject;
+  const o = currentTickObject;
+
+  //
+  // 1. INPUT → VELOCITY
+  //
+  o.speed = prev.speed;
+  o.speed += o.inputsUp * p.forceUpToSpeedFactor;
+  o.speed -= o.inputsDown * p.forceDownToSpeedFactor;
+
+  o.rotationSpeed = prev.rotationSpeed;
+  o.rotationSpeed += o.inputsLeft * p.forceLeftOrRightToRotationFactor;
+  o.rotationSpeed -= o.inputsRight * p.forceLeftOrRightToRotationFactor;
+
+  o.verticalSpeed = prev.verticalSpeed;
+  o.verticalSpeed += o.inputsF * p.forceAscOrDescToVerticalSpeedFactor;
+  o.verticalSpeed -= o.inputsD * p.forceAscOrDescToVerticalSpeedFactor;
+
+  //
+  // 2. CLAMP VELOCITIES
+  //
+  o.speed = Math.min(Math.max(o.speed, p.minSpeed), p.maxSpeed);
+  o.rotationSpeed = Math.min(
+    Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
+    p.maxRotationSpeedAbsolute
+  );
+  o.verticalSpeed = Math.min(
+    Math.max(o.verticalSpeed, -p.maxVerticalSpeedAbsolute),
+    p.maxVerticalSpeedAbsolute
+  );
+
+  //
+  // 3. APPLY DAMPING (time‑based exponential)
+  //
+  if (!o.inputsLeft && !o.inputsRight) {
+    const decay = Math.exp(-p.rotationDecay * p.tickInterval);
+    o.rotationSpeed *= decay;
+    if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
   }
+
+  if (!o.inputsD && !o.inputsF) {
+    const decay = Math.exp(-p.verticalDecay * p.tickInterval);
+    o.verticalSpeed *= decay;
+    if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
+  }
+
+  object3d.position.set(prev.x, prev.y, 0);
+  object3d.setRotationFromAxisAngle(axis, prev.rotationZ);
+  object3d.rotateZ(o.rotationSpeed * p.rotationFactor * p.tickInterval);
+  object3d.translateY(o.speed * p.speedFactor * p.tickInterval);
+  o.x = object3d.position.x;
+  o.y = object3d.position.y;
+  o.rotationZ = object3d.rotation.z;
+
+  o.z = prev.z;
+  o.z += o.verticalSpeed * p.verticalSpeedFactor * p.tickInterval;
 };
+
+// const xhandleMovement = (o: types.SharedGameObject, object3d: THREE.Mesh) => {
+//   const p = parameters;
+
+//   //
+//   // 1. INPUT → VELOCITY
+//   //
+//   const up = Math.min(o.inputsUp, tickDuration);
+//   const down = Math.min(o.inputsDown, tickDuration);
+//   const left = Math.min(o.inputsLeft, tickDuration);
+//   const right = Math.min(o.inputsRight, tickDuration);
+//   const d = Math.min(o.inputsD, tickDuration);
+//   const f = Math.min(o.inputsF, tickDuration);
+
+//   o.inputsUp -= up;
+//   o.inputsDown -= down;
+//   o.inputsLeft -= left;
+//   o.inputsRight -= right;
+//   o.inputsD -= d;
+//   o.inputsF -= f;
+
+//   o.speed += up * p.forceUpToSpeedFactor;
+//   o.speed -= down * p.forceDownToSpeedFactor;
+
+//   o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor;
+//   o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor;
+
+//   o.verticalSpeed -= d * p.forceAscOrDescToVerticalSpeedFactor;
+//   o.verticalSpeed += f * p.forceAscOrDescToVerticalSpeedFactor;
+
+//   //
+//   // 2. CLAMP VELOCITIES
+//   //
+//   o.speed = Math.min(Math.max(o.speed, p.minSpeed), p.maxSpeed);
+//   o.rotationSpeed = Math.min(
+//     Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
+//     p.maxRotationSpeedAbsolute
+//   );
+//   o.verticalSpeed = Math.min(
+//     Math.max(o.verticalSpeed, -p.maxVerticalSpeedAbsolute),
+//     p.maxVerticalSpeedAbsolute
+//   );
+
+//   //
+//   // 3. APPLY DAMPING (time‑based exponential)
+//   //
+//   if (!left && !right) {
+//     const decay = Math.exp(-p.rotationDecay * tickDuration);
+//     o.rotationSpeed *= decay;
+//     if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
+//   }
+
+//   if (!d && !f) {
+//     const decay = Math.exp(-p.verticalDecay * tickDuration);
+//     o.verticalSpeed *= decay;
+//     if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
+//   }
+
+//   //
+//   // 4. INTEGRATE VELOCITIES → TRANSFORM
+//   //
+//   o.previousPosition = [
+//     object3d.position.x.toFixed(0),
+//     object3d.position.y.toFixed(0),
+//     o.positionZ,
+//   ];
+//   o.previousRotation = object3d.rotation.z;
+//   object3d.rotateZ(o.rotationSpeed * p.rotationFactor * tickDuration);
+//   object3d.translateY(o.speed * p.speedFactor * tickDuration);
+//   o.positionZ += o.verticalSpeed * p.verticalSpeedFactor * tickDuration;
+// };
+
+// const handleShot = (
+//   currentTickNumber: number,
+//   currentTickObject: types.TickStateObject,
+//   previousTickObject: types.TickStateObject,
+//   inputs: types.InputsWithBytes,
+//   gameEventHandler: types.GameEventHandler
+// ) => {
+//   const c = currentTickObject;
+//   const p = previousTickObject;
+
+//   c.ordnance1Event = false;
+//   let delay = p.shotDelay;
+//   delay -= parameters.tickInterval;
+//   if (delay <= 0) {
+//     if (inputs.inputs.space) {
+//       // shoot
+//       delay += parameters.shotDelay;
+//       c.ordnance1Event = true;
+//       gameEventHandler({
+//         type: types.EventType.Shot,
+//         data: {
+//           gameObject: c,
+//           tickLocalObjects: localObjects[currentTickNumber],
+//         },
+//       });
+//     }
+//   }
+//   if (delay >= -parameters.shotDelay) {
+//     delay -= parameters.tickInterval;
+//   }
+//   c.shotDelay = delay;
+// };
+
+// const ticksAreDifferent = (receivedState: types.ReceivedState) => {
+//   const localTick = ticks[receivedState.tick];
+
+//   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+//     const r = receivedState.state[i];
+//     const l = localTick[i];
+//     if (r.exists) {
+//       // if (r.ctrlsD !== l.controlsOverChannelsD)
+//     }
+//   }
+// };
+
+// const rollbackSimulate = (
+//   receivedState: types.ReceivedState,
+//   seq: number,
+//   eventDepth: number, // 1 | 2 | 3 | 4
+//   handleGameEvent: (e: types.GameEvent) => void
+// ) => {
+//   const tick = ticks[seq];
+//   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+//     if (eventDifferenceDepthFor[i] >= eventDepth) {
+//       const o = tick[i];
+//       const r = receivedState.state[i];
+//       const ordnance1 = getBit(r.eventsEncoded, eventDepth - 1);
+//       const ordnance2 = getBit(r.eventsEncoded, eventDepth - 1 + 4);
+//       ordnance1 && handleGameEvent({ type: types.EventType.Shot, data: o });
+//       ordnance2 && handleGameEvent({ type: types.EventType.Shot2, data: o });
+//     }
+//   }
+// };
+
+// function seq8Subtract(a: number, b: number) {
+//   return (a - b + 256) & 0xff;
+// }
+
+// const handleAuthoritativeState = () => {
+//   if (!latestReceivedState) return;
+
+//   const seq = latestReceivedState.tick;
+//   const receivedState = latestReceivedState.state;
+
+//   const tick = ticks[seq];
+
+//   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+//     const o = tick[i];
+//     const r = receivedState[i];
+//     o.rollback = false;
+//     if (
+//       o.inputsUp !== r.inputsUp ||
+//       o.inputsDown !== r.inputsDown ||
+//       o.inputsLeft !== r.inputsLeft ||
+//       o.inputsRight !== r.inputsRight ||
+//       o.x !== r.x ||
+//       o.y !== r.y
+//     ) {
+//       o.rollback = true;
+//     }
+//     o.inputsUp = r.inputsUp;
+//     o.inputsDown = r.inputsDown;
+//     o.inputsLeft = r.inputsLeft;
+//     o.inputsRight = r.inputsRight;
+//     o.inputsSpace = r.inputsSpace;
+//     o.inputsD = r.inputsD;
+//     o.inputsF = r.inputsF;
+//     o.inputsE = r.inputsE;
+//     o.x = r.x;
+//     o.y = r.y;
+//     o.z = r.z;
+//     o.rotationZ = r.rotationZ;
+//     o.health = r.health;
+//     o.fuel = r.fuel;
+//   }
+// };
+
+// const ls = globals.localObjects;
+// const dst = parameters.collisionMaxDistanceLocalObject;
+// const checkLocalCollision = (currentTickObject: types.TickStateObject) => {
+//   for (let i = 0; i < ls.length; i++) {
+//     const l = ls[i];
+//     isColliding();
+//   }
+// };
+
+// export const handleTick = (
+//   tickNumber: number,
+//   handleGameEvent: (e: types.GameEvent) => void,
+//   sendControlsData: (data: ArrayBuffer) => void
+// ) => {
+//   handleRollback(tickNumber, handleGameEvent);
+//   for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
+//     const o = globals.sharedObjects[i];
+//     if (o && o.object3d) {
+//       if (o.object3d.visible) {
+//         if (o.isMe) {
+//           handleControlsData(o, sendControlsData, tickNumber);
+//           // TODO controls to tick object
+//         }
+//         // xhandleMovement(o, o.object3d);
+//       }
+//       const oo = ticks[tickNumber][o.idOverNetwork];
+//       oo.id = o.id;
+//       oo.idOverNetwork = o.idOverNetwork;
+//       oo.health = o.health;
+//       oo.type = o.type;
+//       oo.x = o.object3d.position.x;
+//       oo.y = o.object3d.position.y;
+//       // oo.score = o.score;
+//       oo.speed = o.speed;
+//       oo.inputsUp = o.inputsUp;
+//       oo.inputsDown = o.inputsDown;
+//       oo.inputsLeft = o.inputsLeft;
+//       oo.inputsRight = o.inputsRight;
+//       oo.inputsSpace = o.inputsSpace;
+//       oo.inputsF = o.inputsF;
+//       oo.inputsD = o.inputsD;
+//       oo.inputsE = o.inputsE;
+//       oo.rotationSpeed = o.rotationSpeed;
+//       oo.verticalSpeed = o.verticalSpeed;
+//       // oo.backendX = o.backendPosition.x;
+//       // oo.backendY = o.backendPosition.y;
+//       // oo.backendRotationZ = o.backendRotationZ;
+//       // oo.keyDowns = [...o.keyDowns];
+//       // oo.shotDelay = o.shotDelay;
+//       // oo.positionZ = o.positionZ;
+//       // oo.backendPositionZ = o.backendPositionZ;
+//       // oo.previousPosition[0] = o.previousPosition[0];
+//       // oo.previousPosition[1] = o.previousPosition[1];
+//       // oo.previousPosition[2] = o.previousPosition[2];
+//       // oo.previousRotation = o.previousRotation;
+//       oo.fuel = o.fuel;
+//       oo.bulletCount = o.bulletCount;
+//     }
+//   }
+// };

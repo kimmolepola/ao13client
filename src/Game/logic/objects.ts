@@ -2,7 +2,6 @@ import * as THREE from "three";
 
 import * as globals from "src/globals";
 import * as types from "src/types";
-import * as parameters from "src/parameters";
 import { handleReceiveAuthoritativeState } from "./tick";
 
 export const handleReceiveBaseState = (
@@ -60,14 +59,14 @@ export const handleReceiveBaseState = (
           inputsD: 0,
           inputsF: 0,
           inputsE: 0,
-          controlsOverChannelsUp: 0,
-          controlsOverChannelsDown: 0,
-          controlsOverChannelsLeft: 0,
-          controlsOverChannelsRight: 0,
-          controlsOverChannelsSpace: 0,
-          controlsOverChannelsD: 0,
-          controlsOverChannelsF: 0,
-          controlsOverChannelsE: 0,
+          // controlsOverChannelsUp: 0,
+          // controlsOverChannelsDown: 0,
+          // controlsOverChannelsLeft: 0,
+          // controlsOverChannelsRight: 0,
+          // controlsOverChannelsSpace: 0,
+          // controlsOverChannelsD: 0,
+          // controlsOverChannelsF: 0,
+          // controlsOverChannelsE: 0,
           rotationSpeed: 0,
           verticalSpeed: 0,
           speed: 0,
