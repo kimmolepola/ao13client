@@ -43,77 +43,77 @@ export const checkHealth = (
   }
 };
 
-export const handleKeys = (
-  delta: number,
-  gameObject: types.SharedGameObject
-) => {
-  const o = gameObject;
-  for (let i = 0; i < o.keyDowns.length; i++) {
-    const key = o.keyDowns[i];
-    switch (key) {
-      case types.Key.ArrowUp:
-        o.inputsUp += delta;
-        // o.controlsOverChannelsUp += delta;
-        break;
-      case types.Key.ArrowDown:
-        o.inputsDown += delta;
-        // o.controlsOverChannelsDown += delta;
-        break;
-      case types.Key.ArrowLeft:
-        o.inputsLeft += delta;
-        // o.controlsOverChannelsLeft += delta;
-        break;
-      case types.Key.ArrowRight:
-        o.inputsRight += delta;
-        // o.controlsOverChannelsRight += delta;
-        break;
-      case types.Key.Space:
-        o.inputsSpace += delta;
-        // o.controlsOverChannelsSpace += delta;
-        break;
-      case types.Key.KeyD:
-        o.inputsD += delta;
-        // o.controlsOverChannelsD += delta;
-        break;
-      case types.Key.KeyF:
-        o.inputsF += delta;
-        // o.controlsOverChannelsF += delta;
-        break;
-      case types.Key.KeyE:
-        o.inputsE += delta;
-        // o.controlsOverChannelsE += delta;
-        break;
+// export const handleKeys = (
+//   delta: number,
+//   gameObject: types.SharedGameObject
+// ) => {
+//   const o = gameObject;
+//   for (let i = 0; i < o.keyDowns.length; i++) {
+//     const key = o.keyDowns[i];
+//     switch (key) {
+//       case types.Key.ArrowUp:
+//         o.inputsUp += delta;
+//         // o.controlsOverChannelsUp += delta;
+//         break;
+//       case types.Key.ArrowDown:
+//         o.inputsDown += delta;
+//         // o.controlsOverChannelsDown += delta;
+//         break;
+//       case types.Key.ArrowLeft:
+//         o.inputsLeft += delta;
+//         // o.controlsOverChannelsLeft += delta;
+//         break;
+//       case types.Key.ArrowRight:
+//         o.inputsRight += delta;
+//         // o.controlsOverChannelsRight += delta;
+//         break;
+//       case types.Key.Space:
+//         o.inputsSpace += delta;
+//         // o.controlsOverChannelsSpace += delta;
+//         break;
+//       case types.Key.KeyD:
+//         o.inputsD += delta;
+//         // o.controlsOverChannelsD += delta;
+//         break;
+//       case types.Key.KeyF:
+//         o.inputsF += delta;
+//         // o.controlsOverChannelsF += delta;
+//         break;
+//       case types.Key.KeyE:
+//         o.inputsE += delta;
+//         // o.controlsOverChannelsE += delta;
+//         break;
 
-      default:
-        break;
-    }
-  }
-};
+//       default:
+//         break;
+//     }
+//   }
+// };
 
-export const handleShot = (
-  sequenceNumber: number,
-  delta: number,
-  gameObject: types.SharedGameObject,
-  handleGameEvent: (e: types.GameEvent) => void
-) => {
-  const o = gameObject;
-  if (o.inputsSpace) {
-    const timeQuantity = o.inputsSpace > delta ? delta : o.inputsSpace;
-    o.inputsSpace -= timeQuantity;
+// export const handleShot = (
+//   sequenceNumber: number,
+//   delta: number,
+//   gameObject: types.SharedGameObject,
+//   handleGameEvent: (e: types.GameEvent) => void
+// ) => {
+//   const o = gameObject;
+//   if (o.inputsSpace) {
+//     const timeQuantity = o.inputsSpace > delta ? delta : o.inputsSpace;
+//     o.inputsSpace -= timeQuantity;
 
-    //shooting
-    if (o.shotDelay - timeQuantity <= 0) {
-      // shoot
-      o.shotDelay += parameters.shotDelay;
-      handleGameEvent({
-        type: types.EventType.Shot,
-        o: gameObject,
-        sequenceNumber,
-      });
-    }
-  }
-  o.shotDelay -= Math.min(delta, o.shotDelay);
-};
+//     //shooting
+//     if (o.shotDelay - timeQuantity <= 0) {
+//       // shoot
+//       o.shotDelay += parameters.shotDelay;
+//       handleGameEvent({
+//         type: types.EventType.Shot,
+//         o: gameObject,
+//         sequenceNumber,
+//       });
+//     }
+//   }
+//   o.shotDelay -= Math.min(delta, o.shotDelay);
+// };
 
 function next8bit(n: number): number {
   return (n + 1) & 0xff;
@@ -229,7 +229,7 @@ export const gameEventHandler = async (
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
         object3d?.position.set(o3d.position.x, o3d.position.y, 0);
         object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
-        globals.localObjects.push({
+        globals.pendingLocalObjects.push({
           type,
           object3d,
           positionZ: z,

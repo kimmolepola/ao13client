@@ -1,16 +1,22 @@
 import { RefObject } from "react";
 import * as THREE from "three";
 import * as types from "src/types";
-import { handleAnimationFrame } from "./rendering/frame";
-import { handleTick, initializeTicks } from "./tick";
+import { handleKeys, handleFrame } from "./rendering/frame";
+import {
+  handleTick,
+  initializeAuthoritativeState,
+  initializeTicks,
+} from "./tick";
 import * as parameters from "src/parameters";
 
 let loopId: number | undefined;
 let previousTimestamp = 0;
-let cumulativeDelta = 0;
+let accumulator = 0;
 const tickBuffer = new Uint8Array(1);
+// TODO: set tick number based on server tick number
 
 const loop = (
+  ticks: types.TickStateObject[][],
   timestamp: number,
   xLoopId: number,
   camera: THREE.Camera,
@@ -20,31 +26,41 @@ const loop = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  handleGameEvent: (e: types.GameEvent) => void,
-  sendControlsData: (data: ArrayBuffer) => void
+  onGameEvent: (e: types.GameEvent) => void,
+  onInputData: (data: ArrayBuffer) => void
 ) => {
   const delta = timestamp - previousTimestamp;
-  cumulativeDelta += delta;
-  if (cumulativeDelta >= parameters.tickInterval) {
-    cumulativeDelta -= parameters.tickInterval;
-    handleTick(tickBuffer[0], handleGameEvent, sendControlsData);
+  accumulator += delta;
+  const isTickFrame = accumulator >= parameters.tickInterval;
+
+  handleKeys(delta);
+
+  while (accumulator >= parameters.tickInterval) {
+    accumulator -= parameters.tickInterval;
+    handleTick(ticks, tickBuffer[0], onGameEvent, onInputData);
     tickBuffer[0]++;
   }
-  handleAnimationFrame(
+
+  handleFrame(
+    isTickFrame,
     delta,
+    accumulator,
+    tickBuffer[0],
     camera,
-    scene,
     width,
     height,
     infoBoxRef,
     radarBoxRef,
-    handleGameEvent
+    onGameEvent
   );
+
   renderer.render(scene, camera);
+
   previousTimestamp = timestamp;
   loopId === xLoopId &&
     requestAnimationFrame((x) =>
       loop(
+        ticks,
         x,
         xLoopId,
         camera,
@@ -54,8 +70,8 @@ const loop = (
         height,
         infoBoxRef,
         radarBoxRef,
-        handleGameEvent,
-        sendControlsData
+        onGameEvent,
+        onInputData
       )
     );
 };
@@ -68,14 +84,17 @@ export const startGameLoop = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  handleGameEvent: (e: types.GameEvent) => void,
-  sendControlsData: (data: ArrayBuffer) => void
+  onGameEvent: (e: types.GameEvent) => void,
+  onInputData: (data: ArrayBuffer) => void
 ) => {
-  initializeTicks();
+  const ticks: types.TickStateObject[][] = []; // outer array index is tickNumber, inner array index is idOverNetwork
+  initializeTicks(ticks);
+  initializeAuthoritativeState();
   const time = performance.now();
   previousTimestamp = time;
   loopId = time;
   loop(
+    ticks,
     time,
     time,
     camera,
@@ -85,8 +104,8 @@ export const startGameLoop = (
     height,
     infoBoxRef,
     radarBoxRef,
-    handleGameEvent,
-    sendControlsData
+    onGameEvent,
+    onInputData
   );
 };
 

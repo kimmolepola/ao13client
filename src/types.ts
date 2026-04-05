@@ -172,6 +172,19 @@ const f22HeightMeters = 5.1;
 export const fighterHalfHeight =
   (1 / parameters.oneDistanceUnitInMeters) * (f22HeightMeters / 2);
 
+// TODO: is this needed?
+export type PositionObject = {
+  id: string;
+  idOverNetwork: number;
+  x: number;
+  y: number;
+  z: number;
+  speed: number;
+  verticalSpeed: number;
+  rotationZ: number;
+  rotationSpeed: number;
+};
+
 export interface SharedGameObject extends GameObject {
   idOverNetwork: number;
   health: number;
@@ -182,14 +195,14 @@ export interface SharedGameObject extends GameObject {
   username: string;
   score: number;
   speed: number;
-  inputsUp: number;
-  inputsDown: number;
-  inputsLeft: number;
-  inputsRight: number;
-  inputsSpace: number;
-  inputsF: number;
-  inputsD: number;
-  inputsE: number;
+  // inputsUp: number;
+  // inputsDown: number;
+  // inputsLeft: number;
+  // inputsRight: number;
+  // inputsSpace: number;
+  // inputsF: number;
+  // inputsD: number;
+  // inputsE: number;
   rotationSpeed: number;
   verticalSpeed: number;
   backendPosition: THREE.Vector3;
@@ -203,8 +216,10 @@ export interface SharedGameObject extends GameObject {
   shotDelay: number;
   positionZ: number;
   backendPositionZ: number;
-  previousPosition: [string, string, number];
-  previousRotation: number;
+  previousTruncatedPositionX: number;
+  previousTruncatedPositionY: number;
+  previousTruncatedPositionZ: number;
+  previous2DecimalTruncatedRotationZ: number;
   halfHeight: number;
   radius: number;
   fuel: number;
