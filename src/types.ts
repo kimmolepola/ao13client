@@ -172,19 +172,6 @@ const f22HeightMeters = 5.1;
 export const fighterHalfHeight =
   (1 / parameters.oneDistanceUnitInMeters) * (f22HeightMeters / 2);
 
-// TODO: is this needed?
-export type PositionObject = {
-  id: string;
-  idOverNetwork: number;
-  x: number;
-  y: number;
-  z: number;
-  speed: number;
-  verticalSpeed: number;
-  rotationZ: number;
-  rotationSpeed: number;
-};
-
 export interface SharedGameObject extends GameObject {
   idOverNetwork: number;
   health: number;

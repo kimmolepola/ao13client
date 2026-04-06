@@ -2,7 +2,6 @@ import * as types from "./types";
 
 export const accessToken: { value: string | undefined } = { value: undefined };
 export const sharedObjects: types.SharedGameObject[] = [];
-export const positionObjects: types.PositionObject[] = [];
 export const localObjects: types.LocalGameObject[] = [];
 export const pendingLocalObjects: types.LocalGameObject[] = [];
 export const staticObjects: types.StaticGameObject[] = [];

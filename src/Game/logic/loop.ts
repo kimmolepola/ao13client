@@ -3,6 +3,7 @@ import * as THREE from "three";
 import * as types from "src/types";
 import { handleKeys, handleFrame } from "./rendering/frame";
 import {
+  tickState,
   handleTick,
   initializeAuthoritativeState,
   initializeTicks,
@@ -14,6 +15,20 @@ let previousTimestamp = 0;
 let accumulator = 0;
 const tickBuffer = new Uint8Array(1);
 // TODO: set tick number based on server tick number
+let tickInterval = parameters.tickInterval;
+const targetOffsetTicks = 6;
+
+const seqOffset = (newer: number, older: number) => {
+  return (newer - older) & 0xff;
+};
+
+const isNewerSeqNum = (a: number, b: number) => {
+  return ((a - b) & 0xff) < 128;
+};
+
+const getNextSeq = (seq: number) => {
+  return (seq + 1) & 0xff;
+};
 
 const loop = (
   ticks: types.TickStateObject[][],
@@ -31,21 +46,32 @@ const loop = (
 ) => {
   const delta = timestamp - previousTimestamp;
   accumulator += delta;
-  const isTickFrame = accumulator >= parameters.tickInterval;
+  const isTickFrame = accumulator >= tickInterval;
 
   handleKeys(delta);
 
-  while (accumulator >= parameters.tickInterval) {
-    accumulator -= parameters.tickInterval;
-    handleTick(ticks, tickBuffer[0], onGameEvent, onInputData);
-    tickBuffer[0]++;
+  const tickNum = tickBuffer[0];
+  while (accumulator >= tickInterval) {
+    accumulator -= tickInterval;
+    const latestAuth = tickState.latestAuthTickNumber;
+    if (isNewerSeqNum(tickNum, latestAuth)) {
+      const offset = seqOffset(tickNum, latestAuth);
+      const differenceToTarget = offset - targetOffsetTicks;
+      tickInterval = parameters.tickInterval + differenceToTarget;
+      handleTick(ticks, tickNum, onGameEvent, onInputData);
+      tickBuffer[0]++;
+    } else {
+      // unexpected de-sync
+      const ns = getNextSeq;
+      tickBuffer[0] = ns(ns(ns(ns(ns(ns(latestAuth))))));
+    }
   }
 
   handleFrame(
     isTickFrame,
     delta,
     accumulator,
-    tickBuffer[0],
+    tickNum,
     camera,
     width,
     height,

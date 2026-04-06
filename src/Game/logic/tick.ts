@@ -14,10 +14,18 @@ const axis = utils.AXIS_Z;
 // array index is tickNumber
 const ticksLocalObjects: types.TickLocalObjects[] = [];
 
+export const tickState = {
+  latestAuthTickNumber: 0,
+};
+
 export const authoritativeStates: {
   isStale: boolean;
   state: types.AuthoritativeState[];
 }[] = []; // outer array index is tickNumber, inner array index is idOverNetwork
+
+const isNewerSeqNum = (received: number, old: number) => {
+  return ((received - old) & 0xff) < 128;
+};
 
 export const initializeAuthoritativeState = () => {
   authoritativeStates.length = 0;
@@ -117,6 +125,9 @@ export const handleTick = (
 export const handleReceiveAuthoritativeState = (
   receivedState: types.ReceivedState
 ) => {
+  if (isNewerSeqNum(receivedState.tick, tickState.latestAuthTickNumber)) {
+    tickState.latestAuthTickNumber = receivedState.tick;
+  }
   const tickAuthState = authoritativeStates[receivedState.tick];
   tickAuthState.isStale = false;
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
@@ -348,20 +359,20 @@ const applyCurState = (
   idOverNetwork: number
 ) => {
   const t = ticks[tickNumber][idOverNetwork];
-  const p = globals.positionObjects[idOverNetwork];
   const s = globals.sharedObjects[idOverNetwork];
-
-  p.x = t.x;
-  p.y = t.y;
-  p.z = t.z;
-  p.rotationZ = t.rotationZ;
-  p.rotationSpeed = t.rotationSpeed;
-  p.speed = t.speed;
-  p.verticalSpeed = t.verticalSpeed;
-
-  s.bulletCount = t.ordnanceChannel1Value;
-  s.fuel = t.fuel;
-  s.health = t.health;
+  const o3d = s.object3d;
+  if (o3d) {
+    o3d.position.x = t.x;
+    o3d.position.y = t.y;
+    o3d.rotation.z = t.rotationZ;
+    s.positionZ = t.z;
+    s.rotationSpeed = t.rotationSpeed;
+    s.speed = t.speed;
+    s.verticalSpeed = t.verticalSpeed;
+    s.bulletCount = t.ordnanceChannel1Value;
+    s.fuel = t.fuel;
+    s.health = t.health;
+  }
 };
 
 const handleSimulation = (
