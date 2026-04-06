@@ -1,7 +1,7 @@
 import * as types from "../../types";
 import * as globals from "../../globals";
 
-const dataView = new DataView(new ArrayBuffer(2));
+const dataView = new DataView(new ArrayBuffer(3));
 
 const oneFrame60FPS = 1000 / 60;
 const twoFrames60FPS = oneFrame60FPS * 2;

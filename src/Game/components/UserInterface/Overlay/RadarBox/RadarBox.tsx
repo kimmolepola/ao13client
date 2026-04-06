@@ -21,18 +21,21 @@ const RadarBox = ({
       className="absolute left-5 top-5 bg-black/60 overflow-clip pointer-events-none"
       style={radarBoxSize}
     >
-      {objectIds.map((x) => (
-        <RadarItem
-          key={x}
-          id={x}
-          radarBoxRef={radarBoxRef}
-          className={`w-[2%] h-[2%] rounded-full ${
-            globals.sharedObjects.find((xx) => xx.id === x)?.isMe
-              ? "z-10 bg-orange-400"
-              : "z-20 bg-white"
-          }`}
-        />
-      ))}
+      {objectIds.map((x) => {
+        console.log("--radar id:", x);
+        return (
+          <RadarItem
+            key={x}
+            id={x}
+            radarBoxRef={radarBoxRef}
+            className={`w-[2%] h-[2%] rounded-full ${
+              globals.sharedObjects.find((xx) => xx.id === x)?.isMe
+                ? "z-10 bg-orange-400"
+                : "z-20 bg-white"
+            }`}
+          />
+        );
+      })}
       {staticObjects.map((x) => {
         return (
           <RadarItem

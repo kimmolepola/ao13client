@@ -33,7 +33,7 @@ export const initializeAuthoritativeState = () => {
   for (let i = 0; i < parameters.stateMaxSequenceNumber + 1; i++) {
     authoritativeStates[i] = { isStale: true, state: [] };
     ticksLocalObjects[i] = [];
-    for (let ii = 0; i < parameters.maxRemoteObjects; i++) {
+    for (let ii = 0; ii < parameters.maxRemoteObjects; ii++) {
       authoritativeStates[i].state[ii] = {
         exists: false,
         idOverNetwork: ii,
@@ -73,7 +73,7 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
   for (let i = 0; i < parameters.stateMaxSequenceNumber + 1; i++) {
     ticks[i] = [];
     ticksLocalObjects[i] = [];
-    for (let ii = 0; i < parameters.maxRemoteObjects; i++) {
+    for (let ii = 0; ii < parameters.maxRemoteObjects; ii++) {
       ticks[i][ii] = {
         rollback: false,
         id: "",
