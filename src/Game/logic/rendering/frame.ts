@@ -329,7 +329,7 @@ const handleSharedObjects = (
   if (!prevAuthState.isStale && !authState.isStale) {
     for (let i = 0; i < parameters.maxRemoteObjects; i++) {
       const o = globals.sharedObjects[i];
-      const object3d = o.object3d;
+      const object3d = o?.object3d;
       if (!object3d) {
         continue; // eslint-disable-line
       }

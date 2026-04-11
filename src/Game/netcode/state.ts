@@ -124,6 +124,7 @@ const replaceWithChange = (
   variableName: string
 ) => {
   if (differenceSignificance === 4) {
+    console.log("--replace:", dataView, offset);
     const result = dataView.getUint32(offset);
     // variableName === "y" &&
     //   console.log(
@@ -316,7 +317,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       upd.inputsRight = recent.inputsRight;
     }
 
-    let xEncoded = recent.xEncoded;
+    let xEncoded = recent?.xEncoded;
     if (providedBytesPositionX) {
       xEncoded = replaceWithChange(
         xEncoded,
@@ -332,7 +333,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       upd.x = utils.decodeAxisValue(upd.xEncoded);
     }
 
-    let yEncoded = recent.yEncoded;
+    let yEncoded = recent?.yEncoded;
     if (providedBytesPositionY) {
       yEncoded = replaceWithChange(
         yEncoded,

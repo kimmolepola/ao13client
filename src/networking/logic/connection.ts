@@ -100,7 +100,7 @@ const createPeerConnection = (
   stringChannel.onmessage = ({ data }: { data: string }) => {
     try {
       const d = JSON.parse(data);
-      console.log("--stringchannel d:", d);
+      // console.log("--stringchannel d:", d);
       onReceiveStringData(
         d,
         handleReceiveBaseState,

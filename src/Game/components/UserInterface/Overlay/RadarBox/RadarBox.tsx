@@ -22,7 +22,7 @@ const RadarBox = ({
       style={radarBoxSize}
     >
       {objectIds.map((x) => {
-        console.log("--radar id:", x);
+        // console.log("--radar id:", x);
         return (
           <RadarItem
             key={x}
