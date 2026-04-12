@@ -63,17 +63,19 @@ export const gatherControlsDataBinary = (
   tickNumber: number,
   ownTickObj: types.TickStateObject | undefined
 ) => {
-  handle2BitValue(Key.ArrowUp, 0, ownTickObj);
-  handle2BitValue(Key.ArrowUp, 2, ownTickObj);
-  handle2BitValue(Key.ArrowLeft, 4, ownTickObj);
-  handle2BitValue(Key.ArrowRight, 6, ownTickObj);
-  handle2BitValue(Key.Space, 8, ownTickObj);
-  handle2BitValue(Key.KeyD, 10, ownTickObj);
-  handle2BitValue(Key.KeyF, 12, ownTickObj);
-  handle2BitValue(Key.KeyE, 14, ownTickObj);
+  // buf[1] (positions 8–14): directional keys
+  handle2BitValue(Key.ArrowUp, 8, ownTickObj);
+  handle2BitValue(Key.ArrowDown, 10, ownTickObj);
+  handle2BitValue(Key.ArrowLeft, 12, ownTickObj);
+  handle2BitValue(Key.ArrowRight, 14, ownTickObj);
+  // buf[2] (positions 0–6): action keys
+  handle2BitValue(Key.Space, 0, ownTickObj);
+  handle2BitValue(Key.KeyD, 2, ownTickObj);
+  handle2BitValue(Key.KeyF, 4, ownTickObj);
+  handle2BitValue(Key.KeyE, 6, ownTickObj);
 
-  const byte2 = dataView.getUint8(1);
-  const byte3 = dataView.getUint8(2);
+  const byte2 = dataView.getUint8(1); // directional keys
+  const byte3 = dataView.getUint8(2); // action keys
 
   if (!byte2 && !byte3) {
     return undefined;
@@ -81,11 +83,11 @@ export const gatherControlsDataBinary = (
 
   dataView.setUint8(0, tickNumber);
 
-  if (byte3) {
-    return dataView.buffer;
+  if (!byte3) {
+    return new Uint8Array(dataView.buffer, 0, 2).buffer; // 2 bytes: no action keys
   }
 
-  return new Uint8Array(dataView.buffer, 0, 2).buffer;
+  return dataView.buffer; // 3 bytes: directional + action keys
 };
 
 // export const gatherControlsDataBinary = (
