@@ -124,7 +124,6 @@ const replaceWithChange = (
   variableName: string
 ) => {
   if (differenceSignificance === 4) {
-    console.log("--replace:", dataView, offset);
     const result = dataView.getUint32(offset);
     // variableName === "y" &&
     //   console.log(
@@ -203,6 +202,7 @@ const getTwoBitValue = (byte: number, position: number) => {
   return (byte >> position) & 0b11;
 };
 
+let prevProvided = 0;
 export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   const sequenceNumber = dataView.getUint8(0);
 
@@ -215,10 +215,22 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   let offset = 1;
   let index = 0;
 
+  let isErr = false;
   const getNextByte = () => {
-    const value = dataView.getUint8(offset);
-    offset++;
-    return value;
+    try {
+      const value = dataView.getUint8(offset);
+      offset++;
+      return value;
+    } catch (err: any) {
+      isErr = true;
+      console.log("--err:", offset, err);
+      const bits = Array.from({ length: dataView.byteLength }, (_, i) =>
+        dataView.getUint8(i).toString(2).padStart(8, "0")
+      );
+
+      console.log(bits);
+      return 0;
+    }
   };
 
   const getNext2Bytes = () => {
@@ -227,9 +239,19 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     return value;
   };
 
+  let iter = 0;
   while (offset < dataView.byteLength) {
     const providedValues1to8 = getNextByte();
-
+    if (prevProvided !== providedValues1to8) {
+      console.log(
+        "--provided:",
+        iter,
+        offset,
+        providedValues1to8.toString(2).padStart(8, "0")
+      );
+    }
+    prevProvided = providedValues1to8;
+    iter++;
     const providedValues9to16IsProvided = getBit(providedValues1to8, 0);
     const inputs1IsProvided = getBit(providedValues1to8, 1);
     const xA = getBit(providedValues1to8, 2);
