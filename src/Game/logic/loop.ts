@@ -50,15 +50,14 @@ const loop = (
 
   handleKeys(delta);
 
-  const tickNum = tickBuffer[0];
   while (accumulator >= tickInterval) {
     accumulator -= tickInterval;
     const latestAuth = tickState.latestAuthTickNumber;
-    if (isNewerSeqNum(tickNum, latestAuth)) {
-      const offset = seqOffset(tickNum, latestAuth);
+    if (isNewerSeqNum(tickBuffer[0], latestAuth)) {
+      const offset = seqOffset(tickBuffer[0], latestAuth);
       const differenceToTarget = offset - targetOffsetTicks;
       tickInterval = parameters.tickInterval + differenceToTarget;
-      handleTick(ticks, tickNum, onGameEvent, onInputData);
+      handleTick(ticks, tickBuffer[0], onGameEvent, onInputData);
       tickBuffer[0]++;
     } else {
       // unexpected de-sync
@@ -71,7 +70,7 @@ const loop = (
     isTickFrame,
     delta,
     accumulator,
-    tickNum,
+    tickBuffer[0],
     camera,
     width,
     height,

@@ -84,10 +84,10 @@ export const gatherControlsDataBinary = (
   dataView.setUint8(0, tickNumber);
 
   if (!byte3) {
-    return new Uint8Array(dataView.buffer, 0, 2).buffer; // 2 bytes: no action keys
+    return dataView.buffer.slice(0, 2); // 2 bytes: no action keys
   }
 
-  return dataView.buffer; // 3 bytes: directional + action keys
+  return dataView.buffer.slice(0, 3); // 3 bytes: directional + action keys
 };
 
 // export const gatherControlsDataBinary = (

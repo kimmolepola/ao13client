@@ -114,12 +114,13 @@ export const handleTick = (
   sendControlsData: (data: ArrayBuffer) => void
 ) => {
   const ownIdOverNetwork = globals.state.ownRemoteObjectIndex;
-  const ownTickObj = ownIdOverNetwork
-    ? ticks[tickNumber][ownIdOverNetwork]
+  const hasValidIndex = ownIdOverNetwork !== undefined && ownIdOverNetwork >= 0;
+  const ownTickObj = hasValidIndex
+    ? ticks[tickNumber][ownIdOverNetwork!]
     : undefined;
   handleControlsData(sendControlsData, tickNumber, ownTickObj);
   handleSimulation(ticks, tickNumber, handleGameEvent);
-  ownIdOverNetwork && applyCurState(ticks, tickNumber, ownIdOverNetwork);
+  hasValidIndex && applyCurState(ticks, tickNumber, ownIdOverNetwork!);
 };
 
 export const handleReceiveAuthoritativeState = (

@@ -336,12 +336,12 @@ const handleSharedObjects = (
       if (i === globals.state.ownRemoteObjectIndex) {
         const deltaOrAccumulator = isTickFrame ? accumulator : delta;
         handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
-        if (nextInfoUpdate > Date.now()) {
+        if (nextInfoUpdate < Date.now()) {
           nextInfoUpdate = Date.now() + 1000;
           handleInfoBox(o, object3d, infoBoxRef);
           handleRadarBoxItem(o, object3d, radarBoxRef);
-          handleCamera(delta, camera, object3d);
         }
+        handleCamera(delta, camera, object3d);
       } else {
         interpolateRemoteObjectPositionAndRotation(
           i,

@@ -242,16 +242,16 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   let iter = 0;
   while (offset < dataView.byteLength) {
     const providedValues1to8 = getNextByte();
-    if (prevProvided !== providedValues1to8) {
-      console.log(
-        "--provided:",
-        iter,
-        offset,
-        providedValues1to8.toString(2).padStart(8, "0")
-      );
-    }
-    prevProvided = providedValues1to8;
-    iter++;
+    // if (prevProvided !== providedValues1to8) {
+    //   console.log(
+    //     "--provided:",
+    //     iter,
+    //     offset,
+    //     providedValues1to8.toString(2).padStart(8, "0")
+    //   );
+    // }
+    // prevProvided = providedValues1to8;
+    // iter++;
     const providedValues9to16IsProvided = getBit(providedValues1to8, 0);
     const inputs1IsProvided = getBit(providedValues1to8, 1);
     const xA = getBit(providedValues1to8, 2);
