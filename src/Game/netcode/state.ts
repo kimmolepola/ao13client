@@ -262,9 +262,9 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     const rotationSpeedIsProvided = getBit(providedValues1to8, 7);
 
     const providedBytesPositionX =
-      !xA && !xB ? 0 : xA && !xA ? 1 : !xA && xB ? 2 : 4;
+      !xA && !xB ? 0 : xA && !xB ? 1 : !xA && xB ? 2 : 4;
     const providedBytesPositionY =
-      !yA && !yB ? 0 : yA && !yA ? 1 : !yA && yB ? 2 : 4;
+      !yA && !yB ? 0 : yA && !yB ? 1 : !yA && yB ? 2 : 4;
 
     const providedValues9to16 = providedValues9to16IsProvided
       ? getNextByte()
