@@ -19,6 +19,7 @@ import {
 } from "../logic/controls";
 import { useConnection } from "src/networking/hooks/useConnection";
 import { useView } from "../hooks/useView";
+import { debugOn } from "../debug/debug";
 
 const Container = ({
   user,
@@ -39,6 +40,7 @@ const Container = ({
 
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const radarBoxRef = useRef<{ [id: string]: RefObject<HTMLDivElement> }>({});
+  const debugContentRef = useRef<HTMLDivElement>(null);
 
   const onChangeStaticObjects = useCallback(
     (value: types.BaseStateStaticObject[]) => {
@@ -84,6 +86,12 @@ const Container = ({
     };
   }, []);
 
+  const [debug, setDebug] = useState(false);
+  const onDebug = useCallback(() => {
+    setDebug(!debug);
+    debugOn.value = !debug;
+  }, [debug]);
+
   return (
     <div className="w-full h-full bg-rose-50">
       <Canvas
@@ -94,6 +102,7 @@ const Container = ({
         radarBoxRef={radarBoxRef}
         objectIds={objectIds}
         staticObjects={staticObjects}
+        debugContentRef={debugContentRef}
       />
       <Overlay
         style={canvasStyle}
@@ -103,6 +112,8 @@ const Container = ({
         objectIds={objectIds}
         staticObjects={staticObjects}
         radarBoxSize={radarBoxSize}
+        debugContentRef={debugContentRef}
+        debugIsOn={debug}
       />
       <Sidepanel
         username={user?.username}
@@ -114,6 +125,8 @@ const Container = ({
         onChangePosition={onChangePosition}
         onChangeDiameter={onChangeDiameter}
         quit={quit}
+        debugIsOn={debug}
+        onDebug={onDebug}
       />
     </div>
   );

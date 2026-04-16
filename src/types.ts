@@ -203,10 +203,10 @@ export interface SharedGameObject extends GameObject {
   shotDelay: number;
   positionZ: number;
   backendPositionZ: number;
-  previousTruncatedPositionX: number;
-  previousTruncatedPositionY: number;
-  previousTruncatedPositionZ: number;
-  previous2DecimalTruncatedRotationZ: number;
+  previous2DecimalTruncatedPositionX: number;
+  previous2DecimalTruncatedPositionY: number;
+  previous2DecimalTruncatedPositionZ: number;
+  previous3DecimalTruncatedRotationZ: number;
   halfHeight: number;
   radius: number;
   fuel: number;

@@ -57,8 +57,8 @@ const handleRadarBoxItem = (
   const x = object3d.position.x;
   const y = object3d.position.y;
   if (
-    o.previousTruncatedPositionX === (x | 0) &&
-    o.previousTruncatedPositionY === (y | 0)
+    o.previous2DecimalTruncatedPositionX === (x | 0) &&
+    o.previous2DecimalTruncatedPositionY === (y | 0)
   ) {
     return;
   }
@@ -174,11 +174,13 @@ const handleLocalPlayerMovement = (
   //
   // 4. INTEGRATE VELOCITIES → TRANSFORM
   //
-  o.previousTruncatedPositionX = object3d.position.x | 0;
-  o.previousTruncatedPositionY = object3d.position.y | 0;
-  o.previousTruncatedPositionZ = o.positionZ | 0;
-  o.previous2DecimalTruncatedRotationZ =
-    ((object3d.rotation.z * 100) | 0) / 100;
+  o.previous2DecimalTruncatedPositionX =
+    ((object3d.position.x * 100) | 0) / 100;
+  o.previous2DecimalTruncatedPositionY =
+    ((object3d.position.y * 100) | 0) / 100;
+  o.previous2DecimalTruncatedPositionZ = ((o.positionZ * 100) | 0) / 100;
+  o.previous3DecimalTruncatedRotationZ =
+    ((object3d.rotation.z * 1000) | 0) / 1000;
 
   object3d.rotateZ(o.rotationSpeed * p.rotationFactor * delta);
   object3d.translateY(o.speed * p.speedFactor * delta);
@@ -201,10 +203,10 @@ const handleDataBlock = (
     camera.position.y === previousCameraPosition.y &&
     camera.position.z === previousCameraPosition.z &&
     camera.rotation.z === previousCameraRotation &&
-    o.previousTruncatedPositionX === (position.x | 0) &&
-    o.previousTruncatedPositionY === (position.y | 0) &&
-    o.previous2DecimalTruncatedRotationZ ===
-      ((object3d.rotation.z * 100) | 0) / 100
+    o.previous2DecimalTruncatedPositionX === ((position.x * 100) | 0) / 100 &&
+    o.previous2DecimalTruncatedPositionY === ((position.y * 100) | 0) / 100 &&
+    o.previous3DecimalTruncatedRotationZ ===
+      ((object3d.rotation.z * 1000) | 0) / 1000
   ) {
     return;
   }
@@ -310,21 +312,42 @@ const interpolateRemoteObjectPositionAndRotation = (
 
 let nextInfoUpdate = Date.now();
 
+function subtractSeq8(a: number, b: number) {
+  return (a - b) & 0xff;
+}
+
 const handleSharedObjects = (
   isTickFrame: boolean,
   delta: number,
   accumulator: number,
   tickNumber: number,
+  offset: number,
   camera: THREE.Camera,
   width: number,
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
-  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>
+  radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  debugContentRef: RefObject<HTMLDivElement>
 ) => {
-  const serverTickNumber = getPrevSeq(getPrevSeq(getPrevSeq(tickNumber)));
+  const serverTickNumber = subtractSeq8(tickNumber, offset);
+  // const serverTickNumber = getPrevSeq(getPrevSeq(getPrevSeq(tickNumber)));
   const authState = authoritativeStates[serverTickNumber];
   const prevAuthState = authoritativeStates[getPrevSeq(serverTickNumber)];
   const alpha = accumulator / parameters.tickInterval;
+
+  if (debug.debugOn.value && debugContentRef.current) {
+    debugContentRef.current.textContent =
+      "offset: " +
+      (tickNumber - serverTickNumber) +
+      ", server rotationZ: " +
+      authState.state[0].rotationZ.toFixed(2) +
+      ", local rotationZ: " +
+      globals.sharedObjects[0]?.object3d?.rotation.z.toFixed(2) +
+      ", x: " +
+      (globals.sharedObjects[0]?.object3d?.position.x.toFixed(2) || 0) +
+      ", y: " +
+      (globals.sharedObjects[0]?.object3d?.position.y.toFixed(2) || 0);
+  }
 
   if (!prevAuthState.isStale && !authState.isStale) {
     for (let i = 0; i < parameters.maxRemoteObjects; i++) {
@@ -360,11 +383,13 @@ export const handleFrame = (
   delta: number,
   accumulator: number,
   tickNumber: number,
+  offset: number,
   camera: THREE.Camera,
   width: number,
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  debugContentRef: RefObject<HTMLDivElement>,
   onGameEvent: (e: types.GameEvent) => void
 ) => {
   handleSharedObjects(
@@ -372,11 +397,13 @@ export const handleFrame = (
     delta,
     accumulator,
     tickNumber,
+    offset,
     camera,
     width,
     height,
     infoBoxRef,
-    radarBoxRef
+    radarBoxRef,
+    debugContentRef
   );
   handleLocalObjects(delta, onGameEvent);
 };

@@ -33,6 +33,7 @@ const Canvas = ({
   radarBoxRef,
   objectIds,
   staticObjects,
+  debugContentRef,
 }: {
   width: number;
   height: number;
@@ -41,6 +42,7 @@ const Canvas = ({
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
   objectIds: string[];
   staticObjects: types.BaseStateStaticObject[];
+  debugContentRef: RefObject<HTMLDivElement>;
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +71,7 @@ const Canvas = ({
       height,
       infoBoxRef,
       radarBoxRef,
+      debugContentRef,
       gameEventHandlerWrapper,
       sendControlsData
     );
@@ -76,7 +79,7 @@ const Canvas = ({
       node?.removeChild(renderer.domElement);
       stopGameLoop();
     };
-  }, [width, height, infoBoxRef, radarBoxRef]);
+  }, [width, height, infoBoxRef, radarBoxRef, debugContentRef]);
 
   return <div ref={canvasRef} className="absolute inset-0" style={style} />;
 };

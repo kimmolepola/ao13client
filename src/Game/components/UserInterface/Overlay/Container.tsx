@@ -7,6 +7,7 @@ import InfoBox from "./InfoBox";
 import ControlButtons from "./ControlButtons";
 import RadarBox from "./RadarBox";
 import * as types from "src/types";
+import DebugContainer from "src/Game/debug/DebugContainer";
 
 const InfoTexts = () => (
   <>
@@ -28,6 +29,8 @@ const Container = ({
   objectIds,
   staticObjects,
   radarBoxSize,
+  debugContentRef,
+  debugIsOn,
 }: {
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
@@ -36,7 +39,10 @@ const Container = ({
   objectIds: string[];
   staticObjects: types.BaseStateStaticObject[];
   radarBoxSize: { width: number; height: number };
+  debugContentRef: RefObject<HTMLDivElement>;
+  debugIsOn: boolean;
 }) => {
+  console.log("--debugIsOn:", debugIsOn);
   return (
     <div className="absolute inset-0 z-1" style={style}>
       <InfoTexts />
@@ -49,6 +55,7 @@ const Container = ({
         staticObjects={staticObjects}
         radarBoxSize={radarBoxSize}
       />
+      <DebugContainer debugContentRef={debugContentRef} debugIsOn={debugIsOn} />
     </div>
   );
 };

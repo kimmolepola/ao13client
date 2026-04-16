@@ -65,7 +65,7 @@ export const onReceiveState = (
   if (save) {
     ackView[0] = sequenceNumber;
     sendAck(ackView.buffer);
-    debug.debug(sequenceNumber);
+    // debug.debug(sequenceNumber);
   }
 
   const isNewer = sequenceNumberIsNewer(

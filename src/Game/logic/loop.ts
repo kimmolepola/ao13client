@@ -41,6 +41,7 @@ const loop = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  debugContentRef: RefObject<HTMLDivElement>,
   onGameEvent: (e: types.GameEvent) => void,
   onInputData: (data: ArrayBuffer) => void
 ) => {
@@ -49,15 +50,15 @@ const loop = (
   const isTickFrame = accumulator >= tickInterval;
 
   handleKeys(delta);
+  const latestAuth = tickState.latestAuthTickNumber;
 
   while (accumulator >= tickInterval) {
     accumulator -= tickInterval;
-    const latestAuth = tickState.latestAuthTickNumber;
     if (isNewerSeqNum(tickBuffer[0], latestAuth)) {
       const offset = seqOffset(tickBuffer[0], latestAuth);
       const differenceToTarget = offset - targetOffsetTicks;
       tickInterval = parameters.tickInterval + differenceToTarget;
-      handleTick(ticks, tickBuffer[0], onGameEvent, onInputData);
+      handleTick(ticks, tickBuffer[0], offset, onGameEvent, onInputData);
       tickBuffer[0]++;
     } else {
       // unexpected de-sync
@@ -66,16 +67,19 @@ const loop = (
     }
   }
 
+  const offset = seqOffset(tickBuffer[0], latestAuth);
   handleFrame(
     isTickFrame,
     delta,
     accumulator,
     tickBuffer[0],
+    offset,
     camera,
     width,
     height,
     infoBoxRef,
     radarBoxRef,
+    debugContentRef,
     onGameEvent
   );
 
@@ -95,6 +99,7 @@ const loop = (
         height,
         infoBoxRef,
         radarBoxRef,
+        debugContentRef,
         onGameEvent,
         onInputData
       )
@@ -109,6 +114,7 @@ export const startGameLoop = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+  debugContentRef: RefObject<HTMLDivElement>,
   onGameEvent: (e: types.GameEvent) => void,
   onInputData: (data: ArrayBuffer) => void
 ) => {
@@ -129,6 +135,7 @@ export const startGameLoop = (
     height,
     infoBoxRef,
     radarBoxRef,
+    debugContentRef,
     onGameEvent,
     onInputData
   );

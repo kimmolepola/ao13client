@@ -314,6 +314,25 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       ordnanceChannel2IsProvided;
 
     if (!possibleRecentObjectState && !allValuesAreProvided) {
+      // console.log(
+      //   "--provided:",
+      //   inputs1IsProvided,
+      //   xA,
+      //   xB,
+      //   yA,
+      //   yB,
+      //   rotationZIsProvided,
+      //   rotationSpeedIsProvided,
+      //   speedIsProvided,
+      //   eventsIsProvided,
+      //   healthIsProvided,
+      //   fuelIsProvided,
+      //   inputs2IsProvided,
+      //   verticalSpeedIsProvided,
+      //   positionZIsProvided,
+      //   ordnanceChannel1IsProvided,
+      //   ordnanceChannel2IsProvided
+      // );
       debug.debugNoRecentObjectState(
         idOverNetworkIsProvided,
         idOverNetwork,
@@ -338,7 +357,6 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       upd.inputsLeft = recent.inputsLeft;
       upd.inputsRight = recent.inputsRight;
     }
-
     let xEncoded = recent?.xEncoded;
     if (providedBytesPositionX) {
       xEncoded = replaceWithChange(

@@ -110,6 +110,7 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
 export const handleTick = (
   ticks: types.TickStateObject[][],
   tickNumber: number,
+  offset: number,
   handleGameEvent: (e: types.GameEvent) => void,
   sendControlsData: (data: ArrayBuffer) => void
 ) => {
@@ -119,7 +120,7 @@ export const handleTick = (
     ? ticks[tickNumber][ownIdOverNetwork!]
     : undefined;
   handleControlsData(sendControlsData, tickNumber, ownTickObj);
-  handleSimulation(ticks, tickNumber, handleGameEvent);
+  handleSimulation(ticks, tickNumber, offset, handleGameEvent);
   hasValidIndex && applyCurState(ticks, tickNumber, ownIdOverNetwork!);
 };
 
@@ -313,6 +314,14 @@ const handleSimulationRollback = (
     r.ordnanceChannel2Id === o.ordnanceChannel2Id &&
     r.ordnanceChannel2Value === o.ordnanceChannel2Value;
 
+  // console.log(
+  //   "--r:",
+  //   r.rotationZ.toFixed(2),
+  //   r.inputsRight,
+  //   isSame,
+  //   o.rotationZ.toFixed(2)
+  // );
+
   // TODO: handle if differences due to rounding errors but practically same
 
   o.inputsUp = r.inputsUp;
@@ -338,18 +347,18 @@ const handleSimulationRollback = (
     o.ordnanceChannel1Value = r.ordnanceChannel1Value;
     o.ordnanceChannel2Id = r.ordnanceChannel2Id;
     o.ordnanceChannel2Value = r.ordnanceChannel2Value;
+  }
 
-    if (receivedTickNumber !== localTickNumber) {
-      let s = receivedTickNumber;
-      const nextLocalTickNumber = getNextSeq(localTickNumber);
-      while (s !== nextLocalTickNumber) {
-        const prevTick = ticksAttr[s];
-        const prev = prevTick[idOverNetwork];
-        s = getNextSeq(s);
-        const curTick = ticksAttr[s];
-        const cur = curTick[idOverNetwork];
-        handleMovement(cur, prev);
-      }
+  if (receivedTickNumber !== localTickNumber) {
+    let s = receivedTickNumber;
+    const nextLocalTickNumber = getNextSeq(localTickNumber);
+    while (s !== nextLocalTickNumber) {
+      const prevTick = ticksAttr[s];
+      const prev = prevTick[idOverNetwork];
+      s = getNextSeq(s);
+      const curTick = ticksAttr[s];
+      const cur = curTick[idOverNetwork];
+      handleMovement(cur, prev);
     }
   }
 };
@@ -363,6 +372,7 @@ const applyCurState = (
   const s = globals.sharedObjects[idOverNetwork];
   const o3d = s?.object3d;
   if (o3d) {
+    // console.log("--rot:", t.rotationZ.toFixed(2));
     o3d.position.x = t.x;
     o3d.position.y = t.y;
     o3d.rotation.z = t.rotationZ;
@@ -376,12 +386,18 @@ const applyCurState = (
   }
 };
 
+function subtractSeq8(a: number, b: number) {
+  return (a - b) & 0xff;
+}
+
 const handleSimulation = (
   ticks: types.TickStateObject[][],
   tickNumber: number,
+  offset: number,
   handleGameEvent: (e: types.GameEvent) => void
 ) => {
-  const authStateTickNum = getPrevSeq(getPrevSeq(getPrevSeq(tickNumber)));
+  // const authStateTickNum = getPrevSeq(getPrevSeq(getPrevSeq(tickNumber)));
+  const authStateTickNum = subtractSeq8(tickNumber, offset);
   const authState = authoritativeStates[authStateTickNum];
   const prevPrevAuthState =
     authoritativeStates[getPrevSeq(getPrevSeq(authStateTickNum))];

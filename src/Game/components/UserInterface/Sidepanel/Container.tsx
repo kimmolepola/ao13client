@@ -18,6 +18,8 @@ const Container = ({
   onChangePosition,
   onChangeDiameter,
   quit: onClickQuit,
+  debugIsOn,
+  onDebug,
 }: {
   username: string | undefined;
   position: types.SidepanelPosition;
@@ -28,6 +30,8 @@ const Container = ({
   onChangePosition: (value: types.SidepanelPosition) => void;
   onChangeDiameter: (value: number) => void;
   quit: () => void;
+  debugIsOn: boolean;
+  onDebug: () => void;
 }) => {
   const chatOnSubmit = useCallback((value: string) => {
     sendStringData({
@@ -94,6 +98,8 @@ const Container = ({
             onClickQuit={onClickQuit}
             onClickMove={onClickMove}
             move={move}
+            debugIsOn={debugIsOn}
+            onDebug={onDebug}
           />
           <div className="flex gap-1 flex-wrap text-xs p-0.5 border">
             <div>{username} |</div>
