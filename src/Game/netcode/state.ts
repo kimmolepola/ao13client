@@ -233,6 +233,12 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
   };
 
+  const getNextSignedByte = () => {
+    const value = dataView.getInt8(offset);
+    offset++;
+    return value;
+  };
+
   const getNext2Bytes = () => {
     const value = dataView.getUint16(offset);
     offset += 2;
@@ -398,7 +404,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     upd.rotationSpeed = rotationSpeedIsProvided
-      ? getNextByte()
+      ? getNextSignedByte()
       : recent.rotationSpeed;
 
     upd.speed = speedIsProvided ? getNext2Bytes() : recent.speed;
@@ -423,7 +429,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     upd.verticalSpeed = verticalSpeedIsProvided
-      ? getNextByte()
+      ? getNextSignedByte()
       : recent.verticalSpeed;
 
     upd.z = positionZIsProvided ? getNext2Bytes() : recent.z;
