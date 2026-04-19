@@ -333,6 +333,39 @@ const handleSimulationRollback = (
   o.inputsF = r.inputsF;
   o.inputsE = r.inputsE;
 
+  console.log(
+    "--isSame:",
+    isSame,
+    "\nx:",
+    r.x === o.x,
+    "\ny:",
+    r.y === o.y,
+    "\nrotationZ:",
+    r.rotationZ === o.rotationZ,
+    r.rotationZ,
+    o.rotationZ,
+    "\nrotationSpeed:",
+    r.rotationSpeed === o.rotationSpeed,
+    "\nspeed:",
+    r.speed === o.speed,
+    "\nhealth:",
+    r.health === o.health,
+    "\nfuel:",
+    r.fuel === o.fuel,
+    "\nverticalSpeed:",
+    r.verticalSpeed === o.verticalSpeed,
+    "\nz:",
+    r.z === o.z,
+    "\nordnanceChannel1Id:",
+    r.ordnanceChannel1Id === o.ordnanceChannel1Id,
+    "\nordnanceChannel1Value:",
+    r.ordnanceChannel1Value === o.ordnanceChannel1Value,
+    "\nordnanceChannel2Id:",
+    r.ordnanceChannel2Id === o.ordnanceChannel2Id,
+    "\nordnanceChannel2Value:",
+    r.ordnanceChannel2Value === o.ordnanceChannel2Value
+  );
+
   if (!isSame) {
     o.x = r.x;
     o.y = r.y;
