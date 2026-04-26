@@ -59,9 +59,9 @@ const getinitialUpdateObject = () => ({
   rotationZ: 0,
   rotationSpeed: 0,
   fuel: 0,
-  ordnanceChannel1Id: undefined,
+  ordnanceChannel1Id: 0,
   ordnanceChannel1Value: 0,
-  ordnanceChannel2Id: undefined,
+  ordnanceChannel2Id: 0,
   ordnanceChannel2Value: 0,
   eventsEncoded: 0,
   verticalSpeed: 0,
@@ -205,6 +205,7 @@ const getTwoBitValue = (byte: number, position: number) => {
 let prevProvided = 0;
 export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   const sequenceNumber = dataView.getUint8(0);
+  console.log("--seq:", sequenceNumber);
 
   resetReceivedState();
   receivedState.tick = sequenceNumber;
@@ -248,6 +249,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   let iter = 0;
   while (offset < dataView.byteLength) {
     const providedValues1to8 = getNextByte();
+    console.log("--offset:", offset, providedValues1to8, dataView.byteLength);
     // if (prevProvided !== providedValues1to8) {
     //   console.log(
     //     "--provided:",
@@ -344,6 +346,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
         idOverNetwork,
         index
       );
+
       return;
     }
     const recent = possibleRecentObjectState!;
@@ -402,6 +405,12 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       upd.rotationZEncoded = rotationZEncoded;
       upd.rotationZ = utils.decodeAngle(rotationZEncoded);
     }
+    // console.log(
+    //   "--rotZ:",
+    //   rotationZIsProvided,
+    //   rotationZEncoded,
+    //   upd.rotationZ
+    // );
 
     upd.rotationSpeed = rotationSpeedIsProvided
       ? getNextSignedByte()
@@ -413,7 +422,9 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
 
     upd.health = healthIsProvided ? getNextByte() : recent.health;
 
-    upd.fuel = fuelIsProvided ? getNextByte() : recent.fuel;
+    upd.fuel = fuelIsProvided
+      ? getNextByte() * parameters.networkToFuelRatio
+      : recent.fuel;
 
     if (inputs2IsProvided) {
       const inputs2 = getNextByte();

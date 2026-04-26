@@ -116,6 +116,7 @@ const createPeerConnection = (
   controlsChannel.binaryType = "arraybuffer";
   stateChannel.binaryType = "arraybuffer";
   stateChannel.onmessage = ({ data }: { data: ArrayBuffer }) => {
+    // console.log("--onmessage:", data);
     onReceiveState(data, handleReceiveState);
   };
 

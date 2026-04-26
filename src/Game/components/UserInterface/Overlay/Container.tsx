@@ -42,7 +42,7 @@ const Container = ({
   debugContentRef: RefObject<HTMLDivElement>;
   debugIsOn: boolean;
 }) => {
-  console.log("--debugIsOn:", debugIsOn);
+  // console.log("--debugIsOn:", debugIsOn);
   return (
     <div className="absolute inset-0 z-1" style={style}>
       <InfoTexts />

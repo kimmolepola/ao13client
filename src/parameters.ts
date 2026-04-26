@@ -77,3 +77,8 @@ export const bulletTimeToLive = 3000;
 export const cameraDefaultZ = 80; // 160000 / oneDistanceUnitInMeters; // low orbit satellite altitude 160 - 2000 km. 160 km / 20 m = 8000
 export const worldWidth = maxWorldCoordinateValue - minWorldCoordinateValue;
 export const windowToRadarBoxRatio = 10;
+
+export const maxFuelKg = 8200;
+const fuelToNetworkRatio = 255 / maxFuelKg;
+export const networkToFuelRatio = 1 / fuelToNetworkRatio;
+export const maxBullets = 480;

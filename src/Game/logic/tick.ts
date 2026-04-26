@@ -28,6 +28,7 @@ const isNewerSeqNum = (received: number, old: number) => {
 };
 
 export const initializeAuthoritativeState = () => {
+  // console.log("--init auth state");
   authoritativeStates.length = 0;
   ticksLocalObjects.length = 0;
   for (let i = 0; i < parameters.stateMaxSequenceNumber + 1; i++) {
@@ -78,11 +79,11 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
         rollback: false,
         id: "",
         idOverNetwork: ii,
-        health: 255,
+        health: 100,
         type: types.GameObjectType.Fighter,
         x: 0,
         y: 0,
-        z: 0,
+        z: 1000,
         rotationZ: 0,
         speed: 0,
         inputsUp: 0,
@@ -95,12 +96,12 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
         inputsE: 0,
         rotationSpeed: 0,
         verticalSpeed: 0,
-        fuel: 0,
+        fuel: parameters.maxFuelKg,
         bulletCount: 0,
         eventsEncoded: 0,
-        ordnanceChannel1Id: undefined,
-        ordnanceChannel1Value: 0,
-        ordnanceChannel2Id: undefined,
+        ordnanceChannel1Id: 0,
+        ordnanceChannel1Value: parameters.maxBullets,
+        ordnanceChannel2Id: 0,
         ordnanceChannel2Value: 0,
       };
     }
@@ -127,10 +128,12 @@ export const handleTick = (
 export const handleReceiveAuthoritativeState = (
   receivedState: types.ReceivedState
 ) => {
+  console.log("--receivedState.state:", receivedState.state[0].health);
   if (isNewerSeqNum(receivedState.tick, tickState.latestAuthTickNumber)) {
     tickState.latestAuthTickNumber = receivedState.tick;
   }
   const tickAuthState = authoritativeStates[receivedState.tick];
+  // console.log("--xxqqqqqqqwwwqer set isStale false:", receivedState.tick);
   tickAuthState.isStale = false;
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
     const o = tickAuthState.state[i];
@@ -290,6 +293,10 @@ const replay = (prev: types.TickStateObject, cur: types.TickStateObject) => {
   handleMovement(cur, prev);
 };
 
+const nearlyEqual = (a: number, b: number, eps = 1e-12) => {
+  return Math.abs(a - b) < eps;
+};
+
 const handleSimulationRollback = (
   localTickNumber: number,
   receivedTickNumber: number,
@@ -300,27 +307,19 @@ const handleSimulationRollback = (
   const tick = ticksAttr[receivedTickNumber];
   const o = tick[idOverNetwork];
   const isSame =
-    r.x === o.x &&
-    r.y === o.y &&
-    r.rotationZ === o.rotationZ &&
-    r.rotationSpeed === o.rotationSpeed &&
-    r.speed === o.speed &&
-    r.health === o.health &&
-    r.fuel === o.fuel &&
-    r.verticalSpeed === o.verticalSpeed &&
-    r.z === o.z &&
+    nearlyEqual(r.x, o.x) &&
+    nearlyEqual(r.y, o.y) &&
+    nearlyEqual(r.rotationZ, o.rotationZ) &&
+    nearlyEqual(r.rotationSpeed, o.rotationSpeed) &&
+    nearlyEqual(r.speed, o.speed) &&
+    nearlyEqual(r.health, o.health) &&
+    nearlyEqual(r.fuel, o.fuel) &&
+    nearlyEqual(r.verticalSpeed, o.verticalSpeed) &&
+    nearlyEqual(r.z, o.z) &&
+    nearlyEqual(r.ordnanceChannel1Value, o.ordnanceChannel1Value) &&
+    nearlyEqual(r.ordnanceChannel2Value, o.ordnanceChannel2Value) &&
     r.ordnanceChannel1Id === o.ordnanceChannel1Id &&
-    r.ordnanceChannel1Value === o.ordnanceChannel1Value &&
-    r.ordnanceChannel2Id === o.ordnanceChannel2Id &&
-    r.ordnanceChannel2Value === o.ordnanceChannel2Value;
-
-  // console.log(
-  //   "--r:",
-  //   r.rotationZ.toFixed(2),
-  //   r.inputsRight,
-  //   isSame,
-  //   o.rotationZ.toFixed(2)
-  // );
+    r.ordnanceChannel2Id === o.ordnanceChannel2Id;
 
   // TODO: handle if differences due to rounding errors but practically same
 
@@ -333,39 +332,53 @@ const handleSimulationRollback = (
   o.inputsF = r.inputsF;
   o.inputsE = r.inputsE;
 
-  console.log(
-    "--isSame:",
-    isSame,
-    "\nx:",
-    r.x === o.x,
-    "\ny:",
-    r.y === o.y,
-    "\nrotationZ:",
-    r.rotationZ === o.rotationZ,
-    r.rotationZ,
-    o.rotationZ,
-    "\nrotationSpeed:",
-    r.rotationSpeed === o.rotationSpeed,
-    "\nspeed:",
-    r.speed === o.speed,
-    "\nhealth:",
-    r.health === o.health,
-    "\nfuel:",
-    r.fuel === o.fuel,
-    "\nverticalSpeed:",
-    r.verticalSpeed === o.verticalSpeed,
-    "\nz:",
-    r.z === o.z,
-    "\nordnanceChannel1Id:",
-    r.ordnanceChannel1Id === o.ordnanceChannel1Id,
-    "\nordnanceChannel1Value:",
-    r.ordnanceChannel1Value === o.ordnanceChannel1Value,
-    "\nordnanceChannel2Id:",
-    r.ordnanceChannel2Id === o.ordnanceChannel2Id,
-    "\nordnanceChannel2Value:",
-    r.ordnanceChannel2Value === o.ordnanceChannel2Value
-  );
+  false &&
+    r.health !== 100 &&
+    console.log(
+      "--isSame:",
+      isSame,
+      "\nx:",
+      r.x === o.x,
+      "\ny:",
+      r.y === o.y,
+      "\nrotationZ:",
+      nearlyEqual(r.rotationZ, o.rotationZ),
+      r.rotationZ === o.rotationZ,
+      "\nrotationSpeed:",
+      r.rotationSpeed === o.rotationSpeed,
+      "\nspeed:",
+      r.speed === o.speed,
+      "\nhealth:",
+      r.health === o.health,
+      r.health,
+      o.health,
+      "\nfuel:",
+      r.fuel === o.fuel,
+      r.fuel,
+      o.fuel,
+      "\nverticalSpeed:",
+      r.verticalSpeed === o.verticalSpeed,
+      "\nz:",
+      r.z === o.z,
+      "\nordnanceChannel1Id:",
+      r.ordnanceChannel1Id === o.ordnanceChannel1Id,
+      r.ordnanceChannel1Id,
+      o.ordnanceChannel1Id,
+      "\nordnanceChannel1Value:",
+      nearlyEqual(r.ordnanceChannel1Value, o.ordnanceChannel1Value),
+      "\nordnanceChannel2Id:",
+      r.ordnanceChannel2Id === o.ordnanceChannel2Id,
+      r.ordnanceChannel2Id,
+      o.ordnanceChannel2Id,
+      "\nordnanceChannel2Value:",
+      r.ordnanceChannel2Value === o.ordnanceChannel2Value,
+      "authoritativeState:",
+      receivedTickNumber,
+      authoritativeStates[receivedTickNumber],
+      authoritativeStates
+    );
 
+  // console.log("--tick:", receivedTickNumber);
   if (!isSame) {
     o.x = r.x;
     o.y = r.y;
