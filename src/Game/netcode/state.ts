@@ -205,7 +205,7 @@ const getTwoBitValue = (byte: number, position: number) => {
 let prevProvided = 0;
 export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   const sequenceNumber = dataView.getUint8(0);
-  console.log("--seq:", sequenceNumber);
+  // console.log("--seq:", sequenceNumber);
 
   resetReceivedState();
   receivedState.tick = sequenceNumber;
@@ -249,7 +249,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   let iter = 0;
   while (offset < dataView.byteLength) {
     const providedValues1to8 = getNextByte();
-    console.log("--offset:", offset, providedValues1to8, dataView.byteLength);
+    // console.log("--offset:", offset, providedValues1to8, dataView.byteLength);
     // if (prevProvided !== providedValues1to8) {
     //   console.log(
     //     "--provided:",

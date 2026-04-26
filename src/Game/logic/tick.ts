@@ -128,7 +128,7 @@ export const handleTick = (
 export const handleReceiveAuthoritativeState = (
   receivedState: types.ReceivedState
 ) => {
-  console.log("--receivedState.state:", receivedState.state[0].health);
+  // console.log("--receivedState.state:", receivedState.state[0].health);
   if (isNewerSeqNum(receivedState.tick, tickState.latestAuthTickNumber)) {
     tickState.latestAuthTickNumber = receivedState.tick;
   }
@@ -333,12 +333,13 @@ const handleSimulationRollback = (
   o.inputsE = r.inputsE;
 
   false &&
-    r.health !== 100 &&
     console.log(
       "--isSame:",
       isSame,
       "\nx:",
       r.x === o.x,
+      r.x,
+      o.x,
       "\ny:",
       r.y === o.y,
       "\nrotationZ:",
@@ -360,6 +361,8 @@ const handleSimulationRollback = (
       r.verticalSpeed === o.verticalSpeed,
       "\nz:",
       r.z === o.z,
+      r.z,
+      o.z,
       "\nordnanceChannel1Id:",
       r.ordnanceChannel1Id === o.ordnanceChannel1Id,
       r.ordnanceChannel1Id,
@@ -371,11 +374,7 @@ const handleSimulationRollback = (
       r.ordnanceChannel2Id,
       o.ordnanceChannel2Id,
       "\nordnanceChannel2Value:",
-      r.ordnanceChannel2Value === o.ordnanceChannel2Value,
-      "authoritativeState:",
-      receivedTickNumber,
-      authoritativeStates[receivedTickNumber],
-      authoritativeStates
+      r.ordnanceChannel2Value === o.ordnanceChannel2Value
     );
 
   // console.log("--tick:", receivedTickNumber);
@@ -405,6 +404,12 @@ const handleSimulationRollback = (
       const curTick = ticksAttr[s];
       const cur = curTick[idOverNetwork];
       handleMovement(cur, prev);
+      cur.health = prev.health;
+      cur.fuel = prev.fuel - cur.speed * 0.0001;
+      cur.ordnanceChannel1Id = prev.ordnanceChannel1Id;
+      cur.ordnanceChannel1Value = prev.ordnanceChannel1Value - cur.inputsSpace;
+      cur.ordnanceChannel2Id = prev.ordnanceChannel2Id;
+      cur.ordnanceChannel2Value = prev.ordnanceChannel2Value;
     }
   }
 };

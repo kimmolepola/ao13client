@@ -76,7 +76,7 @@ export const onReceiveState = (
   if (isNewer || save) {
     mostRecentSequenceNumber = sequenceNumber;
     const receivedState = handleReceiveStateData(dataView, save);
-    console.log("--receivedState:", receivedState);
+    // console.log("--receivedState:", receivedState);
     isNewer && receivedState && handleReceiveState(receivedState);
   }
   if (!isNewer) {

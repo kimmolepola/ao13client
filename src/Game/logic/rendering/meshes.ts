@@ -47,6 +47,7 @@ export const loadBox = (fileName?: string, size?: [number, number, number]) => {
       new THREE.MeshBasicMaterial({
         map: x,
         transparent: true,
+        opacity: 0,
       }),
       empty,
     ];
