@@ -127,12 +127,13 @@ const handleLocalPlayerMovement = (
   // o.inputsD -= d;
   // o.inputsF -= f;
 
-  const up = globals.keys.ArrowUp ? delta : 0;
-  const down = globals.keys.ArrowDown ? delta : 0;
-  const left = globals.keys.ArrowLeft ? delta : 0;
-  const right = globals.keys.ArrowRight ? delta : 0;
-  const d = globals.keys.KeyD ? delta : 0;
-  const f = globals.keys.KeyF ? delta : 0;
+  const frameScale = delta / (1000 / 60);
+  const up = globals.keys.ArrowUp ? frameScale : 0;
+  const down = globals.keys.ArrowDown ? frameScale : 0;
+  const left = globals.keys.ArrowLeft ? frameScale : 0;
+  const right = globals.keys.ArrowRight ? frameScale : 0;
+  const d = globals.keys.KeyD ? frameScale : 0;
+  const f = globals.keys.KeyF ? frameScale : 0;
 
   o.speed += up * p.forceUpToSpeedFactor;
   o.speed -= down * p.forceDownToSpeedFactor;
@@ -305,7 +306,7 @@ const interpolateRemoteObjectPositionAndRotation = (
   if (o3d) {
     o3d.position.x = pa.x + (a.x - pa.x) * alpha;
     o3d.position.y = pa.y + (a.y - pa.y) * alpha;
-    o3d.rotation.z = pa.rotationZ + (a.rotationZ - pa.rotationZ) * alpha;
+    o3d.rotation.z = pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * alpha;
     o.positionZ = pa.z + (a.z - pa.z) * alpha;
   }
 };

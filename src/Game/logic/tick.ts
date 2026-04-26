@@ -309,13 +309,13 @@ const handleSimulationRollback = (
   const isSame =
     nearlyEqual(r.x, o.x) &&
     nearlyEqual(r.y, o.y) &&
-    nearlyEqual(r.rotationZ, o.rotationZ) &&
-    nearlyEqual(r.rotationSpeed, o.rotationSpeed) &&
-    nearlyEqual(r.speed, o.speed) &&
+    nearlyEqual(r.rotationZ, o.rotationZ, 0.001) &&
+    nearlyEqual(r.rotationSpeed, o.rotationSpeed, 1.0) &&
+    nearlyEqual(r.speed, o.speed, 1.0) &&
     nearlyEqual(r.health, o.health) &&
-    nearlyEqual(r.fuel, o.fuel) &&
-    nearlyEqual(r.verticalSpeed, o.verticalSpeed) &&
-    nearlyEqual(r.z, o.z) &&
+    nearlyEqual(r.fuel, o.fuel, parameters.networkToFuelRatio) &&
+    nearlyEqual(r.verticalSpeed, o.verticalSpeed, 1.0) &&
+    nearlyEqual(r.z, o.z, 1.0) &&
     nearlyEqual(r.ordnanceChannel1Value, o.ordnanceChannel1Value) &&
     nearlyEqual(r.ordnanceChannel2Value, o.ordnanceChannel2Value) &&
     r.ordnanceChannel1Id === o.ordnanceChannel1Id &&
