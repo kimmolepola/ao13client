@@ -1,5 +1,5 @@
-import { useEffect, useRef, memo, RefObject } from "react";
-import * as THREE from "three";
+import { useEffect, useRef, memo, RefObject, useCallback } from "react";
+import { Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import * as parameters from "src/parameters";
 import { startGameLoop, stopGameLoop } from "src/Game/logic/loop";
 import { sendControlsData } from "src/networking/logic/send";
@@ -9,20 +9,35 @@ import { updateRenderedSharedObjects } from "../logic/rendering/loaderSharedObje
 import { updateRenderedStaticObjects } from "../logic/rendering/loaderStaticObjects";
 import * as types from "src/types";
 
-const camera = new THREE.PerspectiveCamera(
+const camera = new PerspectiveCamera(
   30,
   undefined,
-  parameters.cameraDefaultZ - 10,
+  parameters.cameraDefaultZ / 2,
   parameters.cameraDefaultZ + 1
 );
-const scene = new THREE.Scene();
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const scene = new Scene();
+const renderer = new WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
 
 localLoad(scene, types.GameObjectType.Background);
 
 const gameEventHandlerWrapper = (gameEvent: types.GameEvent) => {
   gameEventHandler(scene, gameEvent);
+};
+
+const handleUnmount = (node: HTMLDivElement | null) => {
+  console.log("--unmount");
+  node?.removeChild(renderer.domElement);
+  stopGameLoop();
+  scene.traverse((obj) => {
+    if (!(obj instanceof Mesh)) return;
+    obj.geometry?.dispose();
+    if (Array.isArray(obj.material)) {
+      obj.material.forEach((m) => m.dispose());
+    } else {
+      obj.material?.dispose();
+    }
+  });
 };
 
 const Canvas = ({
@@ -47,12 +62,6 @@ const Canvas = ({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height);
-  }, [width, height]);
-
-  useEffect(() => {
     updateRenderedSharedObjects(objectIds, scene);
   }, [objectIds]);
 
@@ -60,26 +69,35 @@ const Canvas = ({
     updateRenderedStaticObjects(staticObjects, scene);
   }, [staticObjects]);
 
+  const handleMount = useCallback(
+    (node: HTMLDivElement | null) => {
+      node?.appendChild(renderer.domElement);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+      startGameLoop(
+        camera,
+        scene,
+        renderer,
+        width,
+        height,
+        infoBoxRef,
+        radarBoxRef,
+        debugContentRef,
+        gameEventHandlerWrapper,
+        sendControlsData
+      );
+    },
+    [width, height, infoBoxRef, radarBoxRef, debugContentRef]
+  );
+
   useEffect(() => {
     const node = canvasRef.current;
-    node?.appendChild(renderer.domElement);
-    startGameLoop(
-      camera,
-      scene,
-      renderer,
-      width,
-      height,
-      infoBoxRef,
-      radarBoxRef,
-      debugContentRef,
-      gameEventHandlerWrapper,
-      sendControlsData
-    );
+    handleMount(node);
     return () => {
-      node?.removeChild(renderer.domElement);
-      stopGameLoop();
+      handleUnmount(node);
     };
-  }, [width, height, infoBoxRef, radarBoxRef, debugContentRef]);
+  }, [handleMount]);
 
   return <div ref={canvasRef} className="absolute inset-0" style={style} />;
 };

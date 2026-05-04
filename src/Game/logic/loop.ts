@@ -142,5 +142,6 @@ export const startGameLoop = (
 };
 
 export const stopGameLoop = () => {
+  loopId && cancelAnimationFrame(loopId);
   loopId = undefined;
 };

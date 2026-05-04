@@ -35,7 +35,7 @@ const createGUI = (camera: THREE.Camera) => {
   cameraFolder.add(camera.position, "y", -10000, 10000);
   cameraFolder.add(camera.position, "x", -10, 10);
   cameraFolder.add(camera.position, "y", -10, 10);
-  cameraFolder.add(camera.position, "z", 0, 10);
+  cameraFolder.add(camera.position, "z", 0, 100);
   cameraFolder
     .add(camRot, "pitch", -Math.PI / 2, Math.PI / 2)
     .onChange(() => updateCamera(camera));
