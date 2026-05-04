@@ -165,6 +165,7 @@ export const loadFighter = (color?: string) => {
       new THREE.MeshBasicMaterial({
         map: x,
         transparent: true,
+        alphaTest: 0.5,
         color,
       }),
       empty,

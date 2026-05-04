@@ -205,7 +205,7 @@ const getTwoBitValue = (byte: number, position: number) => {
 let prevProvided = 0;
 export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   const sequenceNumber = dataView.getUint8(0);
-  // console.log("--seq:", sequenceNumber);
+  console.log("--seq:", dataView.getUint8(1));
 
   resetReceivedState();
   receivedState.tick = sequenceNumber;
