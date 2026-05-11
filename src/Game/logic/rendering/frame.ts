@@ -244,6 +244,7 @@ const handleLocalObject = (
   object3d: THREE.Mesh
 ) => {
   const o = gameObject;
+  // console.log("--o:", o.id);
   object3d.translateY(o.speed * parameters.speedFactor * delta);
   o.speed *= parameters.bulletSpeedReductionFactor;
   o.timeToLive -= delta;
@@ -254,7 +255,8 @@ const handleLocalObjects = (
   delta: number,
   onGameEvent: (e: types.GameEvent) => void
 ) => {
-  for (let i = globals.localObjects.length - 1; i > -1; i--) {
+  // console.log("--globals.localObjects.length:", globals.localObjects.length);
+  for (let i = 0; i < globals.localObjects.length; i++) {
     const o = globals.localObjects[i];
     if (o && o.object3d) {
       const remove = handleLocalObject(delta, o, o.object3d);
@@ -306,7 +308,8 @@ const interpolateRemoteObjectPositionAndRotation = (
   if (o3d) {
     o3d.position.x = pa.x + (a.x - pa.x) * alpha;
     o3d.position.y = pa.y + (a.y - pa.y) * alpha;
-    o3d.rotation.z = pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * alpha;
+    o3d.rotation.z =
+      pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * alpha;
     o.positionZ = pa.z + (a.z - pa.z) * alpha;
   }
 };

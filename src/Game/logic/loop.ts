@@ -30,6 +30,8 @@ const getNextSeq = (seq: number) => {
   return (seq + 1) & 0xff;
 };
 
+let isSyncing = false;
+
 const loop = (
   ticks: types.TickStateObject[][],
   timestamp: number,
@@ -42,6 +44,7 @@ const loop = (
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   debugContentRef: RefObject<HTMLDivElement>,
+  syncInfoRef: RefObject<HTMLDivElement>,
   onGameEvent: (e: types.GameEvent) => void,
   onInputData: (data: ArrayBuffer) => void
 ) => {
@@ -57,6 +60,23 @@ const loop = (
     if (isNewerSeqNum(tickBuffer[0], latestAuth)) {
       const offset = seqOffset(tickBuffer[0], latestAuth);
       const differenceToTarget = offset - targetOffsetTicks;
+      if (syncInfoRef.current) {
+        if (differenceToTarget > 4) {
+          if (!isSyncing) {
+            isSyncing = true;
+            syncInfoRef.current.classList.remove("invisible");
+            syncInfoRef.current.classList.add("visible");
+          }
+          syncInfoRef.current.textContent =
+            differenceToTarget - 5 === 0
+              ? "Synced"
+              : "Syncing... (" + (differenceToTarget - 5) + ")";
+        } else if (isSyncing) {
+          isSyncing = false;
+          syncInfoRef.current.classList.remove("visible");
+          syncInfoRef.current.classList.add("invisible");
+        }
+      }
       tickInterval = parameters.tickInterval + differenceToTarget;
       handleTick(ticks, tickBuffer[0], offset, onGameEvent, onInputData);
       tickBuffer[0]++;
@@ -100,6 +120,7 @@ const loop = (
         infoBoxRef,
         radarBoxRef,
         debugContentRef,
+        syncInfoRef,
         onGameEvent,
         onInputData
       )
@@ -115,6 +136,7 @@ export const startGameLoop = (
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   debugContentRef: RefObject<HTMLDivElement>,
+  syncInfoRef: RefObject<HTMLDivElement>,
   onGameEvent: (e: types.GameEvent) => void,
   onInputData: (data: ArrayBuffer) => void
 ) => {
@@ -136,6 +158,7 @@ export const startGameLoop = (
     infoBoxRef,
     radarBoxRef,
     debugContentRef,
+    syncInfoRef,
     onGameEvent,
     onInputData
   );

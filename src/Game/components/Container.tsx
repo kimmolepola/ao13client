@@ -41,6 +41,7 @@ const Container = ({
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const radarBoxRef = useRef<{ [id: string]: RefObject<HTMLDivElement> }>({});
   const debugContentRef = useRef<HTMLDivElement>(null);
+  const syncInfoRef = useRef<HTMLDivElement>(null);
 
   const onChangeStaticObjects = useCallback(
     (value: types.BaseStateStaticObject[]) => {
@@ -103,6 +104,7 @@ const Container = ({
         objectIds={objectIds}
         staticObjects={staticObjects}
         debugContentRef={debugContentRef}
+        syncInfoRef={syncInfoRef}
       />
       <Overlay
         style={canvasStyle}
@@ -114,6 +116,7 @@ const Container = ({
         radarBoxSize={radarBoxSize}
         debugContentRef={debugContentRef}
         debugIsOn={debug}
+        syncInfoRef={syncInfoRef}
       />
       <Sidepanel
         username={user?.username}

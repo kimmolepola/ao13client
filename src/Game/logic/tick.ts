@@ -123,6 +123,7 @@ export const handleTick = (
   handleControlsData(sendControlsData, tickNumber, ownTickObj);
   handleSimulation(ticks, tickNumber, offset, handleGameEvent);
   hasValidIndex && applyCurState(ticks, tickNumber, ownIdOverNetwork!);
+  // console.log("--tick:", tickNumber, offset);
 };
 
 export const handleReceiveAuthoritativeState = (

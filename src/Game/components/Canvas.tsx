@@ -49,6 +49,7 @@ const Canvas = ({
   objectIds,
   staticObjects,
   debugContentRef,
+  syncInfoRef,
 }: {
   width: number;
   height: number;
@@ -58,6 +59,7 @@ const Canvas = ({
   objectIds: string[];
   staticObjects: types.BaseStateStaticObject[];
   debugContentRef: RefObject<HTMLDivElement>;
+  syncInfoRef: RefObject<HTMLDivElement>;
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -84,11 +86,12 @@ const Canvas = ({
         infoBoxRef,
         radarBoxRef,
         debugContentRef,
+        syncInfoRef,
         gameEventHandlerWrapper,
         sendControlsData
       );
     },
-    [width, height, infoBoxRef, radarBoxRef, debugContentRef]
+    [width, height, infoBoxRef, radarBoxRef, debugContentRef, syncInfoRef]
   );
 
   useEffect(() => {

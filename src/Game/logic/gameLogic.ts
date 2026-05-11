@@ -150,10 +150,13 @@ export const gameEventHandler = async (
       break;
     }
     case types.EventType.RemoveLocalObjectIndexes: {
-      gameEvent.data.forEach((x) => localRemove(scene, x));
+      for (let i = gameEvent.data.length - 1; i >= 0; i--) {
+        localRemove(scene, gameEvent.data[i]);
+      }
       break;
     }
     case types.EventType.Shot: {
+      console.log("--shot");
       const o = gameEvent.o;
       if (o.bulletCount >= 1 && o.object3d) {
         const speed = o.speed + parameters.bulletSpeed;
@@ -180,6 +183,7 @@ export const gameEventHandler = async (
       break;
     }
     case types.EventType.ShotRollback: {
+      console.log("--shot rollback");
       const dst = parameters.collisionMaxDistanceLocalObject;
       const seq = gameEvent.sequenceNumber;
       const localTickNumber = gameEvent.localTickNumber;
@@ -229,7 +233,8 @@ export const gameEventHandler = async (
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
         object3d?.position.set(o3d.position.x, o3d.position.y, 0);
         object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
-        globals.pendingLocalObjects.push({
+        // console.log("--push");
+        globals.localObjects.push({
           type,
           object3d,
           positionZ: z,

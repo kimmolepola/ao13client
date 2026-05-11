@@ -205,7 +205,7 @@ const getTwoBitValue = (byte: number, position: number) => {
 let prevProvided = 0;
 export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   const sequenceNumber = dataView.getUint8(0);
-  console.log("--seq:", dataView.getUint8(1));
+  // console.log("--seq:", dataView.getUint8(1));
 
   resetReceivedState();
   receivedState.tick = sequenceNumber;
@@ -421,6 +421,8 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     upd.eventsEncoded = eventsIsProvided ? getNextByte() : recent.eventsEncoded;
 
     upd.health = healthIsProvided ? getNextByte() : recent.health;
+
+    // console.log("--upd.health:", upd.health);
 
     upd.fuel = fuelIsProvided
       ? getNextByte() * parameters.networkToFuelRatio
