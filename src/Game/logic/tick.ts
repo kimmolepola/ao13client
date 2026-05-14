@@ -58,10 +58,20 @@ export const initializeAuthoritativeState = () => {
         rotationSpeed: 0,
         fuel: 0,
         ordnanceChannel1Id: 0,
-        ordnanceChannel1Value: 0,
+        ordnanceChannel1Byte1: 0,
+        ordnanceChannel1Byte2: 0,
         ordnanceChannel2Id: 0,
-        ordnanceChannel2Value: 0,
+        ordnanceChannel2Byte1: 0,
+        ordnanceChannel2Byte2: 0,
         eventsEncoded: 0,
+        ordnance1EventId1: undefined,
+        ordnance1EventId2: undefined,
+        ordnance1EventId3: undefined,
+        ordnance1EventId4: undefined,
+        ordnance2EventId1: undefined,
+        ordnance2EventId2: undefined,
+        ordnance2EventId3: undefined,
+        ordnance2EventId4: undefined,
         verticalSpeed: 0,
       };
     }
@@ -100,9 +110,19 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
         bulletCount: 0,
         eventsEncoded: 0,
         ordnanceChannel1Id: 0,
-        ordnanceChannel1Value: parameters.maxBullets,
+        ordnanceChannel1Byte1: parameters.maxBullets,
+        ordnanceChannel1Byte2: 0,
         ordnanceChannel2Id: 0,
-        ordnanceChannel2Value: 0,
+        ordnanceChannel2Byte1: 0,
+        ordnanceChannel2Byte2: 0,
+        ordnance1EventId1: undefined,
+        ordnance1EventId2: undefined,
+        ordnance1EventId3: undefined,
+        ordnance1EventId4: undefined,
+        ordnance2EventId1: undefined,
+        ordnance2EventId2: undefined,
+        ordnance2EventId3: undefined,
+        ordnance2EventId4: undefined,
       };
     }
   }
@@ -159,9 +179,19 @@ export const handleReceiveAuthoritativeState = (
     o.inputsSpace = r.inputsSpace;
     o.inputsUp = r.inputsUp;
     o.ordnanceChannel1Id = r.ordnanceChannel1Id;
-    o.ordnanceChannel1Value = r.ordnanceChannel1Value;
+    o.ordnanceChannel1Byte1 = r.ordnanceChannel1Byte1;
+    o.ordnanceChannel1Byte2 = r.ordnanceChannel1Byte2;
     o.ordnanceChannel2Id = r.ordnanceChannel2Id;
-    o.ordnanceChannel2Value = r.ordnanceChannel2Value;
+    o.ordnanceChannel2Byte1 = r.ordnanceChannel2Byte1;
+    o.ordnanceChannel2Byte2 = r.ordnanceChannel2Byte2;
+    o.ordnance1EventId1 = r.ordnance1EventId1;
+    o.ordnance1EventId2 = r.ordnance1EventId2;
+    o.ordnance1EventId3 = r.ordnance1EventId3;
+    o.ordnance1EventId4 = r.ordnance1EventId4;
+    o.ordnance2EventId1 = r.ordnance2EventId1;
+    o.ordnance2EventId2 = r.ordnance2EventId2;
+    o.ordnance2EventId3 = r.ordnance2EventId3;
+    o.ordnance2EventId4 = r.ordnance2EventId4;
     o.rotationSpeed = r.rotationSpeed;
     o.rotationZ = r.rotationZ;
     o.rotationZEncoded = r.rotationZEncoded;
@@ -330,8 +360,8 @@ const handleSimulationRollback = (
     nearlyEqual(r.fuel, o.fuel, parameters.networkToFuelRatio) &&
     nearlyEqual(r.verticalSpeed, o.verticalSpeed, 1.0) &&
     nearlyEqual(r.z, o.z, 1.0) &&
-    nearlyEqual(r.ordnanceChannel1Value, o.ordnanceChannel1Value) &&
-    nearlyEqual(r.ordnanceChannel2Value, o.ordnanceChannel2Value) &&
+    nearlyEqual(r.ordnanceChannel1Byte1, o.ordnanceChannel1Byte1) &&
+    nearlyEqual(r.ordnanceChannel2Byte1, o.ordnanceChannel2Byte1) &&
     r.ordnanceChannel1Id === o.ordnanceChannel1Id &&
     r.ordnanceChannel2Id === o.ordnanceChannel2Id;
 
@@ -381,14 +411,14 @@ const handleSimulationRollback = (
       r.ordnanceChannel1Id === o.ordnanceChannel1Id,
       r.ordnanceChannel1Id,
       o.ordnanceChannel1Id,
-      "\nordnanceChannel1Value:",
-      nearlyEqual(r.ordnanceChannel1Value, o.ordnanceChannel1Value),
+      "\nordnanceChannel1Byte1:",
+      nearlyEqual(r.ordnanceChannel1Byte1, o.ordnanceChannel1Byte1),
       "\nordnanceChannel2Id:",
       r.ordnanceChannel2Id === o.ordnanceChannel2Id,
       r.ordnanceChannel2Id,
       o.ordnanceChannel2Id,
-      "\nordnanceChannel2Value:",
-      r.ordnanceChannel2Value === o.ordnanceChannel2Value
+      "\nordnanceChannel2Byte1:",
+      r.ordnanceChannel2Byte1 === o.ordnanceChannel2Byte1
     );
 
   // console.log("--tick:", receivedTickNumber);
@@ -403,9 +433,11 @@ const handleSimulationRollback = (
     o.verticalSpeed = r.verticalSpeed;
     o.z = r.z;
     o.ordnanceChannel1Id = r.ordnanceChannel1Id;
-    o.ordnanceChannel1Value = r.ordnanceChannel1Value;
+    o.ordnanceChannel1Byte1 = r.ordnanceChannel1Byte1;
+    o.ordnanceChannel1Byte2 = r.ordnanceChannel1Byte2;
     o.ordnanceChannel2Id = r.ordnanceChannel2Id;
-    o.ordnanceChannel2Value = r.ordnanceChannel2Value;
+    o.ordnanceChannel2Byte1 = r.ordnanceChannel2Byte1;
+    o.ordnanceChannel2Byte2 = r.ordnanceChannel2Byte2;
   }
 
   if (receivedTickNumber !== localTickNumber) {
@@ -421,9 +453,11 @@ const handleSimulationRollback = (
       cur.health = prev.health;
       cur.fuel = prev.fuel - cur.speed * 0.0001;
       cur.ordnanceChannel1Id = prev.ordnanceChannel1Id;
-      cur.ordnanceChannel1Value = prev.ordnanceChannel1Value - cur.inputsSpace;
+      cur.ordnanceChannel1Byte1 = prev.ordnanceChannel1Byte1 - cur.inputsSpace;
+      cur.ordnanceChannel1Byte2 = prev.ordnanceChannel1Byte2;
       cur.ordnanceChannel2Id = prev.ordnanceChannel2Id;
-      cur.ordnanceChannel2Value = prev.ordnanceChannel2Value;
+      cur.ordnanceChannel2Byte1 = prev.ordnanceChannel2Byte1;
+      cur.ordnanceChannel2Byte2 = prev.ordnanceChannel2Byte2;
     }
   }
 };
@@ -445,7 +479,7 @@ const applyCurState = (
     s.rotationSpeed = t.rotationSpeed;
     s.speed = t.speed;
     s.verticalSpeed = t.verticalSpeed;
-    s.bulletCount = t.ordnanceChannel1Value;
+    s.bulletCount = t.ordnanceChannel1Byte1;
     s.fuel = t.fuel;
     s.health = t.health;
   }

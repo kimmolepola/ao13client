@@ -60,10 +60,20 @@ const getinitialUpdateObject = () => ({
   rotationSpeed: 0,
   fuel: 0,
   ordnanceChannel1Id: 0,
-  ordnanceChannel1Value: 0,
+  ordnanceChannel1Byte1: 0,
+  ordnanceChannel1Byte2: 0,
   ordnanceChannel2Id: 0,
-  ordnanceChannel2Value: 0,
+  ordnanceChannel2Byte1: 0,
+  ordnanceChannel2Byte2: 0,
   eventsEncoded: 0,
+  ordnance1EventId1: undefined as number | undefined,
+  ordnance1EventId2: undefined as number | undefined,
+  ordnance1EventId3: undefined as number | undefined,
+  ordnance1EventId4: undefined as number | undefined,
+  ordnance2EventId1: undefined as number | undefined,
+  ordnance2EventId2: undefined as number | undefined,
+  ordnance2EventId3: undefined as number | undefined,
+  ordnance2EventId4: undefined as number | undefined,
   verticalSpeed: 0,
 });
 
@@ -177,25 +187,11 @@ const replaceWithChange = (
   return oldValue;
 };
 
-type DecodedOrdnanceByte1Out = { id: number; value: number; twoBytes: boolean };
-const decodedOrdnanceByte1Out = { id: 0, value: 0, twoBytes: false };
-const decodeOrdnanceByte1 = (byte: number, out: DecodedOrdnanceByte1Out) => {
-  // Extract ID (bits 7–5)
-  out.id = (byte >> 5) & 0x07;
-
-  // Extract flag (bit 4)
-  out.twoBytes = ((byte >> 4) & 0x01) === 1;
-
-  if (!out.twoBytes) {
-    // 1‑byte encoding
-    out.value = byte & 0x0f; // low 4 bits
-  }
-  return out;
-};
-
-const decodeOrdnanceByte2 = (byte1: number, byte2: number) => {
-  // High 4 bits from byte1, low 8 bits from byte2
-  return ((byte1 & 0x0f) << 8) | byte2;
+const popcount = (x: number) => {
+  let n = x >>> 0;
+  let count = 0;
+  while (n) { count += n & 1; n >>>= 1; }
+  return count;
 };
 
 const getTwoBitValue = (byte: number, position: number) => {
@@ -282,8 +278,9 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     const idOverNetworkIsProvided = getBit(providedValues9to16, 1);
     const speedIsProvided = getBit(providedValues9to16, 2);
     const eventsIsProvided = getBit(providedValues9to16, 3);
-    const healthIsProvided = getBit(providedValues9to16, 4);
-    const fuelIsProvided = getBit(providedValues9to16, 5);
+    const eventsIdsIsProvided = getBit(providedValues9to16, 4);
+    const healthIsProvided = getBit(providedValues9to16, 5);
+    const fuelIsProvided = getBit(providedValues9to16, 6);
 
     const providedValues17to24 = providedValues17to24IsProvided
       ? getNextByte()
@@ -418,6 +415,65 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
 
     upd.speed = speedIsProvided ? getNext2Bytes() : recent.speed;
 
+    // Decode ordnance event IDs. Count is derived from recent eventsEncoded since
+    // eventsEncoded is encoded after the IDs in the stream.
+    if (eventsIdsIsProvided) {
+      const recentEventsEncoded = recent?.eventsEncoded ?? 0;
+      const ord1Count = popcount(recentEventsEncoded & 0x0f);
+      const ord2Count = popcount(recentEventsEncoded >> 4);
+
+      if (ord1Count > 0) {
+        const byte = getNextByte();
+        if ((byte >> 7) & 1) {
+          const id = byte & 0x7f;
+          upd.ordnance1EventId1 = id;
+          upd.ordnance1EventId2 = ord1Count > 1 ? id : undefined;
+          upd.ordnance1EventId3 = ord1Count > 2 ? id : undefined;
+          upd.ordnance1EventId4 = ord1Count > 3 ? id : undefined;
+        } else {
+          upd.ordnance1EventId1 = byte;
+          upd.ordnance1EventId2 = ord1Count > 1 ? getNextByte() : undefined;
+          upd.ordnance1EventId3 = ord1Count > 2 ? getNextByte() : undefined;
+          upd.ordnance1EventId4 = ord1Count > 3 ? getNextByte() : undefined;
+        }
+      } else {
+        upd.ordnance1EventId1 = undefined;
+        upd.ordnance1EventId2 = undefined;
+        upd.ordnance1EventId3 = undefined;
+        upd.ordnance1EventId4 = undefined;
+      }
+
+      if (ord2Count > 0) {
+        const byte = getNextByte();
+        if ((byte >> 7) & 1) {
+          const id = byte & 0x7f;
+          upd.ordnance2EventId1 = id;
+          upd.ordnance2EventId2 = ord2Count > 1 ? id : undefined;
+          upd.ordnance2EventId3 = ord2Count > 2 ? id : undefined;
+          upd.ordnance2EventId4 = ord2Count > 3 ? id : undefined;
+        } else {
+          upd.ordnance2EventId1 = byte;
+          upd.ordnance2EventId2 = ord2Count > 1 ? getNextByte() : undefined;
+          upd.ordnance2EventId3 = ord2Count > 2 ? getNextByte() : undefined;
+          upd.ordnance2EventId4 = ord2Count > 3 ? getNextByte() : undefined;
+        }
+      } else {
+        upd.ordnance2EventId1 = undefined;
+        upd.ordnance2EventId2 = undefined;
+        upd.ordnance2EventId3 = undefined;
+        upd.ordnance2EventId4 = undefined;
+      }
+    } else {
+      upd.ordnance1EventId1 = recent.ordnance1EventId1;
+      upd.ordnance1EventId2 = recent.ordnance1EventId2;
+      upd.ordnance1EventId3 = recent.ordnance1EventId3;
+      upd.ordnance1EventId4 = recent.ordnance1EventId4;
+      upd.ordnance2EventId1 = recent.ordnance2EventId1;
+      upd.ordnance2EventId2 = recent.ordnance2EventId2;
+      upd.ordnance2EventId3 = recent.ordnance2EventId3;
+      upd.ordnance2EventId4 = recent.ordnance2EventId4;
+    }
+
     upd.eventsEncoded = eventsIsProvided ? getNextByte() : recent.eventsEncoded;
 
     upd.health = healthIsProvided ? getNextByte() : recent.health;
@@ -448,29 +504,27 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     upd.z = positionZIsProvided ? getNext2Bytes() : recent.z;
 
     if (ordnanceChannel1IsProvided) {
-      const byte1 = getNextByte();
-      const result = decodeOrdnanceByte1(byte1, decodedOrdnanceByte1Out);
-      const value = result.twoBytes
-        ? decodeOrdnanceByte2(byte1, getNextByte())
-        : result.value;
-      upd.ordnanceChannel1Id = result.id;
-      upd.ordnanceChannel1Value = value;
+      const idWithFlag = getNextByte();
+      upd.ordnanceChannel1Id = idWithFlag & 0x7f;
+      const byte2Included = (idWithFlag >> 7) & 1;
+      upd.ordnanceChannel1Byte1 = getNextByte();
+      upd.ordnanceChannel1Byte2 = byte2Included ? getNextByte() : (recent?.ordnanceChannel1Byte2 ?? 0);
     } else {
       upd.ordnanceChannel1Id = recent.ordnanceChannel1Id;
-      upd.ordnanceChannel1Value = recent.ordnanceChannel1Value;
+      upd.ordnanceChannel1Byte1 = recent.ordnanceChannel1Byte1;
+      upd.ordnanceChannel1Byte2 = recent.ordnanceChannel1Byte2;
     }
 
     if (ordnanceChannel2IsProvided) {
-      const byte1 = getNextByte();
-      const result = decodeOrdnanceByte1(byte1, decodedOrdnanceByte1Out);
-      const value = result.twoBytes
-        ? decodeOrdnanceByte2(byte1, getNextByte())
-        : result.value;
-      upd.ordnanceChannel2Id = result.id;
-      upd.ordnanceChannel2Value = value;
+      const idWithFlag = getNextByte();
+      upd.ordnanceChannel2Id = idWithFlag & 0x7f;
+      const byte2Included = (idWithFlag >> 7) & 1;
+      upd.ordnanceChannel2Byte1 = getNextByte();
+      upd.ordnanceChannel2Byte2 = byte2Included ? getNextByte() : (recent?.ordnanceChannel2Byte2 ?? 0);
     } else {
       upd.ordnanceChannel2Id = recent.ordnanceChannel2Id;
-      upd.ordnanceChannel2Value = recent.ordnanceChannel2Value;
+      upd.ordnanceChannel2Byte1 = recent.ordnanceChannel2Byte1;
+      upd.ordnanceChannel2Byte2 = recent.ordnanceChannel2Byte2;
     }
 
     if (save) {
