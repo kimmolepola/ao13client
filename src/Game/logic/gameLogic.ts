@@ -183,10 +183,11 @@ export const gameEventHandler = async (
       break;
     }
     case types.EventType.ShotRollback: {
-      console.log("--shot rollback");
       const dst = parameters.collisionMaxDistanceLocalObject;
       const seq = gameEvent.sequenceNumber;
       const localTickNumber = gameEvent.localTickNumber;
+      console.log("--shot rollback", seq, localTickNumber);
+
       const originId = gameEvent.originId;
       const ticks = gameEvent.ticks;
       const o = ticks[seq][originId];

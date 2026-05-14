@@ -139,6 +139,13 @@ export const handleReceiveAuthoritativeState = (
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
     const o = tickAuthState.state[i];
     const r = receivedState.state[i];
+    if (i === 0 && (r.inputsSpace || r.eventsEncoded)) {
+      console.log(
+        "--rspace:",
+        r.inputsSpace,
+        r.eventsEncoded.toString(2).padStart(8, "0")
+      );
+    }
     o.eventsEncoded = r.eventsEncoded;
     o.exists = r.exists;
     o.fuel = r.fuel;
@@ -215,7 +222,10 @@ const handleEventsRollback = (
     const r3Ordnance2 = getBit(r.eventsEncoded, 6);
     const r4Ordnance2 = getBit(r.eventsEncoded, 7);
 
+    console.log("--r:", localTickNumber, seq, r.inputsSpace, r.eventsEncoded);
+
     if (o4Ordnance1 !== r4Ordnance1) {
+      console.log("--4");
       handleGameEvent({
         type: types.EventType.ShotRollback as const,
         localTickNumber,
@@ -227,6 +237,7 @@ const handleEventsRollback = (
     }
 
     if (o3Ordnance1 !== r3Ordnance1) {
+      console.log("--3");
       handleGameEvent({
         type: types.EventType.ShotRollback as const,
         localTickNumber,
@@ -238,6 +249,7 @@ const handleEventsRollback = (
     }
 
     if (o2Ordnance1 !== r2Ordnance1) {
+      console.log("--2");
       handleGameEvent({
         type: types.EventType.ShotRollback as const,
         localTickNumber,
@@ -249,6 +261,7 @@ const handleEventsRollback = (
     }
 
     if (o1Ordnance1 !== r1Ordnance1) {
+      console.log("--1");
       handleGameEvent({
         type: types.EventType.ShotRollback as const,
         localTickNumber,
@@ -471,7 +484,7 @@ const handleSimulation = (
       handleSimulationRollback(tickNumber, authStateTickNum, i, r, ticks);
 
     handleEventsRollback(
-      authStateTickNum,
+      tickNumber,
       i,
       r,
       ticks,
