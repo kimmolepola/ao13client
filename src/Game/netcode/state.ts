@@ -415,12 +415,11 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
 
     upd.speed = speedIsProvided ? getNext2Bytes() : recent.speed;
 
-    // Decode ordnance event IDs. Count is derived from recent eventsEncoded since
-    // eventsEncoded is encoded after the IDs in the stream.
+    upd.eventsEncoded = eventsIsProvided ? getNextByte() : recent.eventsEncoded;
+
     if (eventsIdsIsProvided) {
-      const recentEventsEncoded = recent?.eventsEncoded ?? 0;
-      const ord1Count = popcount(recentEventsEncoded & 0x0f);
-      const ord2Count = popcount(recentEventsEncoded >> 4);
+      const ord1Count = popcount(upd.eventsEncoded & 0x0f);
+      const ord2Count = popcount(upd.eventsEncoded >> 4);
 
       if (ord1Count > 0) {
         const byte = getNextByte();
@@ -473,8 +472,6 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       upd.ordnance2EventId3 = recent.ordnance2EventId3;
       upd.ordnance2EventId4 = recent.ordnance2EventId4;
     }
-
-    upd.eventsEncoded = eventsIsProvided ? getNextByte() : recent.eventsEncoded;
 
     upd.health = healthIsProvided ? getNextByte() : recent.health;
 
