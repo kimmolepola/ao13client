@@ -445,25 +445,25 @@ export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
 //     Uint8 verticalSpeed?                                                                   31
 //     Uint8*2 positionZ? (unit is feet)                                                      32
 //     Uint8 ordnanceChannel1ID?                                                              33
-//       1: byte 2 provided                                                                   |
-//       2: id part 1                                                                         |
-//       3: id part 2                                                                         |
-//       4: id part 3                                                                         |
-//       5: id part 4                                                                         |
-//       6: id part 5                                                                         |
-//       7: id part 6                                                                         |
-//       8: id part 7 (7 bit max value 127)                                                   |
+//       1: id part 1                                                                         |
+//       2: id part 2                                                                         |
+//       3: id part 3                                                                         |
+//       4: id part 4                                                                         |
+//       5: id part 5                                                                         |
+//       6: id part 6                                                                         |
+//       7: id part 7 (7 bit max value 127)                                                   |
+//       8: byte 2 provided                                                                   |
 //     Uint8 ordnanceChannel1ValueByte1?                                                      34
 //     Uint8 ordnanceChannel1ValueByte2?                                                      35
 //     Uint8 ordnanceChannel2ID?                                                              36
-//       1: byte 2 provided                                                                   |
-//       2: id part 1                                                                         |
-//       3: id part 2                                                                         |
-//       4: id part 3                                                                         |
-//       5: id part 4                                                                         |
-//       6: id part 5                                                                         |
-//       7: id part 6                                                                         |
-//       8: id part 7 (7 bit max value 127)                                                   |
+//       1: id part 1                                                                         |
+//       2: id part 2                                                                         |
+//       3: id part 3                                                                         |
+//       4: id part 4                                                                         |
+//       5: id part 5                                                                         |
+//       6: id part 6                                                                         |
+//       7: id part 7 (7 bit max value 127)                                                   |
+//       8: byte 2 provided                                                                   |
 //     Uint8 ordnanceChannel2ValueByte1?                                                      37
 //     Uint8 ordnanceChannel2ValueByte2?                                                      38
 //   ]
