@@ -406,7 +406,7 @@ export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
 //     Uint8*2 rotationZ?                                                                     15
 //     Uint8 rotationSpeed?                                                                   16
 //     Uint8*2 speed?                                                                         18
-//     Uint8 ordnance1Id1?                                                                    19
+//     Uint8 ordnance1EventId1?                                                                    19
 //       1: id part 1                                                                         |
 //       2: id part 2                                                                         |
 //       3: id part 3                                                                         |
@@ -415,10 +415,10 @@ export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
 //       6: id part 6                                                                         |
 //       7: id part 7 (7 bit max value 127)                                                   |
 //       8: all ordnance1 ids same                                                            |
-//     Uint8 ordnance1Id2?                                                                    20
-//     Uint8 ordnance1Id3?                                                                    21
-//     Uint8 ordnance1Id4?                                                                    22
-//     Uint8 ordnance2Id1?                                                                    23
+//     Uint8 ordnance1EventId2?                                                                    20
+//     Uint8 ordnance1EventId3?                                                                    21
+//     Uint8 ordnance1EventId4?                                                                    22
+//     Uint8 ordnance2EventId1?                                                                    23
 //       1: id part 1                                                                         |
 //       2: id part 2                                                                         |
 //       3: id part 3                                                                         |
@@ -427,9 +427,9 @@ export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
 //       6: id part 6                                                                         |
 //       7: id part 7 (7 bit max value 127)                                                   |
 //       8: all ordnance2 ids same                                                            |
-//     Uint8 ordnance2Id2?                                                                    24
-//     Uint8 ordnance2Id3?                                                                    25
-//     Uint8 ordnance2Id4?                                                                    26
+//     Uint8 ordnance2EventId2?                                                                    24
+//     Uint8 ordnance2EventId3?                                                                    25
+//     Uint8 ordnance2EventId4?                                                                    26
 //     Uint8 events?                                                                          27
 //       1: pOrdnance1Event                                                                   |
 //       2: ppOrdnance1Event                                                                  |
