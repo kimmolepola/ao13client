@@ -245,21 +245,14 @@ export type TickStateObject = GameObject & {
   speed: number;
   rotationSpeed: number;
   verticalSpeed: number;
-  eventsEncoded: number;
   ordnanceChannel1Id: number;
   ordnanceChannel1Byte1: number;
   ordnanceChannel1Byte2: number;
   ordnanceChannel2Id: number;
   ordnanceChannel2Byte1: number;
   ordnanceChannel2Byte2: number;
-  ordnance1EventId1: number | undefined;
-  ordnance1EventId2: number | undefined;
-  ordnance1EventId3: number | undefined;
-  ordnance1EventId4: number | undefined;
-  ordnance2EventId1: number | undefined;
-  ordnance2EventId2: number | undefined;
-  ordnance2EventId3: number | undefined;
-  ordnance2EventId4: number | undefined;
+  ordnance1EventId: number | undefined;
+  ordnance2EventId: number | undefined;
 };
 
 export type TickLocalObjects = (GameObjectType.Bullet | number)[];

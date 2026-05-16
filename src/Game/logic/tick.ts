@@ -108,21 +108,14 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
         verticalSpeed: 0,
         fuel: parameters.maxFuelKg,
         bulletCount: 0,
-        eventsEncoded: 0,
         ordnanceChannel1Id: 0,
         ordnanceChannel1Byte1: parameters.maxBullets,
         ordnanceChannel1Byte2: 0,
         ordnanceChannel2Id: 0,
         ordnanceChannel2Byte1: 0,
         ordnanceChannel2Byte2: 0,
-        ordnance1EventId1: undefined,
-        ordnance1EventId2: undefined,
-        ordnance1EventId3: undefined,
-        ordnance1EventId4: undefined,
-        ordnance2EventId1: undefined,
-        ordnance2EventId2: undefined,
-        ordnance2EventId3: undefined,
-        ordnance2EventId4: undefined,
+        ordnance1EventId: undefined,
+        ordnance2EventId: undefined,
       };
     }
   }
@@ -159,13 +152,13 @@ export const handleReceiveAuthoritativeState = (
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
     const o = tickAuthState.state[i];
     const r = receivedState.state[i];
-    if (i === 0 && (r.inputsSpace || r.eventsEncoded)) {
-      console.log(
-        "--rspace:",
-        r.inputsSpace,
-        r.eventsEncoded.toString(2).padStart(8, "0")
-      );
-    }
+    // if (i === 0 && (r.inputsSpace || r.eventsEncoded)) {
+    //   console.log(
+    //     "--rspace:",
+    //     r.inputsSpace,
+    //     r.eventsEncoded.toString(2).padStart(8, "0")
+    //   );
+    // }
     o.eventsEncoded = r.eventsEncoded;
     o.exists = r.exists;
     o.fuel = r.fuel;
@@ -225,97 +218,104 @@ const handleEventsRollback = (
   idOverNetwork: number,
   r: types.AuthoritativeState,
   ticks: types.TickStateObject[][],
-  seq: number,
   pSeq: number,
   ppSeq: number,
   pppSeq: number,
   ppppSeq: number,
   handleGameEvent: (e: types.GameEvent) => void
 ) => {
-  const tick = ticks[seq];
-  const o = tick[idOverNetwork];
-  if (r.eventsEncoded !== o.eventsEncoded) {
-    const o1Ordnance1 = getBit(o.eventsEncoded, 0);
-    const o2Ordnance1 = getBit(o.eventsEncoded, 1);
-    const o3Ordnance1 = getBit(o.eventsEncoded, 2);
-    const o4Ordnance1 = getBit(o.eventsEncoded, 3);
-    const o1Ordnance2 = getBit(o.eventsEncoded, 4);
-    const o2Ordnance2 = getBit(o.eventsEncoded, 5);
-    const o3Ordnance2 = getBit(o.eventsEncoded, 6);
-    const o4Ordnance2 = getBit(o.eventsEncoded, 7);
-    const r1Ordnance1 = getBit(r.eventsEncoded, 0);
-    const r2Ordnance1 = getBit(r.eventsEncoded, 1);
-    const r3Ordnance1 = getBit(r.eventsEncoded, 2);
-    const r4Ordnance1 = getBit(r.eventsEncoded, 3);
-    const r1Ordnance2 = getBit(r.eventsEncoded, 4);
-    const r2Ordnance2 = getBit(r.eventsEncoded, 5);
-    const r3Ordnance2 = getBit(r.eventsEncoded, 6);
-    const r4Ordnance2 = getBit(r.eventsEncoded, 7);
+  const pObj = ticks[pSeq][idOverNetwork];
+  const ppObj = ticks[ppSeq][idOverNetwork];
+  const pppObj = ticks[pppSeq][idOverNetwork];
+  const ppppObj = ticks[ppppSeq][idOverNetwork];
 
-    console.log("--r:", localTickNumber, seq, r.inputsSpace, r.eventsEncoded);
+  const oOrdnance1EventId1 = pObj.ordnance1EventId;
+  const oOrdnance2EventId1 = pObj.ordnance2EventId;
+  const oOrdnance1EventId2 = ppObj.ordnance1EventId;
+  const oOrdnance2EventId2 = ppObj.ordnance2EventId;
+  const oOrdnance1EventId3 = pppObj.ordnance1EventId;
+  const oOrdnance2EventId3 = pppObj.ordnance2EventId;
+  const oOrdnance1EventId4 = ppppObj.ordnance1EventId;
+  const oOrdnance2EventId4 = ppppObj.ordnance2EventId;
 
-    if (o4Ordnance1 !== r4Ordnance1) {
-      console.log("--4");
-      handleGameEvent({
-        type: types.EventType.ShotRollback as const,
-        localTickNumber,
-        sequenceNumber: ppppSeq,
-        originId: idOverNetwork,
-        ticks,
-        ticksLocalObjects,
-      });
-    }
+  const rOrdnance1Event1 = getBit(r.eventsEncoded, 0);
+  const rOrdnance1Event2 = getBit(r.eventsEncoded, 1);
+  const rOrdnance1Event3 = getBit(r.eventsEncoded, 2);
+  const rOrdnance1Event4 = getBit(r.eventsEncoded, 3);
+  const rOrdnance2Event1 = getBit(r.eventsEncoded, 4);
+  const rOrdnance2Event2 = getBit(r.eventsEncoded, 5);
+  const rOrdnance2Event3 = getBit(r.eventsEncoded, 6);
+  const rOrdnance2Event4 = getBit(r.eventsEncoded, 7);
 
-    if (o3Ordnance1 !== r3Ordnance1) {
-      console.log("--3");
-      handleGameEvent({
-        type: types.EventType.ShotRollback as const,
-        localTickNumber,
-        sequenceNumber: pppSeq,
-        originId: idOverNetwork,
-        ticks,
-        ticksLocalObjects,
-      });
-    }
+  const rOrdnance1EventId1 = rOrdnance1Event1 ? r.ordnance1EventId1 : undefined;
+  const rOrdnance1EventId2 = rOrdnance1Event2 ? r.ordnance1EventId2 : undefined;
+  const rOrdnance1EventId3 = rOrdnance1Event3 ? r.ordnance1EventId3 : undefined;
+  const rOrdnance1EventId4 = rOrdnance1Event4 ? r.ordnance1EventId4 : undefined;
 
-    if (o2Ordnance1 !== r2Ordnance1) {
-      console.log("--2");
-      handleGameEvent({
-        type: types.EventType.ShotRollback as const,
-        localTickNumber,
-        sequenceNumber: ppSeq,
-        originId: idOverNetwork,
-        ticks,
-        ticksLocalObjects,
-      });
-    }
+  const rOrdnance2EventId1 = rOrdnance2Event1 ? r.ordnance2EventId1 : undefined;
+  const rOrdnance2EventId2 = rOrdnance2Event2 ? r.ordnance2EventId2 : undefined;
+  const rOrdnance2EventId3 = rOrdnance2Event3 ? r.ordnance2EventId3 : undefined;
+  const rOrdnance2EventId4 = rOrdnance2Event4 ? r.ordnance2EventId4 : undefined;
 
-    if (o1Ordnance1 !== r1Ordnance1) {
-      console.log("--1");
-      handleGameEvent({
-        type: types.EventType.ShotRollback as const,
-        localTickNumber,
-        sequenceNumber: pSeq,
-        originId: idOverNetwork,
-        ticks,
-        ticksLocalObjects,
-      });
-    }
-
-    o4Ordnance2 !== r4Ordnance2 &&
-      handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
-
-    o3Ordnance2 !== r3Ordnance2 &&
-      handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
-
-    o2Ordnance2 !== r2Ordnance2 &&
-      handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
-
-    o1Ordnance2 !== r1Ordnance2 &&
-      handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
-
-    o.eventsEncoded = r.eventsEncoded;
+  if (oOrdnance1EventId4 !== rOrdnance1EventId4) {
+    console.log("--4");
+    handleGameEvent({
+      type: types.EventType.ShotRollback as const,
+      localTickNumber,
+      sequenceNumber: ppppSeq,
+      originId: idOverNetwork,
+      ticks,
+      ticksLocalObjects,
+    });
   }
+
+  if (oOrdnance1EventId3 !== rOrdnance1EventId3) {
+    console.log("--3");
+    handleGameEvent({
+      type: types.EventType.ShotRollback as const,
+      localTickNumber,
+      sequenceNumber: pppSeq,
+      originId: idOverNetwork,
+      ticks,
+      ticksLocalObjects,
+    });
+  }
+
+  if (oOrdnance1EventId2 !== rOrdnance1EventId2) {
+    console.log("--2");
+    handleGameEvent({
+      type: types.EventType.ShotRollback as const,
+      localTickNumber,
+      sequenceNumber: ppSeq,
+      originId: idOverNetwork,
+      ticks,
+      ticksLocalObjects,
+    });
+  }
+
+  if (oOrdnance1EventId1 !== rOrdnance1EventId1) {
+    console.log("--1");
+    handleGameEvent({
+      type: types.EventType.ShotRollback as const,
+      localTickNumber,
+      sequenceNumber: pSeq,
+      originId: idOverNetwork,
+      ticks,
+      ticksLocalObjects,
+    });
+  }
+
+  oOrdnance2EventId4 !== rOrdnance2EventId4;
+  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
+
+  oOrdnance2EventId3 !== rOrdnance2EventId3;
+  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
+
+  oOrdnance2EventId2 !== rOrdnance2EventId2;
+  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
+
+  oOrdnance2EventId1 !== rOrdnance2EventId1;
+  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
 };
 
 // const multiplier = 0.5;
@@ -514,15 +514,25 @@ const handleSimulation = (
     const r = authState.state[i];
 
     // TODO: would not need to store whole states locally?, only player inputs and received events?
-    globals.state.ownRemoteObjectIndex === i &&
+    if (globals.state.ownRemoteObjectIndex === i) {
       handleSimulationRollback(tickNumber, authStateTickNum, i, r, ticks);
+    } else {
+      const o = ticks[tickNumber][i];
+      o.inputsUp = r.inputsUp;
+      o.inputsDown = r.inputsDown;
+      o.inputsLeft = r.inputsLeft;
+      o.inputsRight = r.inputsRight;
+      o.inputsSpace = r.inputsSpace;
+      o.inputsD = r.inputsD;
+      o.inputsF = r.inputsF;
+      o.inputsE = r.inputsE;
+    }
 
     handleEventsRollback(
       tickNumber,
       i,
       r,
       ticks,
-      authStateTickNum,
       pSeq,
       ppSeq,
       pppSeq,
