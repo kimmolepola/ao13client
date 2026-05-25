@@ -64,14 +64,7 @@ export const initializeAuthoritativeState = () => {
         ordnanceChannel2Byte1: 0,
         ordnanceChannel2Byte2: 0,
         eventsEncoded: 0,
-        ordnance1EventId1: undefined,
-        ordnance1EventId2: undefined,
-        ordnance1EventId3: undefined,
-        ordnance1EventId4: undefined,
-        ordnance2EventId1: undefined,
-        ordnance2EventId2: undefined,
-        ordnance2EventId3: undefined,
-        ordnance2EventId4: undefined,
+        gameEventIds: [[], [], [], []],
         verticalSpeed: 0,
       };
     }
@@ -114,8 +107,8 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
         ordnanceChannel2Id: 0,
         ordnanceChannel2Byte1: 0,
         ordnanceChannel2Byte2: 0,
-        ordnance1EventId: undefined,
-        ordnance2EventId: undefined,
+        shotDelay: 0,
+        gameEventIds: [],
       };
     }
   }
@@ -177,14 +170,7 @@ export const handleReceiveAuthoritativeState = (
     o.ordnanceChannel2Id = r.ordnanceChannel2Id;
     o.ordnanceChannel2Byte1 = r.ordnanceChannel2Byte1;
     o.ordnanceChannel2Byte2 = r.ordnanceChannel2Byte2;
-    o.ordnance1EventId1 = r.ordnance1EventId1;
-    o.ordnance1EventId2 = r.ordnance1EventId2;
-    o.ordnance1EventId3 = r.ordnance1EventId3;
-    o.ordnance1EventId4 = r.ordnance1EventId4;
-    o.ordnance2EventId1 = r.ordnance2EventId1;
-    o.ordnance2EventId2 = r.ordnance2EventId2;
-    o.ordnance2EventId3 = r.ordnance2EventId3;
-    o.ordnance2EventId4 = r.ordnance2EventId4;
+    o.gameEventIds = r.gameEventIds;
     o.rotationSpeed = r.rotationSpeed;
     o.rotationZ = r.rotationZ;
     o.rotationZEncoded = r.rotationZEncoded;
@@ -229,36 +215,28 @@ const handleEventsRollback = (
   const pppObj = ticks[pppSeq][idOverNetwork];
   const ppppObj = ticks[ppppSeq][idOverNetwork];
 
-  const oOrdnance1EventId1 = pObj.ordnance1EventId;
-  const oOrdnance2EventId1 = pObj.ordnance2EventId;
-  const oOrdnance1EventId2 = ppObj.ordnance1EventId;
-  const oOrdnance2EventId2 = ppObj.ordnance2EventId;
-  const oOrdnance1EventId3 = pppObj.ordnance1EventId;
-  const oOrdnance2EventId3 = pppObj.ordnance2EventId;
-  const oOrdnance1EventId4 = ppppObj.ordnance1EventId;
-  const oOrdnance2EventId4 = ppppObj.ordnance2EventId;
+  const pGameEventIds = pObj.gameEventIds;
+  const ppGameEventIds = ppObj.gameEventIds;
+  const pppGameEventIds = pppObj.gameEventIds;
+  const ppppGameEventIds = ppppObj.gameEventIds;
 
-  const rOrdnance1Event1 = getBit(r.eventsEncoded, 0);
-  const rOrdnance1Event2 = getBit(r.eventsEncoded, 1);
-  const rOrdnance1Event3 = getBit(r.eventsEncoded, 2);
-  const rOrdnance1Event4 = getBit(r.eventsEncoded, 3);
-  const rOrdnance2Event1 = getBit(r.eventsEncoded, 4);
-  const rOrdnance2Event2 = getBit(r.eventsEncoded, 5);
-  const rOrdnance2Event3 = getBit(r.eventsEncoded, 6);
-  const rOrdnance2Event4 = getBit(r.eventsEncoded, 7);
+  const rPGameEventIds = getBit(r.eventsEncoded, 0) ? r.gameEventIds[0] : [];
+  const rPpGameEventIds = getBit(r.eventsEncoded, 1) ? r.gameEventIds[1] : [];
+  const rPppGameEventIds = getBit(r.eventsEncoded, 2) ? r.gameEventIds[2] : [];
+  const rPpppGameEventIds = getBit(r.eventsEncoded, 3) ? r.gameEventIds[3] : [];
 
-  const rOrdnance1EventId1 = rOrdnance1Event1 ? r.ordnance1EventId1 : undefined;
-  const rOrdnance1EventId2 = rOrdnance1Event2 ? r.ordnance1EventId2 : undefined;
-  const rOrdnance1EventId3 = rOrdnance1Event3 ? r.ordnance1EventId3 : undefined;
-  const rOrdnance1EventId4 = rOrdnance1Event4 ? r.ordnance1EventId4 : undefined;
+  const gameEventsDiffer = (a: number[], b: number[]) =>
+    a.length !== b.length || a.some((id, i) => id !== b[i]);
 
-  const rOrdnance2EventId1 = rOrdnance2Event1 ? r.ordnance2EventId1 : undefined;
-  const rOrdnance2EventId2 = rOrdnance2Event2 ? r.ordnance2EventId2 : undefined;
-  const rOrdnance2EventId3 = rOrdnance2Event3 ? r.ordnance2EventId3 : undefined;
-  const rOrdnance2EventId4 = rOrdnance2Event4 ? r.ordnance2EventId4 : undefined;
+  const updateEventsArray = (a: number[], b: number[]) => {
+    a.length = b.length;
+    for (let i = 0; i < b.length; i++) {
+      a[i] = b[i];
+    }
+  };
 
-  if (oOrdnance1EventId4 !== rOrdnance1EventId4) {
-    console.log("--4");
+  if (gameEventsDiffer(ppppGameEventIds, rPpppGameEventIds)) {
+    console.log("--4", ppppGameEventIds, rPpppGameEventIds);
     handleGameEvent({
       type: types.EventType.ShotRollback as const,
       localTickNumber,
@@ -267,10 +245,11 @@ const handleEventsRollback = (
       ticks,
       ticksLocalObjects,
     });
+    updateEventsArray(ppppGameEventIds, rPpppGameEventIds);
   }
 
-  if (oOrdnance1EventId3 !== rOrdnance1EventId3) {
-    console.log("--3");
+  if (gameEventsDiffer(pppGameEventIds, rPppGameEventIds)) {
+    console.log("--3", pppGameEventIds, rPppGameEventIds);
     handleGameEvent({
       type: types.EventType.ShotRollback as const,
       localTickNumber,
@@ -279,10 +258,11 @@ const handleEventsRollback = (
       ticks,
       ticksLocalObjects,
     });
+    updateEventsArray(pppGameEventIds, rPppGameEventIds);
   }
 
-  if (oOrdnance1EventId2 !== rOrdnance1EventId2) {
-    console.log("--2");
+  if (gameEventsDiffer(ppGameEventIds, rPpGameEventIds)) {
+    console.log("--2", ppGameEventIds, rPpGameEventIds);
     handleGameEvent({
       type: types.EventType.ShotRollback as const,
       localTickNumber,
@@ -291,10 +271,11 @@ const handleEventsRollback = (
       ticks,
       ticksLocalObjects,
     });
+    updateEventsArray(ppGameEventIds, rPpGameEventIds);
   }
 
-  if (oOrdnance1EventId1 !== rOrdnance1EventId1) {
-    console.log("--1");
+  if (gameEventsDiffer(pGameEventIds, rPGameEventIds)) {
+    console.log("--1", pGameEventIds, rPGameEventIds);
     handleGameEvent({
       type: types.EventType.ShotRollback as const,
       localTickNumber,
@@ -303,19 +284,8 @@ const handleEventsRollback = (
       ticks,
       ticksLocalObjects,
     });
+    updateEventsArray(pGameEventIds, rPGameEventIds);
   }
-
-  oOrdnance2EventId4 !== rOrdnance2EventId4;
-  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
-
-  oOrdnance2EventId3 !== rOrdnance2EventId3;
-  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
-
-  oOrdnance2EventId2 !== rOrdnance2EventId2;
-  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
-
-  oOrdnance2EventId1 !== rOrdnance2EventId1;
-  handleGameEvent({ type: types.EventType.ShotRollback2 }); // TODO
 };
 
 // const multiplier = 0.5;
@@ -453,11 +423,22 @@ const handleSimulationRollback = (
       cur.health = prev.health;
       cur.fuel = prev.fuel - cur.speed * 0.0001;
       cur.ordnanceChannel1Id = prev.ordnanceChannel1Id;
-      cur.ordnanceChannel1Byte1 = prev.ordnanceChannel1Byte1 - cur.inputsSpace;
+      cur.ordnanceChannel1Byte1 = prev.ordnanceChannel1Byte1;
       cur.ordnanceChannel1Byte2 = prev.ordnanceChannel1Byte2;
       cur.ordnanceChannel2Id = prev.ordnanceChannel2Id;
       cur.ordnanceChannel2Byte1 = prev.ordnanceChannel2Byte1;
       cur.ordnanceChannel2Byte2 = prev.ordnanceChannel2Byte2;
+      cur.gameEventIds = [];
+      let shotDelay = prev.shotDelay;
+      if (shotDelay > 0) {
+        shotDelay -= parameters.tickInterval;
+      }
+      if (shotDelay <= 0 && cur.inputsSpace > 0) {
+        shotDelay += parameters.shotDelay;
+        cur.gameEventIds.push(0);
+        cur.ordnanceChannel1Byte1 = Math.max(0, prev.ordnanceChannel1Byte1 - 1);
+      }
+      cur.shotDelay = shotDelay;
     }
   }
 };

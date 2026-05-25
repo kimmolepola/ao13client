@@ -81,7 +81,7 @@ export const gatherControlsDataBinary = (
     return undefined;
   }
 
-  console.log("--controls:", tickNumber);
+  // console.log("--controls:", tickNumber);
   dataView.setUint8(0, tickNumber);
 
   if (!byte3) {
