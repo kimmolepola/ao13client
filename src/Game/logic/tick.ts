@@ -237,53 +237,61 @@ const handleEventsRollback = (
 
   if (gameEventsDiffer(pppGameEventIds, rPppGameEventIds)) {
     console.log("--3", pppGameEventIds, rPppGameEventIds);
-    handleGameEvent({
-      type: types.EventType.ShotRollback as const,
-      localTickNumber,
-      sequenceNumber: pppSeq,
-      originId: idOverNetwork,
-      ticks,
-      ticksLocalObjects,
-    });
+    if (rPppGameEventIds.includes(0) && !pppGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: pppSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
     updateEventsArray(pppGameEventIds, rPppGameEventIds);
   }
 
   if (gameEventsDiffer(ppGameEventIds, rPpGameEventIds)) {
     console.log("--2", ppGameEventIds, rPpGameEventIds);
-    handleGameEvent({
-      type: types.EventType.ShotRollback as const,
-      localTickNumber,
-      sequenceNumber: ppSeq,
-      originId: idOverNetwork,
-      ticks,
-      ticksLocalObjects,
-    });
+    if (rPpGameEventIds.includes(0) && !ppGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: ppSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
     updateEventsArray(ppGameEventIds, rPpGameEventIds);
   }
 
   if (gameEventsDiffer(pGameEventIds, rPGameEventIds)) {
     console.log("--1", pGameEventIds, rPGameEventIds);
-    handleGameEvent({
-      type: types.EventType.ShotRollback as const,
-      localTickNumber,
-      sequenceNumber: pSeq,
-      originId: idOverNetwork,
-      ticks,
-      ticksLocalObjects,
-    });
+    if (rPGameEventIds.includes(0) && !pGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: pSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
     updateEventsArray(pGameEventIds, rPGameEventIds);
   }
 
   if (gameEventsDiffer(curGameEventIds, rCurGameEventIds)) {
     console.log("--0", curGameEventIds, rCurGameEventIds);
-    handleGameEvent({
-      type: types.EventType.ShotRollback as const,
-      localTickNumber,
-      sequenceNumber: curSeq,
-      originId: idOverNetwork,
-      ticks,
-      ticksLocalObjects,
-    });
+    if (rCurGameEventIds.includes(0) && !curGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: curSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
     updateEventsArray(curGameEventIds, rCurGameEventIds);
   }
 };
