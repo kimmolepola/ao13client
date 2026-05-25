@@ -204,26 +204,26 @@ const handleEventsRollback = (
   idOverNetwork: number,
   r: types.AuthoritativeState,
   ticks: types.TickStateObject[][],
+  curSeq: number,
   pSeq: number,
   ppSeq: number,
   pppSeq: number,
-  ppppSeq: number,
   handleGameEvent: (e: types.GameEvent) => void
 ) => {
+  const curObj = ticks[curSeq][idOverNetwork];
   const pObj = ticks[pSeq][idOverNetwork];
   const ppObj = ticks[ppSeq][idOverNetwork];
   const pppObj = ticks[pppSeq][idOverNetwork];
-  const ppppObj = ticks[ppppSeq][idOverNetwork];
 
+  const curGameEventIds = curObj.gameEventIds;
   const pGameEventIds = pObj.gameEventIds;
   const ppGameEventIds = ppObj.gameEventIds;
   const pppGameEventIds = pppObj.gameEventIds;
-  const ppppGameEventIds = ppppObj.gameEventIds;
 
-  const rPGameEventIds = getBit(r.eventsEncoded, 0) ? r.gameEventIds[0] : [];
-  const rPpGameEventIds = getBit(r.eventsEncoded, 1) ? r.gameEventIds[1] : [];
-  const rPppGameEventIds = getBit(r.eventsEncoded, 2) ? r.gameEventIds[2] : [];
-  const rPpppGameEventIds = getBit(r.eventsEncoded, 3) ? r.gameEventIds[3] : [];
+  const rCurGameEventIds = getBit(r.eventsEncoded, 0) ? r.gameEventIds[0] : [];
+  const rPGameEventIds = getBit(r.eventsEncoded, 1) ? r.gameEventIds[1] : [];
+  const rPpGameEventIds = getBit(r.eventsEncoded, 2) ? r.gameEventIds[2] : [];
+  const rPppGameEventIds = getBit(r.eventsEncoded, 3) ? r.gameEventIds[3] : [];
 
   const gameEventsDiffer = (a: number[], b: number[]) =>
     a.length !== b.length || a.some((id, i) => id !== b[i]);
@@ -234,19 +234,6 @@ const handleEventsRollback = (
       a[i] = b[i];
     }
   };
-
-  if (gameEventsDiffer(ppppGameEventIds, rPpppGameEventIds)) {
-    console.log("--4", ppppGameEventIds, rPpppGameEventIds);
-    handleGameEvent({
-      type: types.EventType.ShotRollback as const,
-      localTickNumber,
-      sequenceNumber: ppppSeq,
-      originId: idOverNetwork,
-      ticks,
-      ticksLocalObjects,
-    });
-    updateEventsArray(ppppGameEventIds, rPpppGameEventIds);
-  }
 
   if (gameEventsDiffer(pppGameEventIds, rPppGameEventIds)) {
     console.log("--3", pppGameEventIds, rPppGameEventIds);
@@ -285,6 +272,19 @@ const handleEventsRollback = (
       ticksLocalObjects,
     });
     updateEventsArray(pGameEventIds, rPGameEventIds);
+  }
+
+  if (gameEventsDiffer(curGameEventIds, rCurGameEventIds)) {
+    console.log("--0", curGameEventIds, rCurGameEventIds);
+    handleGameEvent({
+      type: types.EventType.ShotRollback as const,
+      localTickNumber,
+      sequenceNumber: curSeq,
+      originId: idOverNetwork,
+      ticks,
+      ticksLocalObjects,
+    });
+    updateEventsArray(curGameEventIds, rCurGameEventIds);
   }
 };
 
@@ -489,7 +489,6 @@ const handleSimulation = (
   const pSeq = getPrevSeq(authStateTickNum);
   const ppSeq = getPrevSeq(pSeq);
   const pppSeq = getPrevSeq(ppSeq);
-  const ppppSeq = getPrevSeq(pppSeq);
 
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
     const r = authState.state[i];
@@ -514,10 +513,10 @@ const handleSimulation = (
       i,
       r,
       ticks,
+      authStateTickNum,
       pSeq,
       ppSeq,
       pppSeq,
-      ppppSeq,
       handleGameEvent
     );
     // applyCurState(ticks, tickNumber, i);
