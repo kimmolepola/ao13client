@@ -129,7 +129,7 @@ export const handleTick = (
   handleControlsData(sendControlsData, tickNumber, ownTickObj);
   handleSimulation(ticks, tickNumber, offset, handleGameEvent);
   if (hasValidIndex) {
-    handleShot(ticks, tickNumber, ownIdOverNetwork, handleGameEvent);
+    handleLocalEvents(ticks, tickNumber, ownIdOverNetwork, handleGameEvent);
     applyCurState(ticks, tickNumber, ownIdOverNetwork!);
   }
   // console.log("--tick:", tickNumber, offset);
@@ -288,7 +288,9 @@ const handleEventsRollback = (
       "--0",
       curGameEventIds,
       rCurGameEventIds,
-      r.eventsEncoded.toString(2).padStart(8, "0")
+      r.eventsEncoded.toString(2).padStart(8, "0"),
+      curSeq,
+      idOverNetwork
     );
     if (rCurGameEventIds.includes(0) && !curGameEventIds.includes(0)) {
       handleGameEvent({
@@ -444,20 +446,20 @@ const handleSimulationRollback = (
       cur.ordnanceChannel2Id = prev.ordnanceChannel2Id;
       cur.ordnanceChannel2Byte1 = prev.ordnanceChannel2Byte1;
       cur.ordnanceChannel2Byte2 = prev.ordnanceChannel2Byte2;
-      cur.gameEventIds = [];
+      // cur.gameEventIds = [];
       // TODO: this shot logic and inputSpace information can be removed.
       // remote player shots are handled with eventIds.
       // however, this logic needs to be implemented for local player locally.
-      let shotDelay = prev.shotDelay;
-      if (shotDelay > 0) {
-        shotDelay -= parameters.tickInterval;
-      }
-      if (shotDelay <= 0 && cur.inputsSpace > 0) {
-        shotDelay += parameters.shotDelay;
-        cur.gameEventIds.push(0);
-        cur.ordnanceChannel1Byte1 = Math.max(0, prev.ordnanceChannel1Byte1 - 1);
-      }
-      cur.shotDelay = shotDelay;
+      // let shotDelay = prev.shotDelay;
+      // if (shotDelay > 0) {
+      //   shotDelay -= parameters.tickInterval;
+      // }
+      // if (shotDelay <= 0 && cur.inputsSpace > 0) {
+      //   shotDelay += parameters.shotDelay;
+      //   cur.gameEventIds.push(0);
+      //   cur.ordnanceChannel1Byte1 = Math.max(0, prev.ordnanceChannel1Byte1 - 1);
+      // }
+      // cur.shotDelay = shotDelay;
     }
   }
 };
@@ -489,7 +491,7 @@ function subtractSeq8(a: number, b: number) {
   return (a - b) & 0xff;
 }
 
-const handleShot = (
+const handleLocalEvents = (
   ticksAttr: types.TickStateObject[][],
   tickNumber: number,
   idOverNetwork: number,
@@ -497,14 +499,16 @@ const handleShot = (
 ) => {
   const cur = ticksAttr[tickNumber][idOverNetwork];
   const prev = ticksAttr[getPrevSeq(tickNumber)][idOverNetwork];
+
+  cur.gameEventIds.length = 0;
   let shotDelay = prev.shotDelay;
   if (shotDelay > 0) {
     shotDelay -= parameters.tickInterval;
   }
   if (shotDelay <= 0 && cur.inputsSpace > 0) {
     shotDelay += parameters.shotDelay;
-    console.log("--push events:", tickNumber);
     cur.gameEventIds.push(0);
+    console.log("--push events:", idOverNetwork, tickNumber, cur.gameEventIds);
     cur.ordnanceChannel1Byte1 = Math.max(0, prev.ordnanceChannel1Byte1 - 1);
     handleGameEvent({
       type: types.EventType.Shot as const,
