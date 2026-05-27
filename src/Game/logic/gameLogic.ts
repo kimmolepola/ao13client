@@ -5,6 +5,7 @@ import * as parameters from "src/parameters";
 import * as globals from "src/globals";
 import { localLoad, localRemove } from "./rendering/loaderLocalObjects";
 import * as utils from "src/utils";
+import { authoritativeStates } from "./tick";
 
 const bulletTickToLive = parameters.bulletTimeToLive / parameters.tickInterval;
 
@@ -185,7 +186,9 @@ export const gameEventHandler = async (
 
       const originId = gameEvent.originId;
       const ticks = gameEvent.ticks;
-      const o = ticks[seq][originId];
+      // Use authoritative state for position: ticks only tracks positions for the local player,
+      // so remote player entries always have stale/zero values.
+      const o = authoritativeStates[seq].state[originId];
 
       const type = types.GameObjectType.Bullet as const;
       const z = o.z;
@@ -225,9 +228,14 @@ export const gameEventHandler = async (
         }
       }
 
+      // Capture position before awaiting: handleMovement in handleSimulationRollback
+      // runs synchronously while this handler is suspended and overwrites o3d.
+      const bulletX = o3d.position.x;
+      const bulletY = o3d.position.y;
+
       if (tickToLive) {
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-        object3d?.position.set(o3d.position.x, o3d.position.y, 0);
+        object3d?.position.set(bulletX, bulletY, 0);
         object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
         // console.log("--push");
         globals.localObjects.push({
