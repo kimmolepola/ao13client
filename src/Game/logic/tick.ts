@@ -128,7 +128,10 @@ export const handleTick = (
     : undefined;
   handleControlsData(sendControlsData, tickNumber, ownTickObj);
   handleSimulation(ticks, tickNumber, offset, handleGameEvent);
-  hasValidIndex && applyCurState(ticks, tickNumber, ownIdOverNetwork!);
+  if (hasValidIndex) {
+    handleShot(ticks, tickNumber, ownIdOverNetwork, handleGameEvent);
+    applyCurState(ticks, tickNumber, ownIdOverNetwork!);
+  }
   // console.log("--tick:", tickNumber, offset);
 };
 
@@ -184,17 +187,17 @@ export const handleReceiveAuthoritativeState = (
   }
 };
 
-const isSeqHigher = (oldSeq: number, newSeq: number) => {
-  // Normalize to 0–255
-  const A = oldSeq & 0xff;
-  const B = newSeq & 0xff;
+// const isSeqHigher = (oldSeq: number, newSeq: number) => {
+//   // Normalize to 0–255
+//   const A = oldSeq & 0xff;
+//   const B = newSeq & 0xff;
 
-  // Compute forward distance in modulo-256 space
-  const diff = (B - A) & 0xff;
+//   // Compute forward distance in modulo-256 space
+//   const diff = (B - A) & 0xff;
 
-  // If diff is 1..127, B is newer; if 128..255, A is newer or equal
-  return diff !== 0 && diff < 128;
-};
+//   // If diff is 1..127, B is newer; if 128..255, A is newer or equal
+//   return diff !== 0 && diff < 128;
+// };
 
 const getBit = (value: number, bitPosition: number) =>
   !!((value >> bitPosition) & 1);
@@ -281,7 +284,12 @@ const handleEventsRollback = (
   }
 
   if (gameEventsDiffer(curGameEventIds, rCurGameEventIds)) {
-    console.log("--0", curGameEventIds, rCurGameEventIds);
+    console.log(
+      "--0",
+      curGameEventIds,
+      rCurGameEventIds,
+      r.eventsEncoded.toString(2).padStart(8, "0")
+    );
     if (rCurGameEventIds.includes(0) && !curGameEventIds.includes(0)) {
       handleGameEvent({
         type: types.EventType.ShotRollback as const,
@@ -297,23 +305,23 @@ const handleEventsRollback = (
 };
 
 // const multiplier = 0.5;
-const replay = (prev: types.TickStateObject, cur: types.TickStateObject) => {
-  // if (cur.idOverNetwork !== globals.state.ownRemoteObjectIndex) {
-  //   const up = prev.inputsUp * multiplier;
-  //   const down = prev.inputsDown * multiplier;
-  //   const left = prev.inputsLeft * multiplier;
-  //   const right = prev.inputsRight * multiplier;
-  //   const keyD = prev.inputsD * multiplier;
-  //   const keyF = prev.inputsF * multiplier;
-  //   cur.inputsUp = up;
-  //   cur.inputsDown = down;
-  //   cur.inputsLeft = left;
-  //   cur.inputsRight = right;
-  //   cur.inputsD = keyD;
-  //   cur.inputsF = keyF;
-  // }
-  handleMovement(cur, prev);
-};
+// const replay = (prev: types.TickStateObject, cur: types.TickStateObject) => {
+//   // if (cur.idOverNetwork !== globals.state.ownRemoteObjectIndex) {
+//   //   const up = prev.inputsUp * multiplier;
+//   //   const down = prev.inputsDown * multiplier;
+//   //   const left = prev.inputsLeft * multiplier;
+//   //   const right = prev.inputsRight * multiplier;
+//   //   const keyD = prev.inputsD * multiplier;
+//   //   const keyF = prev.inputsF * multiplier;
+//   //   cur.inputsUp = up;
+//   //   cur.inputsDown = down;
+//   //   cur.inputsLeft = left;
+//   //   cur.inputsRight = right;
+//   //   cur.inputsD = keyD;
+//   //   cur.inputsF = keyF;
+//   // }
+//   handleMovement(cur, prev);
+// };
 
 const nearlyEqual = (a: number, b: number, eps = 1e-12) => {
   return Math.abs(a - b) < eps;
@@ -437,6 +445,9 @@ const handleSimulationRollback = (
       cur.ordnanceChannel2Byte1 = prev.ordnanceChannel2Byte1;
       cur.ordnanceChannel2Byte2 = prev.ordnanceChannel2Byte2;
       cur.gameEventIds = [];
+      // TODO: this shot logic and inputSpace information can be removed.
+      // remote player shots are handled with eventIds.
+      // however, this logic needs to be implemented for local player locally.
       let shotDelay = prev.shotDelay;
       if (shotDelay > 0) {
         shotDelay -= parameters.tickInterval;
@@ -477,6 +488,32 @@ const applyCurState = (
 function subtractSeq8(a: number, b: number) {
   return (a - b) & 0xff;
 }
+
+const handleShot = (
+  ticksAttr: types.TickStateObject[][],
+  tickNumber: number,
+  idOverNetwork: number,
+  handleGameEvent: (e: types.GameEvent) => void
+) => {
+  const cur = ticksAttr[tickNumber][idOverNetwork];
+  const prev = ticksAttr[getPrevSeq(tickNumber)][idOverNetwork];
+  let shotDelay = prev.shotDelay;
+  if (shotDelay > 0) {
+    shotDelay -= parameters.tickInterval;
+  }
+  if (shotDelay <= 0 && cur.inputsSpace > 0) {
+    shotDelay += parameters.shotDelay;
+    console.log("--push events:", tickNumber);
+    cur.gameEventIds.push(0);
+    cur.ordnanceChannel1Byte1 = Math.max(0, prev.ordnanceChannel1Byte1 - 1);
+    handleGameEvent({
+      type: types.EventType.Shot as const,
+      sequenceNumber: tickNumber,
+      tickStateObject: cur,
+    });
+  }
+  cur.shotDelay = shotDelay;
+};
 
 const handleSimulation = (
   ticks: types.TickStateObject[][],

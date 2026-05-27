@@ -157,29 +157,24 @@ export const gameEventHandler = async (
     }
     case types.EventType.Shot: {
       console.log("--shot");
-      const o = gameEvent.o;
-      if (o.bulletCount >= 1 && o.object3d) {
-        const speed = o.speed + parameters.bulletSpeed;
-        const type = types.GameObjectType.Bullet as types.GameObjectType.Bullet;
-        const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-        const timeToLive = bulletTickToLive;
-        object3d?.position.copy(o.object3d.position);
-        object3d?.setRotationFromAxisAngle(utils.AXIS_Z, o.object3d.rotation.z);
-        object3d?.translateY(1);
-        globals.localObjects.push({
-          id:
-            "bullet" +
-            o.idOverNetwork +
-            gameEvent.sequenceNumber +
-            "local-event",
-          type,
-          speed,
-          object3d,
-          timeToLive,
-          positionZ: o.positionZ,
-          originId: o.idOverNetwork,
-        });
-      }
+      const o = gameEvent.tickStateObject;
+
+      const speed = o.speed + parameters.bulletSpeed;
+      const type = types.GameObjectType.Bullet as const;
+      const object3d = await localLoad(scene, types.GameObjectType.Bullet);
+      object3d?.position.set(o.x, o.y, 1);
+      object3d?.setRotationFromAxisAngle(utils.AXIS_Z, o.rotationZ);
+      object3d?.translateY(1);
+      const originId = o.idOverNetwork;
+      globals.localObjects.push({
+        type,
+        object3d,
+        positionZ: o.z,
+        speed,
+        timeToLive: parameters.bulletTimeToLive,
+        originId,
+        id: "bullet" + originId + gameEvent.sequenceNumber,
+      });
       break;
     }
     case types.EventType.ShotRollback: {
@@ -196,7 +191,7 @@ export const gameEventHandler = async (
       const z = o.z;
       const rotationZ = o.rotationZ;
       let speed = o.speed + parameters.bulletSpeed;
-      let timeToLive = bulletTickToLive;
+      let tickToLive = bulletTickToLive;
 
       o3d.position.set(o.x, o.y, 0);
       o3d.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
@@ -204,7 +199,7 @@ export const gameEventHandler = async (
 
       let curSeq = seq;
       const nextLocalTickNumber = getNextSeq(localTickNumber);
-      while (timeToLive > 0 && curSeq !== nextLocalTickNumber) {
+      while (tickToLive > 0 && curSeq !== nextLocalTickNumber) {
         for (let i = 0; i < parameters.maxRemoteObjects; i++) {
           const obj = ticks[curSeq][i];
           if (
@@ -218,19 +213,19 @@ export const gameEventHandler = async (
               dst
             )
           ) {
-            timeToLive = 0;
+            tickToLive = 0;
             break;
           }
         }
-        if (timeToLive) {
+        if (tickToLive) {
           o3d.translateY(speed * parameters.speedFactor);
           speed *= parameters.bulletSpeedReductionFactor;
-          timeToLive--;
+          tickToLive--;
           curSeq = next8bit(curSeq);
         }
       }
 
-      if (timeToLive) {
+      if (tickToLive) {
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
         object3d?.position.set(o3d.position.x, o3d.position.y, 0);
         object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
@@ -240,7 +235,7 @@ export const gameEventHandler = async (
           object3d,
           positionZ: z,
           speed,
-          timeToLive,
+          timeToLive: tickToLive * parameters.tickInterval,
           originId,
           id: "bullet" + originId + seq,
         });

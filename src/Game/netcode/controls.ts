@@ -44,6 +44,7 @@ const handle2BitValue = (
   ownTickObj: types.TickStateObject | undefined
 ) => {
   const val = get60FPSFramesMax3(curTickKeyValues[key]);
+  val && console.log("--val:", val, curTickKeyValues[key]);
   if (ownTickObj) {
     key === types.Key.ArrowUp && (ownTickObj.inputsUp = val);
     key === types.Key.ArrowDown && (ownTickObj.inputsDown = val);

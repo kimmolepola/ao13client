@@ -276,6 +276,7 @@ const curTickKeyValues = globals.curTickKeyValues;
 
 const handleKey = (key: types.Key, delta: number) => {
   if (keys[key]) {
+    console.log("--delta:", delta);
     curTickKeyValues[key] += delta;
   }
 };

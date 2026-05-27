@@ -344,8 +344,8 @@ export type GameEvent =
     }
   | {
       type: EventType.Shot;
-      o: SharedGameObject;
       sequenceNumber: number;
+      tickStateObject: TickStateObject;
     }
   | {
       type: EventType.ShotRollback;
