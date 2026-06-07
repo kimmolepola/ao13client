@@ -200,6 +200,11 @@ export const gameEventHandler = async (
       o3d.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
       o3d.translateY(1);
 
+      // Capture shot origin before fast-forward — this is where the bullet visually starts.
+      const originX = o3d.position.x;
+      const originY = o3d.position.y;
+      const initialSpeed = speed;
+
       let curSeq = seq;
       const nextLocalTickNumber = getNextSeq(localTickNumber);
       while (tickToLive > 0 && curSeq !== nextLocalTickNumber) {
@@ -228,21 +233,19 @@ export const gameEventHandler = async (
         }
       }
 
-      // Capture position before awaiting: handleMovement in handleSimulationRollback
-      // runs synchronously while this handler is suspended and overwrites o3d.
-      const bulletX = o3d.position.x;
-      const bulletY = o3d.position.y;
-
       if (tickToLive) {
         const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-        object3d?.position.set(bulletX, bulletY, 0);
+        // Spawn at shot origin so the bullet visually comes from where the shooter fired,
+        // not from the fast-forwarded position. Collision detection above still covers
+        // the rollback window correctly.
+        object3d?.position.set(originX, originY, 0);
         object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
         // console.log("--push");
         globals.localObjects.push({
           type,
           object3d,
           positionZ: z,
-          speed,
+          speed: initialSpeed,
           timeToLive: tickToLive * parameters.tickInterval,
           originId,
           id: "bullet" + originId + seq,
