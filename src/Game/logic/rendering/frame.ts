@@ -246,7 +246,7 @@ const handleLocalObject = (
   const o = gameObject;
   // console.log("--o:", o.id);
   object3d.translateY(o.speed * parameters.speedFactor * delta);
-  o.speed *= parameters.bulletSpeedReductionFactor;
+  o.speed *= parameters.bulletSpeedReductionFactor ** (delta / parameters.tickInterval);
   o.timeToLive -= delta;
   return o.timeToLive < 0;
 };

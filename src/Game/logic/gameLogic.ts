@@ -221,7 +221,7 @@ export const gameEventHandler = async (
           }
         }
         if (tickToLive) {
-          o3d.translateY(speed * parameters.speedFactor);
+          o3d.translateY(speed * parameters.speedFactor * parameters.tickInterval);
           speed *= parameters.bulletSpeedReductionFactor;
           tickToLive--;
           curSeq = next8bit(curSeq);
