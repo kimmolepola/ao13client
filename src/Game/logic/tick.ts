@@ -607,8 +607,10 @@ const handleMovement = (
   o.speed -= o.inputsDown * p.forceDownToSpeedFactor;
 
   o.rotationSpeed = prev.rotationSpeed;
-  o.rotationSpeed += o.inputsLeft * p.forceLeftOrRightToRotationFactor;
-  o.rotationSpeed -= o.inputsRight * p.forceLeftOrRightToRotationFactor;
+  const leftBrake = o.inputsLeft > 0 && prev.rotationSpeed < 0 ? 4 : 1;
+  const rightBrake = o.inputsRight > 0 && prev.rotationSpeed > 0 ? 4 : 1;
+  o.rotationSpeed += o.inputsLeft * p.forceLeftOrRightToRotationFactor * leftBrake;
+  o.rotationSpeed -= o.inputsRight * p.forceLeftOrRightToRotationFactor * rightBrake;
 
   o.verticalSpeed = prev.verticalSpeed;
   o.verticalSpeed += o.inputsF * p.forceAscOrDescToVerticalSpeedFactor;

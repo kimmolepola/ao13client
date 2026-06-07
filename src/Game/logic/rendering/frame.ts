@@ -138,8 +138,10 @@ const handleLocalPlayerMovement = (
   o.speed += up * p.forceUpToSpeedFactor;
   o.speed -= down * p.forceDownToSpeedFactor;
 
-  o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor;
-  o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor;
+  const leftBrake = left > 0 && o.rotationSpeed < 0 ? 4 : 1;
+  const rightBrake = right > 0 && o.rotationSpeed > 0 ? 4 : 1;
+  o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor * leftBrake;
+  o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor * rightBrake;
 
   o.verticalSpeed -= d * p.forceAscOrDescToVerticalSpeedFactor;
   o.verticalSpeed += f * p.forceAscOrDescToVerticalSpeedFactor;
