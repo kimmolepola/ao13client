@@ -7,8 +7,6 @@ import { localLoad, localRemove } from "./rendering/loaderLocalObjects";
 import * as utils from "src/utils";
 import { authoritativeStates } from "./tick";
 
-const bulletTickToLive = parameters.bulletTimeToLive / parameters.tickInterval;
-
 const o3d = utils.object3d;
 
 export const isColliding = (
@@ -116,14 +114,6 @@ export const checkHealth = (
 //   o.shotDelay -= Math.min(delta, o.shotDelay);
 // };
 
-function next8bit(n: number): number {
-  return (n + 1) & 0xff;
-}
-
-const getNextSeq = (seq: number) => {
-  return (seq + 1) & 0xff;
-};
-
 export const gameEventHandler = async (
   scene: THREE.Scene,
   gameEvent: types.GameEvent
@@ -179,78 +169,32 @@ export const gameEventHandler = async (
       break;
     }
     case types.EventType.ShotRollback: {
-      const dst = parameters.collisionMaxDistanceLocalObject;
       const seq = gameEvent.sequenceNumber;
-      const localTickNumber = gameEvent.localTickNumber;
-      console.log("--shot rollback", seq, localTickNumber);
-
       const originId = gameEvent.originId;
-      const ticks = gameEvent.ticks;
-      // Use authoritative state for position: ticks only tracks positions for the local player,
-      // so remote player entries always have stale/zero values.
       const o = authoritativeStates[seq].state[originId];
 
       const type = types.GameObjectType.Bullet as const;
-      const z = o.z;
       const rotationZ = o.rotationZ;
-      let speed = o.speed + parameters.bulletSpeed;
-      let tickToLive = bulletTickToLive;
+      const speed = o.speed + parameters.bulletSpeed;
 
       o3d.position.set(o.x, o.y, 0);
       o3d.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
       o3d.translateY(1);
+      const bulletX = o3d.position.x;
+      const bulletY = o3d.position.y;
 
-      // Capture shot origin before fast-forward — this is where the bullet visually starts.
-      const originX = o3d.position.x;
-      const originY = o3d.position.y;
-      const initialSpeed = speed;
-
-      let curSeq = seq;
-      const nextLocalTickNumber = getNextSeq(localTickNumber);
-      while (tickToLive > 0 && curSeq !== nextLocalTickNumber) {
-        for (let i = 0; i < parameters.maxRemoteObjects; i++) {
-          const obj = ticks[curSeq][i];
-          if (
-            isColliding(
-              o3d.position.x,
-              o3d.position.y,
-              z,
-              obj.x,
-              obj.y,
-              obj.z,
-              dst
-            )
-          ) {
-            tickToLive = 0;
-            break;
-          }
-        }
-        if (tickToLive) {
-          o3d.translateY(speed * parameters.speedFactor * parameters.tickInterval);
-          speed *= parameters.bulletSpeedReductionFactor;
-          tickToLive--;
-          curSeq = next8bit(curSeq);
-        }
-      }
-
-      if (tickToLive) {
-        const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-        // Spawn at shot origin so the bullet visually comes from where the shooter fired,
-        // not from the fast-forwarded position. Collision detection above still covers
-        // the rollback window correctly.
-        object3d?.position.set(originX, originY, 0);
-        object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
-        // console.log("--push");
-        globals.localObjects.push({
-          type,
-          object3d,
-          positionZ: z,
-          speed: initialSpeed,
-          timeToLive: tickToLive * parameters.tickInterval,
-          originId,
-          id: "bullet" + originId + seq,
-        });
-      }
+      const object3d = await localLoad(scene, types.GameObjectType.Bullet);
+      object3d?.position.set(bulletX, bulletY, 0);
+      object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
+      globals.localObjects.push({
+        type,
+        object3d,
+        positionZ: o.z,
+        speed,
+        timeToLive: parameters.bulletTimeToLive,
+        originId,
+        id: "bullet" + originId + seq,
+      });
       break;
     }
     default:
