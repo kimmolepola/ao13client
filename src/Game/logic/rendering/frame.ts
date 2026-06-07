@@ -161,13 +161,13 @@ const handleLocalPlayerMovement = (
   // 3. APPLY DAMPING (time‑based exponential)
   //
   if (!left && !right) {
-    const decay = Math.exp(-p.rotationDecay * delta);
+    const decay = p.rotationDecay ** (delta / (1000 / 60));
     o.rotationSpeed *= decay;
     if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
   }
 
   if (!d && !f) {
-    const decay = Math.exp(-p.verticalDecay * delta);
+    const decay = p.verticalDecay ** (delta / (1000 / 60));
     o.verticalSpeed *= decay;
     if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
   }
