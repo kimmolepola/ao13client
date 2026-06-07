@@ -135,8 +135,11 @@ const handleLocalPlayerMovement = (
   const d = globals.keys.KeyD ? frameScale : 0;
   const f = globals.keys.KeyF ? frameScale : 0;
 
-  o.speed += up * p.forceUpToSpeedFactor;
-  o.speed -= down * p.forceDownToSpeedFactor;
+  const dt = delta / 1000;
+  const throttle = globals.keys.ArrowUp ? 3 : 0;
+  const brake = globals.keys.ArrowDown ? 3 : 0;
+  const thrustFactor = p.thrustMinFactor + (1 - p.thrustMinFactor) * Math.min(o.speed / p.thrustRampSpeed, 1);
+  o.speed += (throttle * p.thrustForce * thrustFactor - p.dragCoefficient * o.speed * o.speed - brake * p.brakeForce) * dt;
 
   const leftBrake = left > 0 && o.rotationSpeed < 0 ? 4 : 1;
   const rightBrake = right > 0 && o.rotationSpeed > 0 ? 4 : 1;
