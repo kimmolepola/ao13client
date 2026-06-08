@@ -175,6 +175,8 @@ export const gameEventHandler = async (
     case types.EventType.ShotRollback: {
       const seq = gameEvent.sequenceNumber;
       const originId = gameEvent.originId;
+      const bulletId = "bullet" + originId + seq;
+      if (globals.localObjects.some((o) => o.id === bulletId)) break;
       const o = authoritativeStates[seq].state[originId];
 
       const type = types.GameObjectType.Bullet as const;

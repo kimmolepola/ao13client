@@ -557,17 +557,19 @@ const handleSimulation = (
       o.inputsE = r.inputsE;
     }
 
-    handleEventsRollback(
-      tickNumber,
-      i,
-      r,
-      ticks,
-      authStateTickNum,
-      pSeq,
-      ppSeq,
-      pppSeq,
-      handleGameEvent
-    );
+    if (globals.state.ownRemoteObjectIndex !== i) {
+      handleEventsRollback(
+        tickNumber,
+        i,
+        r,
+        ticks,
+        authStateTickNum,
+        pSeq,
+        ppSeq,
+        pppSeq,
+        handleGameEvent
+      );
+    }
     // applyCurState(ticks, tickNumber, i);
   }
 };
