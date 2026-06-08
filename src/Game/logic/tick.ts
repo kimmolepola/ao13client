@@ -506,12 +506,12 @@ const handleLocalEvents = (
   if (shotDelay > 0) {
     shotDelay -= parameters.tickInterval;
   }
-  if (shotDelay <= 0 && cur.inputsSpace > 0) {
+  const prevBullets = (prev.ordnanceChannel1Byte1 << 8) | prev.ordnanceChannel1Byte2;
+  if (shotDelay <= 0 && cur.inputsSpace > 0 && prevBullets > 0) {
     shotDelay += parameters.shotDelay;
     cur.gameEventIds.push(0);
     console.log("--push events:", idOverNetwork, tickNumber, cur.gameEventIds);
-    const prevBullets = (prev.ordnanceChannel1Byte1 << 8) | prev.ordnanceChannel1Byte2;
-    const curBullets = Math.max(0, prevBullets - 1);
+    const curBullets = prevBullets - 10;
     cur.ordnanceChannel1Byte1 = (curBullets >> 8) & 0xff;
     cur.ordnanceChannel1Byte2 = curBullets & 0xff;
     handleGameEvent({
