@@ -61,23 +61,23 @@ const loop = (
       const offset = seqOffset(tickBuffer[0], latestAuth);
       const differenceToTarget = offset - targetOffsetTicks;
       if (syncInfoRef.current) {
-        if (differenceToTarget > 4) {
-          if (!isSyncing) {
-            isSyncing = true;
-            syncInfoRef.current.classList.remove("invisible");
-            syncInfoRef.current.classList.add("visible");
-          }
-          syncInfoRef.current.textContent =
-            differenceToTarget - 5 === 0
-              ? "Synced"
-              : "Syncing... (" + (differenceToTarget - 5) + ")";
-        } else if (isSyncing) {
+        if (!isSyncing && differenceToTarget > 6) {
+          isSyncing = true;
+          syncInfoRef.current.classList.remove("invisible");
+          syncInfoRef.current.classList.add("visible");
+        } else if (isSyncing && differenceToTarget <= 2) {
           isSyncing = false;
           syncInfoRef.current.classList.remove("visible");
           syncInfoRef.current.classList.add("invisible");
         }
+        if (isSyncing) {
+          const dots = differenceToTarget > 10 ? "..." : differenceToTarget > 6 ? ".." : ".";
+          syncInfoRef.current.textContent = "Syncing" + dots;
+        }
       }
-      tickInterval = parameters.tickInterval + differenceToTarget;
+      const absDiff = Math.abs(differenceToTarget);
+      const multiplier = Math.max(1, absDiff / 4);
+      tickInterval = Math.max(5, parameters.tickInterval + Math.round(differenceToTarget * multiplier));
       handleTick(ticks, tickBuffer[0], offset, onGameEvent, onInputData);
       tickBuffer[0]++;
     } else {
