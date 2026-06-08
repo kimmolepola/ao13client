@@ -3,7 +3,11 @@ import * as THREE from "three";
 import * as types from "src/types";
 import * as parameters from "src/parameters";
 import * as globals from "src/globals";
-import { localLoad, localRemove } from "./rendering/loaderLocalObjects";
+import {
+  localLoad,
+  localRemove,
+  loadBullet,
+} from "./rendering/loaderLocalObjects";
 import * as utils from "src/utils";
 import { authoritativeStates } from "./tick";
 
@@ -152,10 +156,10 @@ export const gameEventHandler = async (
 
       const speed = o.speed + parameters.bulletSpeed;
       const type = types.GameObjectType.Bullet as const;
-      const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-      object3d?.position.set(o.x, o.y, 1);
-      object3d?.setRotationFromAxisAngle(utils.AXIS_Z, o.rotationZ);
-      object3d?.translateY(1);
+      const object3d = loadBullet(scene);
+      object3d.position.set(o.x, o.y, 1);
+      object3d.setRotationFromAxisAngle(utils.AXIS_Z, o.rotationZ);
+      object3d.translateY(0.25);
       const originId = o.idOverNetwork;
       globals.localObjects.push({
         type,
@@ -179,13 +183,13 @@ export const gameEventHandler = async (
 
       o3d.position.set(o.x, o.y, 0);
       o3d.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
-      o3d.translateY(1);
+      o3d.translateY(0.25);
       const bulletX = o3d.position.x;
       const bulletY = o3d.position.y;
 
-      const object3d = await localLoad(scene, types.GameObjectType.Bullet);
-      object3d?.position.set(bulletX, bulletY, 0);
-      object3d?.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
+      const object3d = loadBullet(scene);
+      object3d.position.set(bulletX, bulletY, 0);
+      object3d.setRotationFromAxisAngle(utils.AXIS_Z, rotationZ);
       globals.localObjects.push({
         type,
         object3d,

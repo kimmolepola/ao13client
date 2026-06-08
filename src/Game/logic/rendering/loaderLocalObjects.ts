@@ -1,7 +1,21 @@
 import * as THREE from "three";
 import * as types from "src/types";
-import { loadBackground, loadPlane, loadBox } from "./meshes";
+import { loadBackground, loadPlane } from "./meshes";
 import * as globals from "src/globals";
+
+export const loadBullet = (scene: THREE.Scene) => {
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.06, 1.2),
+    new THREE.MeshBasicMaterial({
+      color: 0xffdd44,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+    })
+  );
+  scene.add(mesh);
+  return mesh;
+};
 
 const loadMesh = async (
   scene: THREE.Scene,
@@ -26,8 +40,6 @@ export const localLoad = (
   switch (meshName) {
     case types.GameObjectType.Explosion:
       return loadMesh(scene, loadPlane, "explosion.png");
-    case types.GameObjectType.Bullet:
-      return loadMesh(scene, loadBox, "bullet.png", [0.3, 0.3, 0.3]);
     case types.GameObjectType.Background:
       return loadMesh(scene, loadBackground);
     default:

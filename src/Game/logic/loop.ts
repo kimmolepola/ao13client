@@ -71,13 +71,21 @@ const loop = (
           syncInfoRef.current.classList.add("invisible");
         }
         if (isSyncing) {
-          const dots = differenceToTarget > 10 ? "..." : differenceToTarget > 6 ? ".." : ".";
+          const dots =
+            differenceToTarget > 10
+              ? "..."
+              : differenceToTarget > 6
+              ? ".."
+              : ".";
           syncInfoRef.current.textContent = "Syncing" + dots;
         }
       }
       const absDiff = Math.abs(differenceToTarget);
       const multiplier = Math.max(1, absDiff / 4);
-      tickInterval = Math.max(5, parameters.tickInterval + Math.round(differenceToTarget * multiplier));
+      tickInterval = Math.max(
+        5,
+        parameters.tickInterval + Math.round(differenceToTarget * multiplier)
+      );
       handleTick(ticks, tickBuffer[0], offset, onGameEvent, onInputData);
       tickBuffer[0]++;
     } else {
