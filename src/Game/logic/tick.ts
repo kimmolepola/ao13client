@@ -102,7 +102,7 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
         fuel: parameters.maxFuelKg,
         bulletCount: 0,
         ordnanceChannel1Id: 0,
-        ordnanceChannel1Byte1: parameters.maxBullets,
+        ordnanceChannel1Byte1: 0,
         ordnanceChannel1Byte2: 0,
         ordnanceChannel2Id: 0,
         ordnanceChannel2Byte1: 0,
@@ -349,6 +349,7 @@ const handleSimulationRollback = (
     nearlyEqual(r.verticalSpeed, o.verticalSpeed, 1.0) &&
     nearlyEqual(r.z, o.z, 1.0) &&
     nearlyEqual(r.ordnanceChannel1Byte1, o.ordnanceChannel1Byte1) &&
+    nearlyEqual(r.ordnanceChannel1Byte2, o.ordnanceChannel1Byte2) &&
     nearlyEqual(r.ordnanceChannel2Byte1, o.ordnanceChannel2Byte1) &&
     r.ordnanceChannel1Id === o.ordnanceChannel1Id &&
     r.ordnanceChannel2Id === o.ordnanceChannel2Id;
@@ -481,7 +482,7 @@ const applyCurState = (
     s.rotationSpeed = t.rotationSpeed;
     s.speed = t.speed;
     s.verticalSpeed = t.verticalSpeed;
-    s.bulletCount = t.ordnanceChannel1Byte1;
+    s.bulletCount = (t.ordnanceChannel1Byte1 << 8) | t.ordnanceChannel1Byte2;
     s.fuel = t.fuel;
     s.health = t.health;
   }
@@ -509,7 +510,10 @@ const handleLocalEvents = (
     shotDelay += parameters.shotDelay;
     cur.gameEventIds.push(0);
     console.log("--push events:", idOverNetwork, tickNumber, cur.gameEventIds);
-    cur.ordnanceChannel1Byte1 = Math.max(0, prev.ordnanceChannel1Byte1 - 1);
+    const prevBullets = (prev.ordnanceChannel1Byte1 << 8) | prev.ordnanceChannel1Byte2;
+    const curBullets = Math.max(0, prevBullets - 1);
+    cur.ordnanceChannel1Byte1 = (curBullets >> 8) & 0xff;
+    cur.ordnanceChannel1Byte2 = curBullets & 0xff;
     handleGameEvent({
       type: types.EventType.Shot as const,
       sequenceNumber: tickNumber,
