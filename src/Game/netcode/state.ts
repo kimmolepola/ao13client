@@ -177,15 +177,25 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   };
 
   const getNextSignedByte = () => {
-    const value = dataView.getInt8(offset);
-    offset++;
-    return value;
+    try {
+      const value = dataView.getInt8(offset);
+      offset++;
+      return value;
+    } catch (err: any) {
+      console.log("getNextSignedByte error at offset", offset);
+      return 0;
+    }
   };
 
   const getNext2Bytes = () => {
-    const value = dataView.getUint16(offset);
-    offset += 2;
-    return value;
+    try {
+      const value = dataView.getUint16(offset);
+      offset += 2;
+      return value;
+    } catch (err: any) {
+      console.log("getNext2Bytes error at offset", offset);
+      return 0;
+    }
   };
 
   while (offset < dataView.byteLength) {
@@ -397,8 +407,8 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     if (save) {
-      save && recentStates[sequenceNumber].push({ ...upd });
-      save && debug.debugSaveState(upd);
+      recentStates[sequenceNumber].push({ ...upd });
+      debug.debugSaveState(upd);
     }
     index++;
   }
