@@ -129,6 +129,11 @@ export type ChatMessage = {
   username: string;
 };
 
+// 2-bit input encoding: frames held at 60 fps, capped at 3
+export const inputFull = 3;
+export const inputPartial = 2;
+export const inputTap = 1;
+
 export enum Key {
   ArrowUp = "ArrowUp",
   ArrowDown = "ArrowDown",

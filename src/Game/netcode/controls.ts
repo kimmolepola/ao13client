@@ -7,9 +7,9 @@ const oneFrame60FPS = 1000 / 60;
 const twoFrames60FPS = oneFrame60FPS * 2;
 
 const get60FPSFramesMax3 = (ms: number) => {
-  if (ms > twoFrames60FPS) return 3;
-  if (ms > oneFrame60FPS) return 2;
-  if (ms > 0) return 1;
+  if (ms > twoFrames60FPS) return types.inputFull;
+  if (ms > oneFrame60FPS) return types.inputPartial;
+  if (ms > 0) return types.inputTap;
   return 0;
 };
 
