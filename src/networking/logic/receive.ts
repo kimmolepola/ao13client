@@ -28,7 +28,8 @@ export const onReceiveStringData = (
   ) => void,
   onChangeObjectIds: (value: string[]) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void
 ) => {
   switch (data.type) {
     case types.ServerDataType.BaseState: {
@@ -46,6 +47,10 @@ export const onReceiveStringData = (
         () => setChatMessages((x) => x.filter((xx) => xx !== message)),
         chatMessageTimeToLive
       );
+      break;
+    }
+    case types.ServerDataType.InactivityWarning: {
+      setInactivityWarning(data.secondsUntilDisconnect);
       break;
     }
     default:

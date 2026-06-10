@@ -271,6 +271,7 @@ export enum ClientDataType {
 export enum ServerDataType {
   ChatMessage_Server = "ChatMessage_Server",
   BaseState = "BaseState",
+  InactivityWarning = "InactivityWarning",
 }
 
 export type ChatMessageFromServer = {
@@ -309,7 +310,12 @@ export type BaseState = {
   };
 };
 
-export type StringData = ChatMessageFromServer | BaseState;
+export type InactivityWarning = {
+  type: ServerDataType.InactivityWarning;
+  secondsUntilDisconnect: number;
+};
+
+export type StringData = ChatMessageFromServer | BaseState | InactivityWarning;
 
 export const BaseStateObjectTypes = {
   2: GameObjectType.Runway,

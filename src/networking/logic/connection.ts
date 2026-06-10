@@ -51,7 +51,8 @@ const createPeerConnection = (
   onChangeIsConnectedToGameServer: (value: boolean) => void,
   onChangeObjectIds: (value: string[]) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void
 ) => {
   onChangeConnectionMessage("Connecting to server...");
   const peerConnection = new RTCPeerConnection({
@@ -106,7 +107,8 @@ const createPeerConnection = (
         handleReceiveBaseState,
         onChangeObjectIds,
         setChatMessages,
-        onChangeStaticObjects
+        onChangeStaticObjects,
+        setInactivityWarning
       );
     } catch (err) {
       console.log("String channel onmessage error:", data);
@@ -194,7 +196,8 @@ export const createOrUpdateHubConnection = (
   onChangeConnectionMessage: (value: string | undefined) => void,
   onChangeIsConnectedToGameServer: (value: boolean) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void
 ) => {
   if (!hubConnectionRef.current) {
     hubConnectionRef.current = new HubConnectionBuilder()
@@ -236,7 +239,8 @@ export const createOrUpdateHubConnection = (
       onChangeIsConnectedToGameServer,
       onChangeObjectIds,
       setChatMessages,
-      onChangeStaticObjects
+      onChangeStaticObjects,
+      setInactivityWarning
     );
   });
 
@@ -265,7 +269,8 @@ export const createOrUpdateHubConnection = (
         onChangeIsConnectedToGameServer,
         onChangeObjectIds,
         setChatMessages,
-        onChangeStaticObjects
+        onChangeStaticObjects,
+        setInactivityWarning
       );
     peerConnectionHandleSignaling(msg, hubConnection);
   });

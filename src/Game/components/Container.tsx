@@ -37,6 +37,9 @@ const Container = ({
     types.BaseStateStaticObject[]
   >([]);
   const [chatMessages, setChatMessages] = useState<types.ChatMessage[]>([]);
+  const [inactivityWarning, setInactivityWarning] = useState<number | null>(
+    null
+  );
 
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const radarBoxRef = useRef<{ [id: string]: RefObject<HTMLDivElement> }>({});
@@ -50,14 +53,30 @@ const Container = ({
     []
   );
 
+  const handleSetInactivityWarning = useCallback((seconds: number) => {
+    setInactivityWarning(seconds);
+  }, []);
+
   const { disconnect } = useConnection(
     iceServers,
     setConnectionMessage,
     setIsConnectedToGameServer,
     setChatMessages,
     setObjectIds,
-    onChangeStaticObjects
+    onChangeStaticObjects,
+    handleSetInactivityWarning
   );
+
+  useEffect(() => {
+    if (inactivityWarning === null) return;
+    const clear = () => setInactivityWarning(null);
+    window.addEventListener("keydown", clear);
+    window.addEventListener("touchstart", clear);
+    return () => {
+      window.removeEventListener("keydown", clear);
+      window.removeEventListener("touchstart", clear);
+    };
+  }, [inactivityWarning]);
 
   const quit = useCallback(async () => {
     await disconnect();
@@ -117,6 +136,7 @@ const Container = ({
         debugContentRef={debugContentRef}
         debugIsOn={debug}
         syncInfoRef={syncInfoRef}
+        inactivityWarning={inactivityWarning}
       />
       <Sidepanel
         username={user?.username}

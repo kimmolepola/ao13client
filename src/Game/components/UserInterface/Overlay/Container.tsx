@@ -32,6 +32,7 @@ const Container = ({
   debugContentRef,
   debugIsOn,
   syncInfoRef,
+  inactivityWarning,
 }: {
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
@@ -43,6 +44,7 @@ const Container = ({
   debugContentRef: RefObject<HTMLDivElement>;
   debugIsOn: boolean;
   syncInfoRef: RefObject<HTMLDivElement>;
+  inactivityWarning: number | null;
 }) => {
   return (
     <div className="absolute inset-0 z-1" style={style}>
@@ -63,6 +65,11 @@ const Container = ({
           ref={syncInfoRef}
         />
       ) : null}
+      {inactivityWarning !== null && (
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-bold px-6 py-3 rounded shadow-lg text-center pointer-events-none">
+          Disconnecting in {inactivityWarning}s due to inactivity
+        </div>
+      )}
     </div>
   );
 };

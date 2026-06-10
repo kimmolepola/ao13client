@@ -21,7 +21,8 @@ export const useConnection = (
   onChangeIsConnectedToGameServer: (value: boolean) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
   onChangeObjectIds: (value: string[]) => void,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void
 ) => {
   const hubConnectionRef = useRef<HubConnection>();
 
@@ -39,7 +40,8 @@ export const useConnection = (
         onChangeConnectionMessage,
         onChangeIsConnectedToGameServer,
         setChatMessages,
-        onChangeStaticObjects
+        onChangeStaticObjects,
+        setInactivityWarning
       );
       hubConnectionRef.current = hubConnection;
     }
@@ -50,6 +52,7 @@ export const useConnection = (
     onChangeIsConnectedToGameServer,
     setChatMessages,
     onChangeStaticObjects,
+    setInactivityWarning,
   ]);
 
   const disconnect = useCallback(async () => {
