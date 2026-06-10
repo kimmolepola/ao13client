@@ -32,6 +32,7 @@ const getTargetRecentState = (curSeq: number) => {
   return recentState;
 };
 
+// Reused buffer — mutated and returned on every call. Consume all fields synchronously before any await.
 const receivedState: types.ReceivedState = {
   tick: 0,
   state: [],
