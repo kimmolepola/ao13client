@@ -114,8 +114,6 @@ const handleLocalPlayerMovement = (
   // 1. INPUT → VELOCITY
   //
   const frameScale = delta / (1000 / 60);
-  const up = globals.keys.ArrowUp ? frameScale : 0;
-  const down = globals.keys.ArrowDown ? frameScale : 0;
   const left = globals.keys.ArrowLeft ? frameScale : 0;
   const right = globals.keys.ArrowRight ? frameScale : 0;
   const d = globals.keys.KeyD ? frameScale : 0;

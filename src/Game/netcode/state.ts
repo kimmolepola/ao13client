@@ -266,7 +266,12 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     if (!possibleRecentObjectState && !allValuesAreProvided) {
       console.error(
         "State decode invariant violated: partial update received but no reference state exists.",
-        "seq:", sequenceNumber, "idOverNetwork:", idOverNetwork, "index:", index
+        "seq:",
+        sequenceNumber,
+        "idOverNetwork:",
+        idOverNetwork,
+        "index:",
+        index
       );
       return;
     }
