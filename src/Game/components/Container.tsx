@@ -78,6 +78,14 @@ const Container = ({
     };
   }, [inactivityWarning]);
 
+  useEffect(() => {
+    if (inactivityWarning === null || inactivityWarning <= 0) return;
+    const timer = setInterval(() => {
+      setInactivityWarning((prev) => (prev !== null && prev > 1 ? prev - 1 : null));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [inactivityWarning]);
+
   const quit = useCallback(async () => {
     await disconnect();
     onChangePage("frontpage");
