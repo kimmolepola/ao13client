@@ -144,8 +144,12 @@ export const handleReceiveAuthoritativeState = (
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
     const o = tickAuthState.state[i];
     const r = receivedState.state[i];
+    if (!r.exists) {
+      o.exists = false;
+      continue;
+    }
+    o.exists = true;
     o.eventsEncoded = r.eventsEncoded;
-    o.exists = r.exists;
     o.fuel = r.fuel;
     o.health = r.health;
     o.inputsD = r.inputsD;
