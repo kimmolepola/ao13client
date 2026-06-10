@@ -113,20 +113,6 @@ const handleLocalPlayerMovement = (
   //
   // 1. INPUT → VELOCITY
   //
-  // const up = Math.min(o.inputsUp, delta);
-  // const down = Math.min(o.inputsDown, delta);
-  // const left = Math.min(o.inputsLeft, delta);
-  // const right = Math.min(o.inputsRight, delta);
-  // const d = Math.min(o.inputsD, delta);
-  // const f = Math.min(o.inputsF, delta);
-
-  // o.inputsUp -= up;
-  // o.inputsDown -= down;
-  // o.inputsLeft -= left;
-  // o.inputsRight -= right;
-  // o.inputsD -= d;
-  // o.inputsF -= f;
-
   const frameScale = delta / (1000 / 60);
   const up = globals.keys.ArrowUp ? frameScale : 0;
   const down = globals.keys.ArrowDown ? frameScale : 0;
@@ -138,8 +124,14 @@ const handleLocalPlayerMovement = (
   const dt = delta / 1000;
   const throttle = globals.keys.ArrowUp ? 3 : 0;
   const brake = globals.keys.ArrowDown ? 3 : 0;
-  const thrustFactor = p.thrustMinFactor + (1 - p.thrustMinFactor) * Math.min(o.speed / p.thrustRampSpeed, 1);
-  o.speed += (throttle * p.thrustForce * thrustFactor - p.dragCoefficient * o.speed * o.speed - brake * p.brakeForce) * dt;
+  const thrustFactor =
+    p.thrustMinFactor +
+    (1 - p.thrustMinFactor) * Math.min(o.speed / p.thrustRampSpeed, 1);
+  o.speed +=
+    (throttle * p.thrustForce * thrustFactor -
+      p.dragCoefficient * o.speed * o.speed -
+      brake * p.brakeForce) *
+    dt;
 
   const leftBrake = left > 0 && o.rotationSpeed < 0 ? 4 : 1;
   const rightBrake = right > 0 && o.rotationSpeed > 0 ? 4 : 1;
@@ -249,9 +241,9 @@ const handleLocalObject = (
   object3d: THREE.Mesh
 ) => {
   const o = gameObject;
-  // console.log("--o:", o.id);
   object3d.translateY(o.speed * parameters.speedFactor * delta);
-  o.speed *= parameters.bulletSpeedReductionFactor ** (delta / parameters.tickInterval);
+  o.speed *=
+    parameters.bulletSpeedReductionFactor ** (delta / parameters.tickInterval);
   o.timeToLive -= delta;
   return o.timeToLive < 0;
 };
@@ -260,7 +252,6 @@ const handleLocalObjects = (
   delta: number,
   onGameEvent: (e: types.GameEvent) => void
 ) => {
-  // console.log("--globals.localObjects.length:", globals.localObjects.length);
   for (let i = 0; i < globals.localObjects.length; i++) {
     const o = globals.localObjects[i];
     if (o && o.object3d) {
@@ -281,7 +272,6 @@ const curTickKeyValues = globals.curTickKeyValues;
 
 const handleKey = (key: types.Key, delta: number) => {
   if (keys[key]) {
-    console.log("--delta:", delta);
     curTickKeyValues[key] += delta;
   }
 };

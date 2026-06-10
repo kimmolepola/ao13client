@@ -26,7 +26,6 @@ const gameEventHandlerWrapper = (gameEvent: types.GameEvent) => {
 };
 
 const handleUnmount = (node: HTMLDivElement | null) => {
-  console.log("--unmount");
   node?.removeChild(renderer.domElement);
   stopGameLoop();
   scene.traverse((obj) => {

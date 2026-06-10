@@ -44,7 +44,6 @@ const Container = ({
   debugIsOn: boolean;
   syncInfoRef: RefObject<HTMLDivElement>;
 }) => {
-  // console.log("--debugIsOn:", debugIsOn);
   return (
     <div className="absolute inset-0 z-1" style={style}>
       <DataBlocks />

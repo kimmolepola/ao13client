@@ -44,7 +44,6 @@ const handle2BitValue = (
   ownTickObj: types.TickStateObject | undefined
 ) => {
   const val = get60FPSFramesMax3(curTickKeyValues[key]);
-  val && console.log("--val:", val, curTickKeyValues[key]);
   if (ownTickObj) {
     key === types.Key.ArrowUp && (ownTickObj.inputsUp = val);
     key === types.Key.ArrowDown && (ownTickObj.inputsDown = val);
@@ -82,7 +81,6 @@ export const gatherControlsDataBinary = (
     return undefined;
   }
 
-  // console.log("--controls:", tickNumber);
   dataView.setUint8(0, tickNumber);
 
   if (!byte3) {
@@ -91,32 +89,3 @@ export const gatherControlsDataBinary = (
 
   return dataView.buffer.slice(0, 3); // 3 bytes: directional + action keys
 };
-
-// export const gatherControlsDataBinary = (
-//   o: types.SharedGameObject,
-//   tickNumber: number
-// ) => {
-//   set2BitValue(0, get60FPSFramesMax3(o.controlsOverChannelsUp));
-//   set2BitValue(2, get60FPSFramesMax3(o.controlsOverChannelsDown));
-//   set2BitValue(4, get60FPSFramesMax3(o.controlsOverChannelsLeft));
-//   set2BitValue(6, get60FPSFramesMax3(o.controlsOverChannelsRight));
-//   set2BitValue(8, get60FPSFramesMax3(o.controlsOverChannelsSpace));
-//   set2BitValue(10, get60FPSFramesMax3(o.controlsOverChannelsD));
-//   set2BitValue(12, get60FPSFramesMax3(o.controlsOverChannelsF));
-//   set2BitValue(14, get60FPSFramesMax3(o.controlsOverChannelsE));
-
-//   const byte2 = dataView.getUint8(1);
-//   const byte3 = dataView.getUint8(2);
-
-//   if (!byte2 && !byte3) {
-//     return undefined;
-//   }
-
-//   dataView.setUint8(0, tickNumber);
-
-//   if (byte3) {
-//     return dataView.buffer;
-//   }
-
-//   return new Uint8Array(dataView.buffer, 0, 2).buffer;
-// };

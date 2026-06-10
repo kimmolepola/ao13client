@@ -99,13 +99,6 @@ export const handleReceiveBaseState = (
   const updateObjectIds = () => {
     if (objectIdsChanged) {
       const ids = baseState.data.sharedObjects.map((x) => x.id);
-      // console.log(
-      //   "--baseState:",
-      //   baseState,
-      //   baseState.data,
-      //   baseState.data.sharedObjects
-      // );
-      // console.log("--baseState ids:", ids);
       onChangeObjectIds(ids);
       globals.state.ownRemoteObjectIndex = globals.sharedObjects.findIndex(
         (x) => x.isMe

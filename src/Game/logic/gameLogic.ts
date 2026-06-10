@@ -151,7 +151,6 @@ export const gameEventHandler = async (
       break;
     }
     case types.EventType.Shot: {
-      console.log("--shot");
       const o = gameEvent.tickStateObject;
 
       const speed = o.speed + parameters.bulletSpeed;

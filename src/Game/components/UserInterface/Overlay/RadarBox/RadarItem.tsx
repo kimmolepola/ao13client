@@ -26,8 +26,6 @@ const RadarItem = ({
     [x, y]
   );
 
-  // console.log("--style:", style, radarBoxRef?.current);
-
   return (
     <div ref={ref} className={clsx("absolute", className)} style={style} />
   );
