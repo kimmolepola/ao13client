@@ -144,11 +144,8 @@ export const handleReceiveAuthoritativeState = (
   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
     const o = tickAuthState.state[i];
     const r = receivedState.state[i];
-    if (!r.exists) {
-      o.exists = false;
-      continue;
-    }
-    o.exists = true;
+    o.exists = r.exists;
+    if (r.exists) {
     o.eventsEncoded = r.eventsEncoded;
     o.fuel = r.fuel;
     o.health = r.health;
@@ -177,6 +174,7 @@ export const handleReceiveAuthoritativeState = (
     o.y = r.y;
     o.yEncoded = r.yEncoded;
     o.z = r.z;
+    }
   }
 };
 
