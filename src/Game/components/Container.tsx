@@ -28,7 +28,7 @@ const Container = ({
 }: {
   user: types.User | undefined;
   iceServers: types.IceServerInfo[] | undefined;
-  onChangePage: (page: "frontpage" | "game") => void;
+  onChangePage: (page: "frontpage" | "game", reason?: string) => void;
 }) => {
   const [isConnectedToGameServer, setIsConnectedToGameServer] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState<string>();
@@ -67,8 +67,16 @@ const Container = ({
     handleSetInactivityWarning
   );
 
+  const quit = useCallback(
+    async (reason?: string) => {
+      await disconnect();
+      onChangePage("frontpage", reason);
+    },
+    [onChangePage, disconnect]
+  );
+
   useEffect(() => {
-    if (inactivityWarning === null) return;
+    if (inactivityWarning === null || inactivityWarning <= 0) return;
     const clear = () => setInactivityWarning(null);
     window.addEventListener("keydown", clear);
     window.addEventListener("touchstart", clear);
@@ -81,15 +89,17 @@ const Container = ({
   useEffect(() => {
     if (inactivityWarning === null || inactivityWarning <= 0) return;
     const timer = setInterval(() => {
-      setInactivityWarning((prev) => (prev !== null && prev > 1 ? prev - 1 : null));
+      setInactivityWarning((prev) =>
+        prev !== null && prev > 0 ? prev - 1 : prev
+      );
     }, 1000);
     return () => clearInterval(timer);
   }, [inactivityWarning]);
 
-  const quit = useCallback(async () => {
-    await disconnect();
-    onChangePage("frontpage");
-  }, [onChangePage, disconnect]);
+  useEffect(() => {
+    if (inactivityWarning !== 0) return;
+    quit("You were disconnected due to inactivity.");
+  }, [inactivityWarning, quit]);
 
   const {
     canvasStyle,

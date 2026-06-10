@@ -22,11 +22,13 @@ const Container = ({
   onChangeUser,
   onChangePage,
   onChangeIceServers,
+  disconnectReason,
 }: {
   user: types.User | undefined;
   onChangeUser: (user: types.User | undefined) => void;
-  onChangePage: (page: "frontpage" | "game") => void;
+  onChangePage: (page: "frontpage" | "game", reason?: string) => void;
   onChangeIceServers: (value: types.IceServerInfo[] | undefined) => void;
+  disconnectReason?: string;
 }) => (
   <BrowserRouter>
     <Routes>
@@ -38,6 +40,7 @@ const Container = ({
             onChangeUser={onChangeUser}
             onChangePage={onChangePage}
             onChangeIceServers={onChangeIceServers}
+            disconnectReason={disconnectReason}
           />
         }
       />
@@ -52,11 +55,13 @@ const Content = ({
   onChangeUser,
   onChangePage,
   onChangeIceServers,
+  disconnectReason,
 }: {
   user: types.User | undefined;
   onChangeUser: (user: types.User | undefined) => void;
-  onChangePage: (page: "frontpage" | "game") => void;
+  onChangePage: (page: "frontpage" | "game", reason?: string) => void;
   onChangeIceServers: (value: types.IceServerInfo[] | undefined) => void;
+  disconnectReason?: string;
 }) => {
   const location = useLocation();
 
@@ -97,6 +102,7 @@ const Content = ({
                   onChangeUser={onChangeUser}
                   onChangePage={onChangePage}
                   onChangeIceServers={onChangeIceServers}
+                  disconnectReason={disconnectReason}
                 />
               )
             }

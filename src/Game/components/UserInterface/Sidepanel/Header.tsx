@@ -1,7 +1,6 @@
-import { useState, useCallback, memo } from "react";
+import { memo } from "react";
 import { BiMove } from "react-icons/bi";
 import clsx from "clsx";
-import { debugOn } from "../../../debug/debug";
 
 const Header = ({
   move,
