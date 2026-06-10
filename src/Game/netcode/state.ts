@@ -263,12 +263,10 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       ordnanceChannel2IsProvided;
 
     if (!possibleRecentObjectState && !allValuesAreProvided) {
-      debug.debugNoRecentObjectState(
-        idOverNetworkIsProvided,
-        idOverNetwork,
-        index
+      console.error(
+        "State decode invariant violated: partial update received but no reference state exists.",
+        "seq:", sequenceNumber, "idOverNetwork:", idOverNetwork, "index:", index
       );
-
       return;
     }
     const recent = possibleRecentObjectState!;
