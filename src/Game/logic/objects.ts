@@ -25,10 +25,11 @@ export const handleReceiveBaseState = (
   const handleNonExistentSharedObjects = () => {
     for (let i = 0; i < globals.sharedObjects.length; i++) {
       const r = globals.sharedObjects[i];
-      const b = baseState.data.sharedObjects.find((x) => x.id === r.id);
-      if (!b) {
-        objectIdsChanged = true;
-        // globals.sharedObjects.splice(i, 1);
+      if (r) {
+        const b = baseState.data.sharedObjects.find((x) => x.id === r.id);
+        if (!b) {
+          objectIdsChanged = true;
+        }
       }
     }
   };
@@ -36,14 +37,14 @@ export const handleReceiveBaseState = (
   const addNewOrUpdateSharedObjects = () => {
     for (let i = 0; i < baseState.data.sharedObjects.length; i++) {
       const b = baseState.data.sharedObjects[i];
-      const r = globals.sharedObjects.find((x) => x.id === b.id);
+      const r = globals.sharedObjects[b.idOverNetwork];
       if (r) {
         r.idOverNetwork = b.idOverNetwork;
         r.username = b.username;
         r.isPlayer = b.isPlayer;
       } else {
         objectIdsChanged = true;
-        globals.sharedObjects.push({
+        globals.sharedObjects[b.idOverNetwork] = {
           id: b.id,
           idOverNetwork: b.idOverNetwork,
           isMe: b.id === globals.state.ownId,
@@ -91,7 +92,7 @@ export const handleReceiveBaseState = (
           radius: 1,
           bulletCount: 0,
           fuel: 0,
-        });
+        };
       }
     }
   };
@@ -100,9 +101,9 @@ export const handleReceiveBaseState = (
     if (objectIdsChanged) {
       const ids = baseState.data.sharedObjects.map((x) => x.id);
       onChangeObjectIds(ids);
-      globals.state.ownRemoteObjectIndex = globals.sharedObjects.findIndex(
-        (x) => x.isMe
-      );
+      globals.state.ownRemoteObjectIndex = globals.sharedObjects.find(
+        (x) => x?.isMe
+      )?.idOverNetwork;
     }
   };
 
@@ -136,7 +137,7 @@ export const handleQuit = (
   onChangeObjectIds: (value: string[]) => void,
   onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
 ) => {
-  globals.sharedObjects.splice(0, globals.sharedObjects.length);
+  globals.sharedObjects.length = 0;
   onChangeObjectIds([]);
   onChangeStaticObjects([]);
 };

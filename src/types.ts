@@ -270,6 +270,7 @@ export enum ServerDataType {
   BaseState = "BaseState",
   InactivityWarning = "InactivityWarning",
   ConnectionQualityKick = "ConnectionQualityKick",
+  YouDied = "YouDied",
 }
 
 export type ChatMessageFromServer = {
@@ -317,7 +318,11 @@ export type ConnectionQualityKick = {
   type: ServerDataType.ConnectionQualityKick;
 };
 
-export type StringData = ChatMessageFromServer | BaseState | InactivityWarning | ConnectionQualityKick;
+export type YouDied = {
+  type: ServerDataType.YouDied;
+};
+
+export type StringData = ChatMessageFromServer | BaseState | InactivityWarning | ConnectionQualityKick | YouDied;
 
 export const BaseStateObjectTypes = {
   2: GameObjectType.Runway,

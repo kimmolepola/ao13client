@@ -289,14 +289,13 @@ const getPrevSeq = (seq: number) => {
 };
 
 const interpolateRemoteObjectPositionAndRotation = (
-  idOverNetwork: number,
+  o: types.SharedGameObject,
   alpha: number,
   state: types.AuthoritativeState[],
   prevState: types.AuthoritativeState[]
 ) => {
-  const o = globals.sharedObjects[idOverNetwork];
-  const a = state[idOverNetwork];
-  const pa = prevState[idOverNetwork];
+  const a = state[o.idOverNetwork];
+  const pa = prevState[o.idOverNetwork];
   const o3d = o.object3d;
   if (o3d) {
     o3d.position.x = pa.x + (a.x - pa.x) * alpha;
@@ -324,7 +323,8 @@ const handleSharedObjects = (
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  debugContentRef: RefObject<HTMLDivElement>
+  debugContentRef: RefObject<HTMLDivElement>,
+  onGameEvent: (e: types.GameEvent) => void
 ) => {
   const serverTickNumber = subtractSeq8(tickNumber, offset);
   // const serverTickNumber = getPrevSeq(getPrevSeq(getPrevSeq(tickNumber)));
@@ -349,28 +349,38 @@ const handleSharedObjects = (
   if (!prevAuthState.isStale && !authState.isStale) {
     for (let i = 0; i < parameters.maxRemoteObjects; i++) {
       const o = globals.sharedObjects[i];
-      const object3d = o?.object3d;
-      if (!object3d) {
-        continue; // eslint-disable-line
-      }
-      if (i === globals.state.ownRemoteObjectIndex) {
-        const deltaOrAccumulator = isTickFrame ? accumulator : delta;
-        handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
-        if (nextInfoUpdate < Date.now()) {
-          nextInfoUpdate = Date.now() + 1000;
-          handleInfoBox(o, object3d, infoBoxRef);
-          handleRadarBoxItem(o, object3d, radarBoxRef);
+      if (o) {
+        const object3d = o.object3d;
+        if (object3d) {
+          // Fire explosion when the authoritative state says this slot no longer exists
+          // but the mesh is still visible in our scene.
+          if (!authState.state[i].exists) {
+            if (object3d.visible) {
+              object3d.visible = false;
+              onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: serverTickNumber });
+            }
+          } else {
+            if (i === globals.state.ownRemoteObjectIndex) {
+              const deltaOrAccumulator = isTickFrame ? accumulator : delta;
+              handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
+              if (nextInfoUpdate < Date.now()) {
+                nextInfoUpdate = Date.now() + 1000;
+                handleInfoBox(o, object3d, infoBoxRef);
+                handleRadarBoxItem(o, object3d, radarBoxRef);
+              }
+              handleCamera(delta, camera, object3d);
+            } else {
+              interpolateRemoteObjectPositionAndRotation(
+                o,
+                alpha,
+                authState.state,
+                prevAuthState.state
+              );
+            }
+            handleDataBlock(o, object3d, camera, width, height);
+          }
         }
-        handleCamera(delta, camera, object3d);
-      } else {
-        interpolateRemoteObjectPositionAndRotation(
-          i,
-          alpha,
-          authState.state,
-          prevAuthState.state
-        );
       }
-      handleDataBlock(o, object3d, camera, width, height);
     }
   }
 };
@@ -400,7 +410,8 @@ export const handleFrame = (
     height,
     infoBoxRef,
     radarBoxRef,
-    debugContentRef
+    debugContentRef,
+    onGameEvent
   );
   handleLocalObjects(delta, onGameEvent);
 };

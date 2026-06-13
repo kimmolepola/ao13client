@@ -12,7 +12,7 @@ import DebugContainer from "src/Game/debug/DebugContainer";
 const DataBlocks = () => (
   <>
     {globals.sharedObjects.reduce((acc: JSX.Element[], cur) => {
-      acc.push(<DataBlock key={cur.id} gameObject={cur} />);
+      if (cur) acc.push(<DataBlock key={cur.id} gameObject={cur} />);
       return acc;
     }, [])}
   </>

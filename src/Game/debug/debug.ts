@@ -56,7 +56,7 @@ const removeGUI = () => {
 
 const handleObjects = () => {
   globals.sharedObjects.forEach((x) =>
-    x.object3d?.material.forEach((xx: any, i) => {
+    x?.object3d?.material.forEach((xx: any, i) => {
       xx.wireframe = i !== 4 && debugOn.value;
       xx.needsUpdate = i !== 4 && debugOn.value;
     })

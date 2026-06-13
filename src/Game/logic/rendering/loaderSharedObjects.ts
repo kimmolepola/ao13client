@@ -28,10 +28,10 @@ const load = async (
 const removeSharedObject = (scene: THREE.Scene, objectsIndex: number) => {
   const os = globals.sharedObjects;
   const o = os[objectsIndex];
-  if (o.object3d) {
+  if (o?.object3d) {
     scene.remove(o.object3d);
   }
-  os.splice(objectsIndex, 1);
+  os[objectsIndex] = undefined;
 };
 
 export const updateRenderedSharedObjects = (
@@ -41,11 +41,13 @@ export const updateRenderedSharedObjects = (
   const os = globals.sharedObjects;
   for (let i = os.length - 1; i >= 0; i--) {
     const o = os[i];
-    if (objectIds.includes(o.id)) {
-      const isFound = o.object3d && scene.children.includes(o.object3d);
-      !isFound && load(scene, loadFighter, o);
-    } else {
-      removeSharedObject(scene, i);
+    if (o) {
+      if (objectIds.includes(o.id)) {
+        const isFound = o.object3d && scene.children.includes(o.object3d);
+        !isFound && load(scene, loadFighter, o);
+      } else {
+        removeSharedObject(scene, i);
+      }
     }
   }
 };

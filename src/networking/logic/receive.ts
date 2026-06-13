@@ -41,7 +41,7 @@ export const onReceiveStringData = (
       const message = {
         ...data,
         username:
-          sharedObjects.find((x) => x.id === data.userId)?.username || "",
+          sharedObjects.find((x) => x?.id === data.userId)?.username || "",
       };
       setChatMessages((x) => [message, ...x]);
       setTimeout(
@@ -56,6 +56,10 @@ export const onReceiveStringData = (
     }
     case types.ServerDataType.ConnectionQualityKick: {
       setKickReason("Disconnected: poor connection quality.");
+      break;
+    }
+    case types.ServerDataType.YouDied: {
+      setKickReason("You were shot down.");
       break;
     }
     default:

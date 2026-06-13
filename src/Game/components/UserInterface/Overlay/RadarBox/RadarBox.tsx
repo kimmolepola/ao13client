@@ -28,7 +28,7 @@ const RadarBox = ({
             id={x}
             radarBoxRef={radarBoxRef}
             className={`w-[2%] h-[2%] rounded-full ${
-              globals.sharedObjects.find((xx) => xx.id === x)?.isMe
+              globals.sharedObjects.find((xx) => xx?.id === x)?.isMe
                 ? "z-10 bg-orange-400"
                 : "z-20 bg-white"
             }`}

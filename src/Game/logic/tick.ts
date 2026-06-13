@@ -384,7 +384,7 @@ const applyCurState = (
   const t = ticks[tickNumber][idOverNetwork];
   const s = globals.sharedObjects[idOverNetwork];
   const o3d = s?.object3d;
-  if (o3d) {
+  if (s && o3d) {
     o3d.position.x = t.x;
     o3d.position.y = t.y;
     o3d.rotation.z = t.rotationZ;
