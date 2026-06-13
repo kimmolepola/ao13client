@@ -48,7 +48,6 @@ export type AuthoritativeState = {
   inputsSpace: number; // 0-3
   inputsD: number; // 0-3
   inputsF: number; // 0-3
-  inputsE: number; // 0-3
   health: number;
   xEncoded: number;
   yEncoded: number;
@@ -142,7 +141,6 @@ export enum Key {
   Space = "Space",
   KeyD = "KeyD",
   KeyF = "KeyF",
-  KeyE = "KeyE",
 }
 
 export enum GameObjectType {
@@ -237,7 +235,6 @@ export type TickStateObject = GameObject & {
   inputsSpace: number;
   inputsF: number;
   inputsD: number;
-  inputsE: number;
   fuel: number;
   bulletCount: number;
   speed: number;
@@ -272,6 +269,7 @@ export enum ServerDataType {
   ChatMessage_Server = "ChatMessage_Server",
   BaseState = "BaseState",
   InactivityWarning = "InactivityWarning",
+  ConnectionQualityKick = "ConnectionQualityKick",
 }
 
 export type ChatMessageFromServer = {
@@ -315,7 +313,11 @@ export type InactivityWarning = {
   secondsUntilDisconnect: number;
 };
 
-export type StringData = ChatMessageFromServer | BaseState | InactivityWarning;
+export type ConnectionQualityKick = {
+  type: ServerDataType.ConnectionQualityKick;
+};
+
+export type StringData = ChatMessageFromServer | BaseState | InactivityWarning | ConnectionQualityKick;
 
 export const BaseStateObjectTypes = {
   2: GameObjectType.Runway,
@@ -434,7 +436,7 @@ export type GameEventHandler = (scene: THREE.Scene, e: GameEvent) => void;
 //       8: another event follows for this tick (1) or end of tick's events (0)              |
 //     Uint8 health?                                                                          20+n
 //     Uint8 fuel?                                                                            29
-//     Uint8 inputs2? (1&2:space 3&4:keyD 5&6:keyF 7&8:keyE)                                  30
+//     Uint8 inputs2? (1&2:space 3&4:keyD 5&6:keyF 7&8:unused)                               30
 //     Uint8 verticalSpeed?                                                                   31
 //     Uint8*2 positionZ? (unit is feet)                                                      32
 //     Uint8 ordnanceChannel1ID?                                                              33

@@ -57,7 +57,7 @@ const Container = ({
     setInactivityWarning(seconds);
   }, []);
 
-  const { disconnect } = useConnection(
+  const { disconnect, kickReason } = useConnection(
     iceServers,
     setConnectionMessage,
     setIsConnectedToGameServer,
@@ -74,6 +74,10 @@ const Container = ({
     },
     [onChangePage, disconnect]
   );
+
+  useEffect(() => {
+    if (kickReason) quit(kickReason);
+  }, [kickReason, quit]);
 
   useEffect(() => {
     if (inactivityWarning === null || inactivityWarning <= 0) return;

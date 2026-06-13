@@ -282,7 +282,6 @@ export const handleKeys = (delta: number) => {
   handleKey(Key.Space, delta);
   handleKey(Key.KeyD, delta);
   handleKey(Key.KeyF, delta);
-  handleKey(Key.KeyE, delta);
 };
 
 const getPrevSeq = (seq: number) => {

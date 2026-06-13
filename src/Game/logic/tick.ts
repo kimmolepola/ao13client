@@ -44,7 +44,6 @@ export const initializeAuthoritativeState = () => {
         inputsSpace: 0, // 0-3
         inputsD: 0, // 0-3
         inputsF: 0, // 0-3
-        inputsE: 0, // 0-3
         health: 0,
         xEncoded: 0,
         yEncoded: 0,
@@ -95,7 +94,6 @@ export const initializeTicks = (ticks: types.TickStateObject[][]) => {
         inputsSpace: 0,
         inputsF: 0,
         inputsD: 0,
-        inputsE: 0,
         rotationSpeed: 0,
         verticalSpeed: 0,
         fuel: parameters.maxFuelKg,
@@ -151,7 +149,6 @@ export const handleReceiveAuthoritativeState = (
       o.health = r.health;
       o.inputsD = r.inputsD;
       o.inputsDown = r.inputsDown;
-      o.inputsE = r.inputsE;
       o.inputsF = r.inputsF;
       o.inputsLeft = r.inputsLeft;
       o.inputsRight = r.inputsRight;
@@ -324,7 +321,6 @@ const handleSimulationRollback = (
   o.inputsSpace = r.inputsSpace;
   o.inputsD = r.inputsD;
   o.inputsF = r.inputsF;
-  o.inputsE = r.inputsE;
 
   if (!isSame) {
     o.x = r.x;
@@ -472,7 +468,6 @@ const handleSimulation = (
       o.inputsSpace = r.inputsSpace;
       o.inputsD = r.inputsD;
       o.inputsF = r.inputsF;
-      o.inputsE = r.inputsE;
     }
 
     if (globals.state.ownRemoteObjectIndex !== i) {

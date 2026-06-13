@@ -29,7 +29,8 @@ export const onReceiveStringData = (
   onChangeObjectIds: (value: string[]) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
   onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
-  setInactivityWarning: (seconds: number) => void
+  setInactivityWarning: (seconds: number) => void,
+  setKickReason: (reason: string) => void
 ) => {
   switch (data.type) {
     case types.ServerDataType.BaseState: {
@@ -51,6 +52,10 @@ export const onReceiveStringData = (
     }
     case types.ServerDataType.InactivityWarning: {
       setInactivityWarning(data.secondsUntilDisconnect);
+      break;
+    }
+    case types.ServerDataType.ConnectionQualityKick: {
+      setKickReason("Disconnected: poor connection quality.");
       break;
     }
     default:

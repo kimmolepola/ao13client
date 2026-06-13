@@ -40,7 +40,6 @@ export const keys: Record<types.Key, boolean> = {
   [types.Key.Space]: false,
   [types.Key.KeyD]: false,
   [types.Key.KeyF]: false,
-  [types.Key.KeyE]: false,
 };
 
 export const curTickKeyValues: Record<string, number> = {
@@ -51,5 +50,4 @@ export const curTickKeyValues: Record<string, number> = {
   [types.Key.Space]: 0,
   [types.Key.KeyD]: 0,
   [types.Key.KeyF]: 0,
-  [types.Key.KeyE]: 0,
 };

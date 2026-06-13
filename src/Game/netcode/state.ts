@@ -17,20 +17,31 @@ const recentStates: types.RecentStates = {
   224: [],
 };
 
+const recentStateMaps: { [seqNum: number]: Map<number, types.AuthoritativeState> } = {
+  0: new Map(),
+  32: new Map(),
+  64: new Map(),
+  96: new Map(),
+  128: new Map(),
+  160: new Map(),
+  192: new Map(),
+  224: new Map(),
+};
+
 export const getRecentStateForDebug = () => recentStates;
 
-const getTargetRecentState = (curSeq: number) => {
+const getTargetSlotKey = (curSeq: number): number => {
   const maxSequenceNumber = parameters.stateMaxSequenceNumber;
   const sequenceNumbers = maxSequenceNumber + 1;
   const slotLength = parameters.recentStateSlotLength;
   const remainder = curSeq % slotLength;
   const slotStart = curSeq - remainder;
   const difference = slotStart - slotLength;
-  const previousSlotStart =
-    ((difference + sequenceNumbers) & maxSequenceNumber) >>> 0;
-  const recentState = recentStates[previousSlotStart];
-  return recentState;
+  return ((difference + sequenceNumbers) & maxSequenceNumber) >>> 0;
 };
+
+const getTargetRecentState = (curSeq: number) =>
+  recentStates[getTargetSlotKey(curSeq)];
 
 // Reused buffer — mutated and returned on every call. Consume all fields synchronously before any await.
 const receivedState: types.ReceivedState = {
@@ -48,7 +59,6 @@ const getinitialUpdateObject = () => ({
   inputsSpace: 0,
   inputsD: 0,
   inputsF: 0,
-  inputsE: 0,
   health: 0,
   xEncoded: 0,
   yEncoded: 0,
@@ -87,14 +97,10 @@ const resetReceivedState = () => {
 };
 
 const initializeRecentStates = () => {
-  recentStates[0] = [];
-  recentStates[32] = [];
-  recentStates[64] = [];
-  recentStates[96] = [];
-  recentStates[128] = [];
-  recentStates[160] = [];
-  recentStates[192] = [];
-  recentStates[224] = [];
+  for (const key of [0, 32, 64, 96, 128, 160, 192, 224]) {
+    recentStates[key] = [];
+    recentStateMaps[key].clear();
+  }
 };
 
 export const initializeState = () => {
@@ -104,6 +110,7 @@ export const initializeState = () => {
 
 const resetRecentState = (seqNum: number) => {
   recentStates[seqNum] = [];
+  recentStateMaps[seqNum].clear();
 };
 
 const getBit = (value: number, bitPosition: number) =>
@@ -157,7 +164,8 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
   receivedState.tick = sequenceNumber;
 
   save && resetRecentState(sequenceNumber);
-  const recentState = getTargetRecentState(sequenceNumber);
+  const targetSlotKey = getTargetSlotKey(sequenceNumber);
+  const recentState = recentStates[targetSlotKey];
 
   let offset = 1;
   let index = 0;
@@ -242,7 +250,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       : recentState[index]?.idOverNetwork || 0;
 
     const possibleRecentObjectState = idOverNetworkIsProvided
-      ? recentState.find((x) => x.idOverNetwork === idOverNetwork)
+      ? recentStateMaps[targetSlotKey].get(idOverNetwork)
       : recentState[index];
 
     const allValuesAreProvided =
@@ -368,12 +376,10 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       upd.inputsSpace = getTwoBitValue(inputs2, 0);
       upd.inputsD = getTwoBitValue(inputs2, 2);
       upd.inputsF = getTwoBitValue(inputs2, 4);
-      upd.inputsE = getTwoBitValue(inputs2, 6);
     } else {
       upd.inputsSpace = recent.inputsSpace;
       upd.inputsD = recent.inputsD;
       upd.inputsF = recent.inputsF;
-      upd.inputsE = recent.inputsE;
     }
 
     upd.verticalSpeed = verticalSpeedIsProvided
@@ -411,7 +417,9 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     }
 
     if (save) {
-      recentStates[sequenceNumber].push({ ...upd });
+      const saved = { ...upd };
+      recentStates[sequenceNumber].push(saved);
+      recentStateMaps[sequenceNumber].set(upd.idOverNetwork, saved);
       debug.debugSaveState(upd);
     }
     index++;

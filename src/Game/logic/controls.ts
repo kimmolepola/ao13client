@@ -17,7 +17,6 @@ export const handleAllReleased = () => {
   globals.keys[types.Key.Space] = false;
   globals.keys[types.Key.KeyD] = false;
   globals.keys[types.Key.KeyF] = false;
-  globals.keys[types.Key.KeyE] = false;
 };
 
 export const handleKeyDown = (e: any) => {

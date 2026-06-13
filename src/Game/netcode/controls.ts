@@ -35,7 +35,6 @@ export const twoBitTickVals: { [key in types.Key]: number } = {
   Space: 0,
   KeyD: 0,
   KeyF: 0,
-  KeyE: 0,
 };
 
 const handle2BitValue = (
@@ -52,7 +51,6 @@ const handle2BitValue = (
     key === types.Key.Space && (ownTickObj.inputsSpace = val);
     key === types.Key.KeyD && (ownTickObj.inputsD = val);
     key === types.Key.KeyF && (ownTickObj.inputsF = val);
-    key === types.Key.KeyE && (ownTickObj.inputsE = val);
   }
   twoBitTickVals[key] = val;
   set2BitValue(pos, val);
@@ -72,7 +70,6 @@ export const gatherControlsDataBinary = (
   handle2BitValue(Key.Space, 0, ownTickObj);
   handle2BitValue(Key.KeyD, 2, ownTickObj);
   handle2BitValue(Key.KeyF, 4, ownTickObj);
-  handle2BitValue(Key.KeyE, 6, ownTickObj);
 
   const byte2 = dataView.getUint8(1); // directional keys
   const byte3 = dataView.getUint8(2); // action keys

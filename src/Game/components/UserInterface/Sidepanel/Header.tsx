@@ -37,7 +37,7 @@ const Header = ({
         <button
           className="w-10 h-6 text-rose-900 border-2 active:brightness-80 text-xs font-bold"
           type="button"
-          onClick={onClickQuit}
+          onClick={() => onClickQuit()}
         >
           Quit
         </button>

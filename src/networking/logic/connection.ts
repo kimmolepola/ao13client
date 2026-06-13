@@ -52,7 +52,8 @@ const createPeerConnection = (
   onChangeObjectIds: (value: string[]) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
   onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
-  setInactivityWarning: (seconds: number) => void
+  setInactivityWarning: (seconds: number) => void,
+  setKickReason: (reason: string) => void
 ) => {
   onChangeConnectionMessage("Connecting to server...");
   const peerConnection = new RTCPeerConnection({
@@ -108,7 +109,8 @@ const createPeerConnection = (
         onChangeObjectIds,
         setChatMessages,
         onChangeStaticObjects,
-        setInactivityWarning
+        setInactivityWarning,
+        setKickReason
       );
     } catch (err) {
       console.log("String channel onmessage error:", data);
@@ -197,7 +199,8 @@ export const createOrUpdateHubConnection = (
   onChangeIsConnectedToGameServer: (value: boolean) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
   onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
-  setInactivityWarning: (seconds: number) => void
+  setInactivityWarning: (seconds: number) => void,
+  setKickReason: (reason: string) => void
 ) => {
   if (!hubConnectionRef.current) {
     hubConnectionRef.current = new HubConnectionBuilder()
@@ -240,7 +243,8 @@ export const createOrUpdateHubConnection = (
       onChangeObjectIds,
       setChatMessages,
       onChangeStaticObjects,
-      setInactivityWarning
+      setInactivityWarning,
+      setKickReason
     );
   });
 
@@ -270,7 +274,8 @@ export const createOrUpdateHubConnection = (
         onChangeObjectIds,
         setChatMessages,
         onChangeStaticObjects,
-        setInactivityWarning
+        setInactivityWarning,
+        setKickReason
       );
     peerConnectionHandleSignaling(msg, hubConnection);
   });
