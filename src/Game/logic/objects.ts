@@ -138,6 +138,8 @@ export const handleQuit = (
   onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
 ) => {
   globals.sharedObjects.length = 0;
+  globals.localObjects.length = 0;
+  globals.pendingLocalObjects.length = 0;
   onChangeObjectIds([]);
   onChangeStaticObjects([]);
 };

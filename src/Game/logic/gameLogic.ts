@@ -124,23 +124,20 @@ export const gameEventHandler = async (
 ) => {
   switch (gameEvent.type) {
     case types.EventType.HealthZero: {
-      const speed = 0;
-      const type = types.GameObjectType.Explosion;
+      const pos = gameEvent.o.object3d?.position.clone();
+      const positionZ = gameEvent.o.positionZ;
       const object3d = await localLoad(scene, types.GameObjectType.Explosion);
-      const timeToLive = 30000;
-
-      if (gameEvent.o.object3d) {
-        object3d?.position.copy(gameEvent.o.object3d.position);
-        gameEvent.o.object3d.visible = false;
+      if (object3d && pos) {
+        object3d.position.copy(pos);
       }
       globals.localObjects.push({
         id: "explosion" + gameEvent.o.idOverNetwork + gameEvent.sequenceNumber,
-        type,
-        speed,
+        type: types.GameObjectType.Explosion,
+        speed: 0,
         object3d,
-        timeToLive,
+        timeToLive: 30000,
         originId: gameEvent.o.idOverNetwork,
-        positionZ: gameEvent.o.positionZ,
+        positionZ,
       });
       break;
     }

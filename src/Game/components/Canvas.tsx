@@ -19,8 +19,6 @@ const scene = new Scene();
 const renderer = new WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
 
-localLoad(scene, types.GameObjectType.Background);
-
 const gameEventHandlerWrapper = (gameEvent: types.GameEvent) => {
   gameEventHandler(scene, gameEvent);
 };
@@ -37,6 +35,7 @@ const handleUnmount = (node: HTMLDivElement | null) => {
       obj.material?.dispose();
     }
   });
+  scene.clear();
 };
 
 const Canvas = ({
@@ -72,6 +71,7 @@ const Canvas = ({
 
   const handleMount = useCallback(
     (node: HTMLDivElement | null) => {
+      localLoad(scene, types.GameObjectType.Background);
       node?.appendChild(renderer.domElement);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();

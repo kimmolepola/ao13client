@@ -39,7 +39,7 @@ export const localLoad = (
 ) => {
   switch (meshName) {
     case types.GameObjectType.Explosion:
-      return loadMesh(scene, loadPlane, "explosion.png");
+      return loadMesh(scene, loadPlane, "explosion.png", [10, 10, 1]);
     case types.GameObjectType.Background:
       return loadMesh(scene, loadBackground);
     default:

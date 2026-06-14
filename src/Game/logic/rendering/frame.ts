@@ -357,11 +357,13 @@ const handleSharedObjects = (
           if (!authState.state[i].exists) {
             if (object3d.visible) {
               object3d.visible = false;
-              onGameEvent({
-                type: types.EventType.HealthZero,
-                o,
-                sequenceNumber: serverTickNumber,
-              });
+              if (prevAuthState.state[i].exists) {
+                onGameEvent({
+                  type: types.EventType.HealthZero,
+                  o,
+                  sequenceNumber: serverTickNumber,
+                });
+              }
             }
           } else {
             if (!object3d.visible) object3d.visible = true;
