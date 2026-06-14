@@ -17,17 +17,6 @@ const recentStates: types.RecentStates = {
   224: [],
 };
 
-const recentStateMaps: { [seqNum: number]: Map<number, types.AuthoritativeState> } = {
-  0: new Map(),
-  32: new Map(),
-  64: new Map(),
-  96: new Map(),
-  128: new Map(),
-  160: new Map(),
-  192: new Map(),
-  224: new Map(),
-};
-
 export const getRecentStateForDebug = () => recentStates;
 
 const getTargetSlotKey = (curSeq: number): number => {
@@ -99,7 +88,6 @@ const resetReceivedState = () => {
 const initializeRecentStates = () => {
   for (const key of [0, 32, 64, 96, 128, 160, 192, 224]) {
     recentStates[key] = [];
-    recentStateMaps[key].clear();
   }
 };
 
@@ -110,18 +98,10 @@ export const initializeState = () => {
 
 const resetRecentState = (seqNum: number) => {
   recentStates[seqNum] = [];
-  recentStateMaps[seqNum].clear();
 };
 
 const getBit = (value: number, bitPosition: number) =>
   !!((value >> bitPosition) & 1);
-
-const getUint24 = (view: DataView, offset: number) => {
-  const b0 = view.getUint8(offset);
-  const b1 = view.getUint8(offset + 1);
-  const b2 = view.getUint8(offset + 2);
-  return ((b0 << 16) | (b1 << 8) | b2) >>> 0;
-};
 
 const replaceWithChange = (
   oldValue: number,
@@ -132,11 +112,6 @@ const replaceWithChange = (
 ) => {
   if (differenceSignificance === 4) {
     const result = dataView.getUint32(offset);
-    return result;
-  }
-  if (differenceSignificance === 3) {
-    const change = getUint24(dataView, offset);
-    const result = ((oldValue & 0xff000000) | (change & 0x00ffffff)) >>> 0;
     return result;
   }
   if (differenceSignificance === 2) {
@@ -245,13 +220,13 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     const ordnanceChannel1IsProvided = getBit(providedValues17to24, 3);
     const ordnanceChannel2IsProvided = getBit(providedValues17to24, 4);
 
+    const refState = recentState[index];
     const idOverNetwork = idOverNetworkIsProvided
       ? getNextByte()
-      : recentState[index]?.idOverNetwork || 0;
+      : refState?.idOverNetwork ?? 0;
 
-    const possibleRecentObjectState = idOverNetworkIsProvided
-      ? recentStateMaps[targetSlotKey].get(idOverNetwork)
-      : recentState[index];
+    const possibleRecentObjectState =
+      refState?.idOverNetwork === idOverNetwork ? refState : undefined;
 
     const allValuesAreProvided =
       inputs1IsProvided &&
@@ -263,6 +238,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       rotationSpeedIsProvided &&
       speedIsProvided &&
       eventsIsProvided &&
+      eventsIdsIsProvided &&
       healthIsProvided &&
       fuelIsProvided &&
       inputs2IsProvided &&
@@ -419,7 +395,6 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
     if (save) {
       const saved = { ...upd };
       recentStates[sequenceNumber].push(saved);
-      recentStateMaps[sequenceNumber].set(upd.idOverNetwork, saved);
       debug.debugSaveState(upd);
     }
     index++;

@@ -360,6 +360,7 @@ const handleSharedObjects = (
               onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: serverTickNumber });
             }
           } else {
+            if (!object3d.visible) object3d.visible = true;
             if (i === globals.state.ownRemoteObjectIndex) {
               const deltaOrAccumulator = isTickFrame ? accumulator : delta;
               handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
