@@ -29,9 +29,6 @@ const getTargetSlotKey = (curSeq: number): number => {
   return ((difference + sequenceNumbers) & maxSequenceNumber) >>> 0;
 };
 
-const getTargetRecentState = (curSeq: number) =>
-  recentStates[getTargetSlotKey(curSeq)];
-
 // Reused buffer — mutated and returned on every call. Consume all fields synchronously before any await.
 const receivedState: types.ReceivedState = {
   tick: 0,
@@ -86,8 +83,8 @@ const resetReceivedState = () => {
 };
 
 const initializeRecentStates = () => {
-  for (const key of [0, 32, 64, 96, 128, 160, 192, 224]) {
-    recentStates[key] = [];
+  for (let i = 0; i < 8; i++) {
+    recentStates[i * 32] = [];
   }
 };
 
