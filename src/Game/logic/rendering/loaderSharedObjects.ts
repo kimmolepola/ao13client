@@ -36,7 +36,8 @@ const removeSharedObject = (scene: THREE.Scene, objectsIndex: number) => {
 
 export const updateRenderedSharedObjects = (
   objectIds: string[],
-  scene: THREE.Scene
+  scene: THREE.Scene,
+  onGameEvent?: (e: types.GameEvent) => void
 ) => {
   const os = globals.sharedObjects;
   for (let i = os.length - 1; i >= 0; i--) {
@@ -46,6 +47,9 @@ export const updateRenderedSharedObjects = (
         const isFound = o.object3d && scene.children.includes(o.object3d);
         !isFound && load(scene, loadFighter, o);
       } else {
+        if (o.object3d?.visible && onGameEvent) {
+          onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: 0 });
+        }
         removeSharedObject(scene, i);
       }
     }

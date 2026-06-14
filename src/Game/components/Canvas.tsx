@@ -62,7 +62,7 @@ const Canvas = ({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    updateRenderedSharedObjects(objectIds, scene);
+    updateRenderedSharedObjects(objectIds, scene, gameEventHandlerWrapper);
   }, [objectIds]);
 
   useEffect(() => {
