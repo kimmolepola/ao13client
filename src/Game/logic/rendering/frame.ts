@@ -374,6 +374,7 @@ const handleSharedObjects = (
                 authState.state,
                 prevAuthState.state
               );
+              o.health = authState.state[i].health;
             }
             handleDataBlock(o, object3d, camera, width, height);
           }
