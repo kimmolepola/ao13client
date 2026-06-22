@@ -47,7 +47,7 @@ export const updateRenderedSharedObjects = (
         const isFound = o.object3d && scene.children.includes(o.object3d);
         !isFound && load(scene, loadFighter, o);
       } else {
-        if (o.object3d?.visible && onGameEvent) {
+        if (o.object3d && onGameEvent) {
           onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: 0 });
         }
         removeSharedObject(scene, i);

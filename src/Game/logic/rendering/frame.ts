@@ -352,18 +352,9 @@ const handleSharedObjects = (
       if (o) {
         const object3d = o.object3d;
         if (object3d) {
-          // Fire explosion when the authoritative state says this slot no longer exists
-          // but the mesh is still visible in our scene.
           if (!authState.state[i].exists) {
-            if (object3d.visible) {
+            if (object3d.visible && prevAuthState.state[i].exists) {
               object3d.visible = false;
-              if (prevAuthState.state[i].exists) {
-                onGameEvent({
-                  type: types.EventType.HealthZero,
-                  o,
-                  sequenceNumber: serverTickNumber,
-                });
-              }
             }
           } else {
             if (!object3d.visible) object3d.visible = true;
