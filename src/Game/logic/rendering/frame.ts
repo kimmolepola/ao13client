@@ -6,18 +6,11 @@ import * as utils from "src/utils";
 import * as parameters from "src/parameters";
 import * as globals from "src/globals";
 import * as debug from "../../debug/debug";
-import * as gameLogic from "../gameLogic";
+import { authoritativeStates } from "../tick";
 
-import { gatherControlsDataBinary } from "../../netcode/controls";
-
-const positionAlpha = parameters.objectPositionInterpolationAlpha;
-const rotationAlpha = parameters.objectRotationInterpolationAlpha;
 const cameraPositionAlpha = parameters.cameraPositionInterpolationAlpha;
 const cameraRotationAlpha = parameters.cameraRotationInterpolationAlpha;
-
 const cameraTarget = new THREE.Vector3(0, 0, parameters.cameraDefaultZ);
-
-let deltaCumulative = 0;
 const localObjectsRemoveIndexes: number[] = [];
 
 const normalizeAngle = (a: number) => {
@@ -30,12 +23,13 @@ const normalizeAngle = (a: number) => {
 const previousCameraPosition = new THREE.Vector3();
 let previousCameraRotation = NaN;
 const handleCamera = (
-  camPosAlpha: number,
-  camRotAlpha: number,
+  delta: number,
   camera: THREE.Camera,
-  o: types.SharedGameObject,
   object3d: THREE.Mesh
 ) => {
+  const camPosAlpha = 1 - Math.exp(-cameraPositionAlpha * delta);
+  const camRotAlpha = 1 - Math.exp(-cameraRotationAlpha * delta);
+
   previousCameraPosition.copy(camera.position);
   previousCameraRotation = camera.rotation.z;
 
@@ -60,22 +54,19 @@ const handleRadarBoxItem = (
   object3d: THREE.Mesh,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>
 ) => {
+  const x = object3d.position.x;
+  const y = object3d.position.y;
   if (
-    o.previousPosition[0] === object3d.position.x.toFixed(0) &&
-    o.previousPosition[1] === object3d.position.y.toFixed(0)
+    o.previous2DecimalTruncatedPositionX === (x | 0) &&
+    o.previous2DecimalTruncatedPositionY === (y | 0)
   ) {
     return;
   }
-  const radarItemStyle = radarBoxRef.current?.[o.id]?.current?.style;
-  const objectPosition = object3d?.position;
-  if (radarItemStyle && objectPosition) {
-    radarItemStyle.transform = `translate3d(${
-      objectPosition.x * globals.dimensions.worldToRadarPositionRatio +
-      globals.dimensions.radarBoxHalfWidth
-    }px, ${
-      -objectPosition.y * globals.dimensions.worldToRadarPositionRatio +
-      globals.dimensions.radarBoxHalfWidth
-    }px, 0)`;
+  const wrr = globals.dimensions.worldToRadarPositionRatio;
+  const rhw = globals.dimensions.radarBoxHalfWidth;
+  const style = radarBoxRef.current?.[o.id]?.current?.style;
+  if (style) {
+    style.transform = `translate3d(${x * wrr + rhw}px, ${-y * wrr + rhw}px, 0)`;
   }
 };
 
@@ -88,14 +79,14 @@ const handleInfoBox = (
     const degree = Math.round(utils.radiansToDegrees(-object3d.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
     infoBoxRef.current.textContent = `
-    x: ${object3d.position.x.toFixed()} ${(object3d.position.x * 20).toFixed()}
-    y: ${object3d.position.y.toFixed()} ${(object3d.position.y * 20).toFixed()}
-    z: ${o.positionZ.toFixed(0)}
+    x: ${object3d.position.x | 0} ${(object3d.position.x * 20) | 0}
+    y: ${object3d.position.y | 0} ${(object3d.position.y * 20) | 0}
+    z: ${o.positionZ | 0}
     heading: ${heading}
     speed: ${o.speed.toFixed(1)}
-    health: ${o.health.toFixed(0)}
+    health: ${o.health | 0}
     fuel: ${o.fuel.toFixed(2)}
-    ammo: ${o.bullets}
+    ammo: ${o.bulletCount}
     ${
       debug.debugOn.value
         ? `
@@ -112,47 +103,38 @@ const handleInfoBox = (
   }
 };
 
-const handleLocalObject = (
-  delta: number,
-  gameObject: types.LocalGameObject,
-  object3d: THREE.Mesh
-) => {
-  const o = gameObject;
-  object3d.translateY(o.speed * parameters.speedFactor * delta);
-  o.speed *= parameters.bulletSpeedReductionFactor;
-  o.timeToLive -= delta;
-  return o.timeToLive < 0;
-};
-
-const handleMovement = (
+const handleLocalPlayerMovement = (
   delta: number,
   o: types.SharedGameObject,
-  object3d: THREE.Mesh
+  object3d: THREE.Object3D
 ) => {
   const p = parameters;
 
   //
   // 1. INPUT → VELOCITY
   //
-  const up = Math.min(o.controlsUp, delta);
-  const down = Math.min(o.controlsDown, delta);
-  const left = Math.min(o.controlsLeft, delta);
-  const right = Math.min(o.controlsRight, delta);
-  const d = Math.min(o.controlsD, delta);
-  const f = Math.min(o.controlsF, delta);
+  const frameScale = delta / (1000 / 60);
+  const left = globals.keys.ArrowLeft ? frameScale : 0;
+  const right = globals.keys.ArrowRight ? frameScale : 0;
+  const d = globals.keys.KeyD ? frameScale : 0;
+  const f = globals.keys.KeyF ? frameScale : 0;
 
-  o.controlsUp -= up;
-  o.controlsDown -= down;
-  o.controlsLeft -= left;
-  o.controlsRight -= right;
-  o.controlsD -= d;
-  o.controlsF -= f;
+  const dt = delta / 1000;
+  const throttle = globals.keys.ArrowUp ? types.inputFull : 0;
+  const brake = globals.keys.ArrowDown ? types.inputFull : 0;
+  const thrustFactor =
+    p.thrustMinFactor +
+    (1 - p.thrustMinFactor) * Math.min(o.speed / p.thrustRampSpeed, 1);
+  o.speed +=
+    (throttle * p.thrustForce * thrustFactor -
+      p.dragCoefficient * o.speed * o.speed -
+      brake * p.brakeForce) *
+    dt;
 
-  o.speed += up * p.forceUpToSpeedFactor;
-  o.speed -= down * p.forceDownToSpeedFactor;
-
-  o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor;
-  o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor;
+  const leftBrake = left > 0 && o.rotationSpeed < 0 ? 4 : 1;
+  const rightBrake = right > 0 && o.rotationSpeed > 0 ? 4 : 1;
+  o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor * leftBrake;
+  o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor * rightBrake;
 
   o.verticalSpeed -= d * p.forceAscOrDescToVerticalSpeedFactor;
   o.verticalSpeed += f * p.forceAscOrDescToVerticalSpeedFactor;
@@ -174,13 +156,13 @@ const handleMovement = (
   // 3. APPLY DAMPING (time‑based exponential)
   //
   if (!left && !right) {
-    const decay = Math.exp(-p.rotationDecay * delta);
+    const decay = p.rotationDecay ** (delta / (1000 / 60));
     o.rotationSpeed *= decay;
     if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
   }
 
   if (!d && !f) {
-    const decay = Math.exp(-p.verticalDecay * delta);
+    const decay = p.verticalDecay ** (delta / (1000 / 60));
     o.verticalSpeed *= decay;
     if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
   }
@@ -188,12 +170,14 @@ const handleMovement = (
   //
   // 4. INTEGRATE VELOCITIES → TRANSFORM
   //
-  o.previousPosition = [
-    object3d.position.x.toFixed(0),
-    object3d.position.y.toFixed(0),
-    o.positionZ,
-  ];
-  o.previousRotation = object3d.rotation.z;
+  o.previous2DecimalTruncatedPositionX =
+    ((object3d.position.x * 100) | 0) / 100;
+  o.previous2DecimalTruncatedPositionY =
+    ((object3d.position.y * 100) | 0) / 100;
+  o.previous2DecimalTruncatedPositionZ = ((o.positionZ * 100) | 0) / 100;
+  o.previous3DecimalTruncatedRotationZ =
+    ((object3d.rotation.z * 1000) | 0) / 1000;
+
   object3d.rotateZ(o.rotationSpeed * p.rotationFactor * delta);
   object3d.translateY(o.speed * p.speedFactor * delta);
   o.positionZ += o.verticalSpeed * p.verticalSpeedFactor * delta;
@@ -201,6 +185,7 @@ const handleMovement = (
 
 // const down = new THREE.Vector3(0, -1, 0);
 const dataBlockPosition = new THREE.Vector3();
+
 const handleDataBlock = (
   o: types.SharedGameObject,
   object3d: THREE.Mesh,
@@ -214,9 +199,10 @@ const handleDataBlock = (
     camera.position.y === previousCameraPosition.y &&
     camera.position.z === previousCameraPosition.z &&
     camera.rotation.z === previousCameraRotation &&
-    o.previousPosition[0] === position.x.toFixed(0) &&
-    o.previousPosition[1] === position.y.toFixed(0) &&
-    o.previousRotation === object3d.rotation.z
+    o.previous2DecimalTruncatedPositionX === ((position.x * 100) | 0) / 100 &&
+    o.previous2DecimalTruncatedPositionY === ((position.y * 100) | 0) / 100 &&
+    o.previous3DecimalTruncatedRotationZ ===
+      ((object3d.rotation.z * 1000) | 0) / 1000
   ) {
     return;
   }
@@ -247,107 +233,373 @@ const handleDataBlock = (
   }
 };
 
-const interpolatePositionAndRotaion = (
-  posAlpha: number,
-  rotAlpha: number,
-  o: types.SharedGameObject,
+const handleLocalObject = (
+  delta: number,
+  gameObject: types.LocalGameObject,
   object3d: THREE.Mesh
 ) => {
-  // position interpolation
-  object3d.position.lerp(o.backendPosition, posAlpha);
-  o.positionZ += (o.backendPositionZ - o.positionZ) * posAlpha;
-
-  // rotation interpolation
-  const current = normalizeAngle(object3d.rotation.z);
-  const target = normalizeAngle(o.backendRotationZ);
-  const diff = normalizeAngle(target - current);
-  object3d.rotation.z = current + diff * rotAlpha;
+  const o = gameObject;
+  object3d.translateY(o.speed * parameters.speedFactor * delta);
+  o.speed *=
+    parameters.bulletSpeedReductionFactor ** (delta / parameters.tickInterval);
+  o.timeToLive -= delta;
+  return o.timeToLive < 0;
 };
 
 const handleLocalObjects = (
   delta: number,
-  scene: THREE.Scene,
-  gameEventHandler: types.GameEventHandler
+  onGameEvent: (e: types.GameEvent) => void
 ) => {
-  for (let i = globals.localObjects.length - 1; i > -1; i--) {
+  for (let i = 0; i < globals.localObjects.length; i++) {
     const o = globals.localObjects[i];
     if (o && o.object3d) {
       const remove = handleLocalObject(delta, o, o.object3d);
       remove && localObjectsRemoveIndexes.push(i);
     }
   }
-  gameEventHandler(scene, {
+  onGameEvent({
     type: types.EventType.RemoveLocalObjectIndexes,
     data: localObjectsRemoveIndexes,
   });
   localObjectsRemoveIndexes.splice(0, localObjectsRemoveIndexes.length);
 };
 
-const handleObjects = (
+const Key = types.Key;
+const keys = globals.keys;
+const curTickKeyValues = globals.curTickKeyValues;
+
+const handleKey = (key: types.Key, delta: number) => {
+  if (keys[key]) {
+    curTickKeyValues[key] += delta;
+  }
+};
+
+export const handleKeys = (delta: number) => {
+  handleKey(Key.ArrowUp, delta);
+  handleKey(Key.ArrowDown, delta);
+  handleKey(Key.ArrowLeft, delta);
+  handleKey(Key.ArrowRight, delta);
+  handleKey(Key.Space, delta);
+  handleKey(Key.KeyD, delta);
+  handleKey(Key.KeyF, delta);
+};
+
+const getPrevSeq = (seq: number) => {
+  return (seq - 1) & 0xff;
+};
+
+const interpolateRemoteObjectPositionAndRotation = (
+  o: types.SharedGameObject,
+  alpha: number,
+  state: types.AuthoritativeState[],
+  prevState: types.AuthoritativeState[]
+) => {
+  const a = state[o.idOverNetwork];
+  const pa = prevState[o.idOverNetwork];
+  const o3d = o.object3d;
+  if (o3d) {
+    o3d.position.x = pa.x + (a.x - pa.x) * alpha;
+    o3d.position.y = pa.y + (a.y - pa.y) * alpha;
+    o3d.rotation.z =
+      pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * alpha;
+    o.positionZ = pa.z + (a.z - pa.z) * alpha;
+  }
+};
+
+let nextInfoUpdate = Date.now();
+
+function subtractSeq8(a: number, b: number) {
+  return (a - b) & 0xff;
+}
+
+const handleSharedObjects = (
+  isTickFrame: boolean,
   delta: number,
+  accumulator: number,
+  tickNumber: number,
+  offset: number,
   camera: THREE.Camera,
-  scene: THREE.Scene,
   width: number,
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler,
-  sendControlsData: (data: ArrayBuffer) => void
+  debugContentRef: RefObject<HTMLDivElement>,
+  onGameEvent: (e: types.GameEvent) => void
 ) => {
-  deltaCumulative += delta;
-  const posAlpha = 1 - Math.exp(-positionAlpha * delta);
-  const rotAlpha = 1 - Math.exp(-rotationAlpha * delta);
-  const camPosAlpha = 1 - Math.exp(-cameraPositionAlpha * delta);
-  const camRotAlpha = 1 - Math.exp(-cameraRotationAlpha * delta);
+  const serverTickNumber = subtractSeq8(tickNumber, offset);
+  // const serverTickNumber = getPrevSeq(getPrevSeq(getPrevSeq(tickNumber)));
+  const authState = authoritativeStates[serverTickNumber];
+  const prevAuthState = authoritativeStates[getPrevSeq(serverTickNumber)];
+  const alpha = accumulator / parameters.tickInterval;
 
-  for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
-    const o = globals.sharedObjects[i];
-    if (o && o.object3d) {
-      if (o.object3d.visible) {
-        gameLogic.checkHealth(scene, o, gameEventHandler);
-        if (o.isMe) {
-          gameLogic.handleKeys(delta, o);
-          handleInfoBox(o, o.object3d, infoBoxRef);
-          if (deltaCumulative > parameters.clientSendInterval) {
-            const controlsData = gatherControlsDataBinary(o, deltaCumulative);
-            deltaCumulative = 0;
-            if (controlsData) {
-              sendControlsData(controlsData);
+  if (debug.debugOn.value && debugContentRef.current) {
+    debugContentRef.current.textContent =
+      "offset: " +
+      (tickNumber - serverTickNumber) +
+      ", server rotationZ: " +
+      authState.state[0].rotationZ.toFixed(2) +
+      ", local rotationZ: " +
+      globals.sharedObjects[0]?.object3d?.rotation.z.toFixed(2) +
+      ", x: " +
+      (globals.sharedObjects[0]?.object3d?.position.x.toFixed(2) || 0) +
+      ", y: " +
+      (globals.sharedObjects[0]?.object3d?.position.y.toFixed(2) || 0);
+  }
+
+  if (!prevAuthState.isStale && !authState.isStale) {
+    for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+      const o = globals.sharedObjects[i];
+      if (o) {
+        const object3d = o.object3d;
+        if (object3d) {
+          if (!authState.state[i].exists) {
+            if (object3d.visible && prevAuthState.state[i].exists) {
+              object3d.visible = false;
             }
+          } else {
+            if (!object3d.visible) object3d.visible = true;
+            if (i === globals.state.ownRemoteObjectIndex) {
+              const deltaOrAccumulator = isTickFrame ? accumulator : delta;
+              handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
+              if (nextInfoUpdate < Date.now()) {
+                nextInfoUpdate = Date.now() + 1000;
+                handleInfoBox(o, object3d, infoBoxRef);
+                handleRadarBoxItem(o, object3d, radarBoxRef);
+              }
+              handleCamera(delta, camera, object3d);
+            } else {
+              interpolateRemoteObjectPositionAndRotation(
+                o,
+                alpha,
+                authState.state,
+                prevAuthState.state
+              );
+            }
+            handleDataBlock(o, object3d, camera, width, height);
           }
         }
-        handleMovement(delta, o, o.object3d);
-        gameLogic.handleShot(scene, delta, o, gameEventHandler);
       }
-      interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
-      o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
-      !o.isMe && handleDataBlock(o, o.object3d, camera, width, height);
-      handleRadarBoxItem(o, o.object3d, radarBoxRef);
     }
   }
 };
 
-export const runFrame = (
+export const handleFrame = (
+  isTickFrame: boolean,
   delta: number,
+  accumulator: number,
+  tickNumber: number,
+  offset: number,
   camera: THREE.Camera,
-  scene: THREE.Scene,
   width: number,
   height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
-  gameEventHandler: types.GameEventHandler,
-  sendControlsData: (data: ArrayBuffer) => void
+  debugContentRef: RefObject<HTMLDivElement>,
+  onGameEvent: (e: types.GameEvent) => void
 ) => {
-  handleLocalObjects(delta, scene, gameEventHandler);
-  handleObjects(
+  handleSharedObjects(
+    isTickFrame,
     delta,
+    accumulator,
+    tickNumber,
+    offset,
     camera,
-    scene,
     width,
     height,
     infoBoxRef,
     radarBoxRef,
-    gameEventHandler,
-    sendControlsData
+    debugContentRef,
+    onGameEvent
   );
+  handleLocalObjects(delta, onGameEvent);
 };
+
+// const handleObjects = (
+//   delta: number,
+//   camera: THREE.Camera,
+//   scene: THREE.Scene,
+//   width: number,
+//   height: number,
+//   infoBoxRef: RefObject<HTMLDivElement>,
+//   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+//   gameEventHandler: types.GameEventHandler,
+//   sendControlsData: (data: ArrayBuffer) => void
+// ) => {
+//   deltaCumulative += delta;
+//   const posAlpha = 1 - Math.exp(-positionAlpha * delta);
+//   const rotAlpha = 1 - Math.exp(-rotationAlpha * delta);
+//   const camPosAlpha = 1 - Math.exp(-cameraPositionAlpha * delta);
+//   const camRotAlpha = 1 - Math.exp(-cameraRotationAlpha * delta);
+
+//   for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
+//     const o = globals.sharedObjects[i];
+//     if (o && o.object3d) {
+//       if (o.object3d.visible) {
+//         gameLogic.checkHealth(scene, o, gameEventHandler);
+//         if (o.isMe) {
+//           gameLogic.handleKeys(delta, o);
+//           handleInfoBox(o, o.object3d, infoBoxRef);
+//           if (deltaCumulative > parameters.clientSendInterval) {
+//             const controlsData = gatherControlsDataBinary(o, deltaCumulative);
+//             deltaCumulative = 0;
+//             if (controlsData) {
+//               sendControlsData(controlsData);
+//             }
+//           }
+//         }
+//         handleMovement(delta, o, o.object3d);
+//         gameLogic.handleShot(scene, delta, o, gameEventHandler);
+//       }
+//       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
+//       o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
+//       !o.isMe && handleDataBlock(o, o.object3d, camera, width, height);
+//       handleRadarBoxItem(o, o.object3d, radarBoxRef);
+//     }
+//   }
+// // };
+
+// export const deadReckon = (delta: number) => {
+//   for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+//     const positionObject = globals.positionObjects[i];
+//     const sharedObject = globals.sharedObjects[i];
+//     const p = positionObject;
+
+//     const up = Math.min(sharedObject.inputsUp, delta);
+//     const down = Math.min(sharedObject.inputsDown, delta);
+//     const left = Math.min(sharedObject.inputsLeft, delta);
+//     const right = Math.min(sharedObject.inputsRight, delta);
+//     const d = Math.min(sharedObject.inputsD, delta);
+//     const f = Math.min(sharedObject.inputsF, delta);
+
+//     sharedObject.inputsUp -= up;
+//     sharedObject.inputsDown -= down;
+//     sharedObject.inputsLeft -= left;
+//     sharedObject.inputsRight -= right;
+//     sharedObject.inputsD -= d;
+//     sharedObject.inputsF -= f;
+
+//     p.speed += up * parameters.forceUpToSpeedFactor;
+//     p.speed -= down * parameters.forceDownToSpeedFactor;
+
+//     p.rotationSpeed += left * parameters.forceLeftOrRightToRotationFactor;
+//     p.rotationSpeed -= right * parameters.forceLeftOrRightToRotationFactor;
+
+//     p.verticalSpeed -= d * parameters.forceAscOrDescToVerticalSpeedFactor;
+//     p.verticalSpeed += f * parameters.forceAscOrDescToVerticalSpeedFactor;
+
+//     //
+//     // 2. CLAMP VELOCITIES
+//     //
+//     p.speed = Math.min(
+//       Math.max(p.speed, parameters.minSpeed),
+//       parameters.maxSpeed
+//     );
+//     p.rotationSpeed = Math.min(
+//       Math.max(p.rotationSpeed, -parameters.maxRotationSpeedAbsolute),
+//       parameters.maxRotationSpeedAbsolute
+//     );
+//     p.verticalSpeed = Math.min(
+//       Math.max(p.verticalSpeed, -parameters.maxVerticalSpeedAbsolute),
+//       parameters.maxVerticalSpeedAbsolute
+//     );
+
+//     //
+//     // 3. APPLY DAMPING (time‑based exponential)
+//     //
+//     if (!left && !right) {
+//       const decay = Math.exp(-parameters.rotationDecay * delta);
+//       p.rotationSpeed *= decay;
+//       if (Math.abs(p.rotationSpeed) < 0.00001) p.rotationSpeed = 0;
+//     }
+
+//     if (!d && !f) {
+//       const decay = Math.exp(-parameters.verticalDecay * delta);
+//       p.verticalSpeed *= decay;
+//       if (Math.abs(p.verticalSpeed) < 0.00001) p.verticalSpeed = 0;
+//     }
+//   }
+// };
+
+// export const handleAnimationFrame = (
+//   isTickFrame: boolean,
+//   delta: number,
+//   camera: THREE.Camera,
+//   scene: THREE.Scene,
+//   width: number,
+//   height: number,
+//   infoBoxRef: RefObject<HTMLDivElement>,
+//   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+//   handleGameEvent: (e: types.GameEvent) => void
+// ) => {
+//   handleKeys(delta);
+//   handleLocalObjects(isTickFrame, delta, handleGameEvent);
+//   handleObjects(
+//     isTickFrame,
+//     delta,
+//     camera,
+//     scene,
+//     width,
+//     height,
+//     infoBoxRef,
+//     radarBoxRef,
+//     handleGameEvent
+//   );
+// };
+
+// const handleObjects = (
+//   isTickFrame: boolean,
+//   delta: number,
+//   camera: THREE.Camera,
+//   scene: THREE.Scene,
+//   width: number,
+//   height: number,
+//   infoBoxRef: RefObject<HTMLDivElement>,
+//   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
+//   handleGameEvent: (e: types.GameEvent) => void
+// ) => {
+//   deltaCumulative += delta;
+//   const posAlpha = 1 - Math.exp(-positionAlpha * delta);
+//   const rotAlpha = 1 - Math.exp(-rotationAlpha * delta);
+//   const camPosAlpha = 1 - Math.exp(-cameraPositionAlpha * delta);
+//   const camRotAlpha = 1 - Math.exp(-cameraRotationAlpha * delta);
+
+//   for (let i = globals.sharedObjects.length - 1; i > -1; i--) {
+//     const o = globals.sharedObjects[i];
+//     if (o && o.object3d) {
+//       if (o.object3d.visible) {
+//         // gameLogic.checkHealth(o, handleGameEvent);
+//         if (o.isMe) {
+//           gameLogic.handleKeys(delta, o);
+//           handleInfoBox(o, o.object3d, infoBoxRef);
+//         }
+//         handleLocalPlayerMovement(delta, o, o.object3d);
+//         // gameLogic.handleShot(delta, o, handleGameEvent);
+//       }
+//       interpolatePositionAndRotaion(posAlpha, rotAlpha, o, o.object3d);
+//       o.isMe && handleCamera(camPosAlpha, camRotAlpha, camera, o, o.object3d);
+//       !o.isMe && handleDataBlock(o, o.object3d, camera, width, height);
+//       handleRadarBoxItem(o, o.object3d, radarBoxRef);
+//     }
+//   }
+// };
+
+// const interpolatePositionAndRotaion = (
+//   posAlpha: number,
+//   rotAlpha: number,
+//   o: types.SharedGameObject,
+//   object3d: THREE.Mesh
+// ) => {
+//   // position interpolation
+//   object3d.position.lerp(o.backendPosition, posAlpha);
+//   o.positionZ += (o.backendPositionZ - o.positionZ) * posAlpha;
+
+//   // rotation interpolation
+//   const current = normalizeAngle(object3d.rotation.z);
+//   const target = normalizeAngle(o.backendRotationZ);
+//   const diff = normalizeAngle(target - current);
+//   object3d.rotation.z = current + diff * rotAlpha;
+// };
+
+// const positionAlpha = parameters.objectPositionInterpolationAlpha;
+// const rotationAlpha = parameters.objectRotationInterpolationAlpha;
+// let deltaCumulative = 0;

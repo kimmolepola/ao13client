@@ -28,7 +28,9 @@ export const onReceiveStringData = (
   ) => void,
   onChangeObjectIds: (value: string[]) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void,
+  setKickReason: (reason: string) => void
 ) => {
   switch (data.type) {
     case types.ServerDataType.BaseState: {
@@ -39,13 +41,25 @@ export const onReceiveStringData = (
       const message = {
         ...data,
         username:
-          sharedObjects.find((x) => x.id === data.userId)?.username || "",
+          sharedObjects.find((x) => x?.id === data.userId)?.username || "",
       };
       setChatMessages((x) => [message, ...x]);
       setTimeout(
         () => setChatMessages((x) => x.filter((xx) => xx !== message)),
         chatMessageTimeToLive
       );
+      break;
+    }
+    case types.ServerDataType.InactivityWarning: {
+      setInactivityWarning(data.secondsUntilDisconnect);
+      break;
+    }
+    case types.ServerDataType.ConnectionQualityKick: {
+      setKickReason("Disconnected: poor connection quality.");
+      break;
+    }
+    case types.ServerDataType.YouDied: {
+      setKickReason("You were shot down.");
       break;
     }
     default:
@@ -55,7 +69,7 @@ export const onReceiveStringData = (
 
 export const onReceiveState = (
   data: ArrayBuffer,
-  handleReceiveState: (updateObjects: types.UpdateObject[]) => void
+  handleReceiveState: (receivedState: types.ReceivedState) => void
 ) => {
   debug.receiveState(data);
   const dataView = new DataView(data);
@@ -65,7 +79,7 @@ export const onReceiveState = (
   if (save) {
     ackView[0] = sequenceNumber;
     sendAck(ackView.buffer);
-    debug.debug(sequenceNumber);
+    // debug.debug(sequenceNumber);
   }
 
   const isNewer = sequenceNumberIsNewer(
@@ -73,10 +87,12 @@ export const onReceiveState = (
     mostRecentSequenceNumber
   );
 
-  if (isNewer || save) {
+  if (isNewer) {
     mostRecentSequenceNumber = sequenceNumber;
-    const updateObjects = handleReceiveStateData(dataView, save);
-    isNewer && updateObjects && handleReceiveState(updateObjects);
+  }
+  if (isNewer || save) {
+    const receivedState = handleReceiveStateData(dataView, save);
+    isNewer && receivedState && handleReceiveState(receivedState);
   }
   if (!isNewer) {
     debug.statistics.outOfSequence++;

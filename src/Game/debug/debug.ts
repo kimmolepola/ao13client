@@ -35,7 +35,7 @@ const createGUI = (camera: THREE.Camera) => {
   cameraFolder.add(camera.position, "y", -10000, 10000);
   cameraFolder.add(camera.position, "x", -10, 10);
   cameraFolder.add(camera.position, "y", -10, 10);
-  cameraFolder.add(camera.position, "z", 0, 10);
+  cameraFolder.add(camera.position, "z", 0, 100);
   cameraFolder
     .add(camRot, "pitch", -Math.PI / 2, Math.PI / 2)
     .onChange(() => updateCamera(camera));
@@ -56,7 +56,7 @@ const removeGUI = () => {
 
 const handleObjects = () => {
   globals.sharedObjects.forEach((x) =>
-    x.object3d?.material.forEach((xx: any, i) => {
+    x?.object3d?.material.forEach((xx: any, i) => {
       xx.wireframe = i !== 4 && debugOn.value;
       xx.needsUpdate = i !== 4 && debugOn.value;
     })
@@ -169,7 +169,7 @@ export const debug = (stateSequenceNumber: number) => {
   });
 };
 
-export const debugSaveState = (updateObject: types.UpdateObject) => {
+export const debugSaveState = (updateObject: types.AuthoritativeState) => {
   if (!debugOn.value) return;
   console.log("SaveState:", updateObject);
 };

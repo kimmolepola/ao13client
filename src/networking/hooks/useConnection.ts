@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useState,
   Dispatch,
   SetStateAction,
   useRef,
@@ -21,9 +22,12 @@ export const useConnection = (
   onChangeIsConnectedToGameServer: (value: boolean) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
   onChangeObjectIds: (value: string[]) => void,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void
 ) => {
   const hubConnectionRef = useRef<HubConnection>();
+  const [kickReason, setKickReason] = useState<string | null>(null);
+  const handleKickReason = useCallback((reason: string) => setKickReason(reason), []);
 
   useEffect(() => {
     initializeState();
@@ -39,7 +43,9 @@ export const useConnection = (
         onChangeConnectionMessage,
         onChangeIsConnectedToGameServer,
         setChatMessages,
-        onChangeStaticObjects
+        onChangeStaticObjects,
+        setInactivityWarning,
+        handleKickReason
       );
       hubConnectionRef.current = hubConnection;
     }
@@ -50,6 +56,8 @@ export const useConnection = (
     onChangeIsConnectedToGameServer,
     setChatMessages,
     onChangeStaticObjects,
+    setInactivityWarning,
+    handleKickReason,
   ]);
 
   const disconnect = useCallback(async () => {
@@ -68,5 +76,5 @@ export const useConnection = (
     onChangeStaticObjects,
   ]);
 
-  return { disconnect };
+  return { disconnect, kickReason };
 };

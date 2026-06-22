@@ -19,6 +19,7 @@ import {
 } from "../logic/controls";
 import { useConnection } from "src/networking/hooks/useConnection";
 import { useView } from "../hooks/useView";
+import { debugOn } from "../debug/debug";
 
 const Container = ({
   user,
@@ -27,7 +28,7 @@ const Container = ({
 }: {
   user: types.User | undefined;
   iceServers: types.IceServerInfo[] | undefined;
-  onChangePage: (page: "frontpage" | "game") => void;
+  onChangePage: (page: "frontpage" | "game", reason?: string) => void;
 }) => {
   const [isConnectedToGameServer, setIsConnectedToGameServer] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState<string>();
@@ -36,9 +37,14 @@ const Container = ({
     types.BaseStateStaticObject[]
   >([]);
   const [chatMessages, setChatMessages] = useState<types.ChatMessage[]>([]);
+  const [inactivityWarning, setInactivityWarning] = useState<number | null>(
+    null
+  );
 
   const infoBoxRef = useRef<HTMLDivElement>(null);
   const radarBoxRef = useRef<{ [id: string]: RefObject<HTMLDivElement> }>({});
+  const debugContentRef = useRef<HTMLDivElement>(null);
+  const syncInfoRef = useRef<HTMLDivElement>(null);
 
   const onChangeStaticObjects = useCallback(
     (value: types.BaseStateStaticObject[]) => {
@@ -47,19 +53,57 @@ const Container = ({
     []
   );
 
-  const { disconnect } = useConnection(
+  const handleSetInactivityWarning = useCallback((seconds: number) => {
+    setInactivityWarning(seconds);
+  }, []);
+
+  const { disconnect, kickReason } = useConnection(
     iceServers,
     setConnectionMessage,
     setIsConnectedToGameServer,
     setChatMessages,
     setObjectIds,
-    onChangeStaticObjects
+    onChangeStaticObjects,
+    handleSetInactivityWarning
   );
 
-  const quit = useCallback(async () => {
-    await disconnect();
-    onChangePage("frontpage");
-  }, [onChangePage, disconnect]);
+  const quit = useCallback(
+    async (reason?: string) => {
+      await disconnect();
+      onChangePage("frontpage", reason);
+    },
+    [onChangePage, disconnect]
+  );
+
+  useEffect(() => {
+    if (kickReason) quit(kickReason);
+  }, [kickReason, quit]);
+
+  useEffect(() => {
+    if (inactivityWarning === null || inactivityWarning <= 0) return;
+    const clear = () => setInactivityWarning(null);
+    window.addEventListener("keydown", clear);
+    window.addEventListener("touchstart", clear);
+    return () => {
+      window.removeEventListener("keydown", clear);
+      window.removeEventListener("touchstart", clear);
+    };
+  }, [inactivityWarning]);
+
+  useEffect(() => {
+    if (inactivityWarning === null || inactivityWarning <= 0) return;
+    const timer = setInterval(() => {
+      setInactivityWarning((prev) =>
+        prev !== null && prev > 0 ? prev - 1 : prev
+      );
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [inactivityWarning]);
+
+  useEffect(() => {
+    if (inactivityWarning !== 0) return;
+    quit("You were disconnected due to inactivity.");
+  }, [inactivityWarning, quit]);
 
   const {
     canvasStyle,
@@ -84,6 +128,12 @@ const Container = ({
     };
   }, []);
 
+  const [debug, setDebug] = useState(false);
+  const onDebug = useCallback(() => {
+    setDebug(!debug);
+    debugOn.value = !debug;
+  }, [debug]);
+
   return (
     <div className="w-full h-full bg-rose-50">
       <Canvas
@@ -94,6 +144,8 @@ const Container = ({
         radarBoxRef={radarBoxRef}
         objectIds={objectIds}
         staticObjects={staticObjects}
+        debugContentRef={debugContentRef}
+        syncInfoRef={syncInfoRef}
       />
       <Overlay
         style={canvasStyle}
@@ -103,6 +155,10 @@ const Container = ({
         objectIds={objectIds}
         staticObjects={staticObjects}
         radarBoxSize={radarBoxSize}
+        debugContentRef={debugContentRef}
+        debugIsOn={debug}
+        syncInfoRef={syncInfoRef}
+        inactivityWarning={inactivityWarning}
       />
       <Sidepanel
         username={user?.username}
@@ -114,6 +170,8 @@ const Container = ({
         onChangePosition={onChangePosition}
         onChangeDiameter={onChangeDiameter}
         quit={quit}
+        debugIsOn={debug}
+        onDebug={onDebug}
       />
     </div>
   );

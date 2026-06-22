@@ -15,11 +15,13 @@ const LoggedIn = ({
   onChangeUser,
   onChangePage,
   onChangeIceServers,
+  disconnectReason,
 }: {
   user: types.User | undefined;
   onChangeUser: (user: types.User | undefined) => void;
-  onChangePage: (page: "frontpage" | "game") => void;
+  onChangePage: (page: "frontpage" | "game", reason?: string) => void;
   onChangeIceServers: (value: types.IceServerInfo[]) => void;
+  disconnectReason?: string;
 }) => {
   const location = useLocation();
 
@@ -82,6 +84,11 @@ const LoggedIn = ({
                 {"\u21BB"}
               </button>
             </div>
+            {disconnectReason && (
+              <div className="text-amber-700 dark:text-amber-400">
+                {disconnectReason}
+              </div>
+            )}
             {errorText && (
               <div className={theme.cValidationError}>{errorText}</div>
             )}

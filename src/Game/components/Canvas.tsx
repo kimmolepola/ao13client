@@ -1,11 +1,7 @@
-import { useEffect, useRef, memo, RefObject } from "react";
-import * as THREE from "three";
+import { useEffect, useRef, memo, RefObject, useCallback } from "react";
+import { Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import * as parameters from "src/parameters";
-import {
-  startAnimation,
-  stopAnimation,
-} from "src/Game/logic/rendering/animation";
-import { runFrame } from "../logic/rendering/frame";
+import { startGameLoop, stopGameLoop } from "src/Game/logic/loop";
 import { sendControlsData } from "src/networking/logic/send";
 import { gameEventHandler } from "../logic/gameLogic";
 import { localLoad } from "../logic/rendering/loaderLocalObjects";
@@ -13,17 +9,34 @@ import { updateRenderedSharedObjects } from "../logic/rendering/loaderSharedObje
 import { updateRenderedStaticObjects } from "../logic/rendering/loaderStaticObjects";
 import * as types from "src/types";
 
-const camera = new THREE.PerspectiveCamera(
+const camera = new PerspectiveCamera(
   30,
   undefined,
-  parameters.cameraDefaultZ - 10,
+  parameters.cameraDefaultZ / 2,
   parameters.cameraDefaultZ + 1
 );
-const scene = new THREE.Scene();
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const scene = new Scene();
+const renderer = new WebGLRenderer({ antialias: true });
 camera.position.setZ(parameters.cameraDefaultZ);
 
-localLoad(scene, types.GameObjectType.Background);
+const gameEventHandlerWrapper = (gameEvent: types.GameEvent) => {
+  gameEventHandler(scene, gameEvent);
+};
+
+const handleUnmount = (node: HTMLDivElement | null) => {
+  node?.removeChild(renderer.domElement);
+  stopGameLoop();
+  scene.traverse((obj) => {
+    if (!(obj instanceof Mesh)) return;
+    obj.geometry?.dispose();
+    if (Array.isArray(obj.material)) {
+      obj.material.forEach((m) => m.dispose());
+    } else {
+      obj.material?.dispose();
+    }
+  });
+  scene.clear();
+};
 
 const Canvas = ({
   width,
@@ -33,6 +46,8 @@ const Canvas = ({
   radarBoxRef,
   objectIds,
   staticObjects,
+  debugContentRef,
+  syncInfoRef,
 }: {
   width: number;
   height: number;
@@ -41,43 +56,50 @@ const Canvas = ({
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>;
   objectIds: string[];
   staticObjects: types.BaseStateStaticObject[];
+  debugContentRef: RefObject<HTMLDivElement>;
+  syncInfoRef: RefObject<HTMLDivElement>;
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height);
-  }, [width, height]);
-
-  useEffect(() => {
-    updateRenderedSharedObjects(objectIds, scene);
+    updateRenderedSharedObjects(objectIds, scene, gameEventHandlerWrapper);
   }, [objectIds]);
 
   useEffect(() => {
     updateRenderedStaticObjects(staticObjects, scene);
   }, [staticObjects]);
 
+  const handleMount = useCallback(
+    (node: HTMLDivElement | null) => {
+      localLoad(scene, types.GameObjectType.Background);
+      node?.appendChild(renderer.domElement);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+      startGameLoop(
+        camera,
+        scene,
+        renderer,
+        width,
+        height,
+        infoBoxRef,
+        radarBoxRef,
+        debugContentRef,
+        syncInfoRef,
+        gameEventHandlerWrapper,
+        sendControlsData
+      );
+    },
+    [width, height, infoBoxRef, radarBoxRef, debugContentRef, syncInfoRef]
+  );
+
   useEffect(() => {
     const node = canvasRef.current;
-    node?.appendChild(renderer.domElement);
-    startAnimation(
-      camera,
-      scene,
-      renderer,
-      width,
-      height,
-      infoBoxRef,
-      radarBoxRef,
-      gameEventHandler,
-      sendControlsData,
-      runFrame
-    );
+    handleMount(node);
     return () => {
-      node?.removeChild(renderer.domElement);
-      stopAnimation();
+      handleUnmount(node);
     };
-  }, [width, height, infoBoxRef, radarBoxRef]);
+  }, [handleMount]);
 
   return <div ref={canvasRef} className="absolute inset-0" style={style} />;
 };

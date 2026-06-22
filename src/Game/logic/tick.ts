@@ -1,0 +1,559 @@
+import * as parameters from "src/parameters";
+import * as types from "src/types";
+import * as globals from "src/globals";
+import { gatherControlsDataBinary } from "../netcode/controls";
+import * as utils from "src/utils";
+
+const object3d = utils.object3d;
+const axis = utils.AXIS_Z;
+
+// outer array index is tickNumber
+// inner array index is idOverNetwork
+// const ticks: types.TickStateObject[][] = [];
+
+// array index is tickNumber
+const ticksLocalObjects: types.TickLocalObjects[] = [];
+
+export const tickState = {
+  latestAuthTickNumber: 0,
+};
+
+export const authoritativeStates: {
+  isStale: boolean;
+  state: types.AuthoritativeState[];
+}[] = []; // outer array index is tickNumber, inner array index is idOverNetwork
+
+const isNewerSeqNum = (received: number, old: number) => {
+  return ((received - old) & 0xff) < 128;
+};
+
+export const initializeAuthoritativeState = () => {
+  authoritativeStates.length = 0;
+  ticksLocalObjects.length = 0;
+  for (let i = 0; i < parameters.stateMaxSequenceNumber + 1; i++) {
+    authoritativeStates[i] = { isStale: true, state: [] };
+    ticksLocalObjects[i] = [];
+    for (let ii = 0; ii < parameters.maxRemoteObjects; ii++) {
+      authoritativeStates[i].state[ii] = {
+        exists: false,
+        idOverNetwork: ii,
+        inputsUp: 0, // 0-3
+        inputsDown: 0, // 0-3
+        inputsLeft: 0, // 0-3
+        inputsRight: 0, // 0-3
+        inputsSpace: 0, // 0-3
+        inputsD: 0, // 0-3
+        inputsF: 0, // 0-3
+        health: 0,
+        xEncoded: 0,
+        yEncoded: 0,
+        x: 0,
+        y: 0,
+        z: 0,
+        speed: 0,
+        rotationZEncoded: 0,
+        rotationZ: 0,
+        rotationSpeed: 0,
+        fuel: 0,
+        ordnanceChannel1Id: 0,
+        ordnanceChannel1Byte1: 0,
+        ordnanceChannel1Byte2: 0,
+        ordnanceChannel2Id: 0,
+        ordnanceChannel2Byte1: 0,
+        ordnanceChannel2Byte2: 0,
+        eventsEncoded: 0,
+        gameEventIds: [[], [], [], []],
+        verticalSpeed: 0,
+      };
+    }
+  }
+};
+
+export const initializeTicks = (ticks: types.TickStateObject[][]) => {
+  ticks.length = 0;
+  ticksLocalObjects.length = 0;
+  for (let i = 0; i < parameters.stateMaxSequenceNumber + 1; i++) {
+    ticks[i] = [];
+    ticksLocalObjects[i] = [];
+    for (let ii = 0; ii < parameters.maxRemoteObjects; ii++) {
+      ticks[i][ii] = {
+        rollback: false,
+        id: "",
+        idOverNetwork: ii,
+        health: 100,
+        type: types.GameObjectType.Fighter,
+        x: 0,
+        y: 0,
+        z: 1000,
+        rotationZ: 0,
+        speed: 0,
+        inputsUp: 0,
+        inputsDown: 0,
+        inputsLeft: 0,
+        inputsRight: 0,
+        inputsSpace: 0,
+        inputsF: 0,
+        inputsD: 0,
+        rotationSpeed: 0,
+        verticalSpeed: 0,
+        fuel: parameters.maxFuelKg,
+        bulletCount: 0,
+        ordnanceChannel1Id: 0,
+        ordnanceChannel1Byte1: 0,
+        ordnanceChannel1Byte2: 0,
+        ordnanceChannel2Id: 0,
+        ordnanceChannel2Byte1: 0,
+        ordnanceChannel2Byte2: 0,
+        shotDelay: 0,
+        gameEventIds: [],
+      };
+    }
+  }
+};
+
+export const handleTick = (
+  ticks: types.TickStateObject[][],
+  tickNumber: number,
+  offset: number,
+  handleGameEvent: (e: types.GameEvent) => void,
+  sendControlsData: (data: ArrayBuffer) => void
+) => {
+  const ownIdOverNetwork = globals.state.ownRemoteObjectIndex;
+  const hasValidIndex = ownIdOverNetwork !== undefined && ownIdOverNetwork >= 0;
+  const ownTickObj = hasValidIndex
+    ? ticks[tickNumber][ownIdOverNetwork!]
+    : undefined;
+  handleControlsData(sendControlsData, tickNumber, ownTickObj);
+  handleSimulation(ticks, tickNumber, offset, handleGameEvent);
+  if (hasValidIndex) {
+    handleLocalEvents(ticks, tickNumber, ownIdOverNetwork, handleGameEvent);
+    applyCurState(ticks, tickNumber, ownIdOverNetwork!);
+  }
+};
+
+export const handleReceiveAuthoritativeState = (
+  receivedState: types.ReceivedState
+) => {
+  if (isNewerSeqNum(receivedState.tick, tickState.latestAuthTickNumber)) {
+    tickState.latestAuthTickNumber = receivedState.tick;
+  }
+  const tickAuthState = authoritativeStates[receivedState.tick];
+  tickAuthState.isStale = false;
+  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+    const o = tickAuthState.state[i];
+    const r = receivedState.state[i];
+    o.exists = r.exists;
+    if (r.exists) {
+      o.eventsEncoded = r.eventsEncoded;
+      o.fuel = r.fuel;
+      o.health = r.health;
+      o.inputsD = r.inputsD;
+      o.inputsDown = r.inputsDown;
+      o.inputsF = r.inputsF;
+      o.inputsLeft = r.inputsLeft;
+      o.inputsRight = r.inputsRight;
+      o.inputsSpace = r.inputsSpace;
+      o.inputsUp = r.inputsUp;
+      o.ordnanceChannel1Id = r.ordnanceChannel1Id;
+      o.ordnanceChannel1Byte1 = r.ordnanceChannel1Byte1;
+      o.ordnanceChannel1Byte2 = r.ordnanceChannel1Byte2;
+      o.ordnanceChannel2Id = r.ordnanceChannel2Id;
+      o.ordnanceChannel2Byte1 = r.ordnanceChannel2Byte1;
+      o.ordnanceChannel2Byte2 = r.ordnanceChannel2Byte2;
+      o.gameEventIds = r.gameEventIds;
+      o.rotationSpeed = r.rotationSpeed;
+      o.rotationZ = r.rotationZ;
+      o.rotationZEncoded = r.rotationZEncoded;
+      o.speed = r.speed;
+      o.verticalSpeed = r.verticalSpeed;
+      o.x = r.x;
+      o.xEncoded = r.xEncoded;
+      o.y = r.y;
+      o.yEncoded = r.yEncoded;
+      o.z = r.z;
+    }
+  }
+};
+
+const getBit = (value: number, bitPosition: number) =>
+  !!((value >> bitPosition) & 1);
+
+const handleEventsRollback = (
+  localTickNumber: number,
+  idOverNetwork: number,
+  r: types.AuthoritativeState,
+  ticks: types.TickStateObject[][],
+  curSeq: number,
+  pSeq: number,
+  ppSeq: number,
+  pppSeq: number,
+  handleGameEvent: (e: types.GameEvent) => void
+) => {
+  const curObj = ticks[curSeq][idOverNetwork];
+  const pObj = ticks[pSeq][idOverNetwork];
+  const ppObj = ticks[ppSeq][idOverNetwork];
+  const pppObj = ticks[pppSeq][idOverNetwork];
+
+  const curGameEventIds = curObj.gameEventIds;
+  const pGameEventIds = pObj.gameEventIds;
+  const ppGameEventIds = ppObj.gameEventIds;
+  const pppGameEventIds = pppObj.gameEventIds;
+
+  const rCurGameEventIds = getBit(r.eventsEncoded, 0) ? r.gameEventIds[0] : [];
+  const rPGameEventIds = getBit(r.eventsEncoded, 1) ? r.gameEventIds[1] : [];
+  const rPpGameEventIds = getBit(r.eventsEncoded, 2) ? r.gameEventIds[2] : [];
+  const rPppGameEventIds = getBit(r.eventsEncoded, 3) ? r.gameEventIds[3] : [];
+
+  const gameEventsDiffer = (a: number[], b: number[]) =>
+    a.length !== b.length || a.some((id, i) => id !== b[i]);
+
+  const updateEventsArray = (a: number[], b: number[]) => {
+    a.length = b.length;
+    for (let i = 0; i < b.length; i++) {
+      a[i] = b[i];
+    }
+  };
+
+  if (gameEventsDiffer(pppGameEventIds, rPppGameEventIds)) {
+    if (rPppGameEventIds.includes(0) && !pppGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: pppSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
+    updateEventsArray(pppGameEventIds, rPppGameEventIds);
+  }
+
+  if (gameEventsDiffer(ppGameEventIds, rPpGameEventIds)) {
+    if (rPpGameEventIds.includes(0) && !ppGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: ppSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
+    updateEventsArray(ppGameEventIds, rPpGameEventIds);
+  }
+
+  if (gameEventsDiffer(pGameEventIds, rPGameEventIds)) {
+    if (rPGameEventIds.includes(0) && !pGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: pSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
+    updateEventsArray(pGameEventIds, rPGameEventIds);
+  }
+
+  if (gameEventsDiffer(curGameEventIds, rCurGameEventIds)) {
+    if (rCurGameEventIds.includes(0) && !curGameEventIds.includes(0)) {
+      handleGameEvent({
+        type: types.EventType.ShotRollback as const,
+        localTickNumber,
+        sequenceNumber: curSeq,
+        originId: idOverNetwork,
+        ticks,
+        ticksLocalObjects,
+      });
+    }
+    updateEventsArray(curGameEventIds, rCurGameEventIds);
+  }
+};
+
+const nearlyEqual = (a: number, b: number, eps = 1e-12) => {
+  return Math.abs(a - b) < eps;
+};
+
+const handleSimulationRollback = (
+  localTickNumber: number,
+  receivedTickNumber: number,
+  idOverNetwork: number,
+  r: types.AuthoritativeState,
+  ticksAttr: types.TickStateObject[][]
+) => {
+  const tick = ticksAttr[receivedTickNumber];
+  const o = tick[idOverNetwork];
+  const isSame =
+    nearlyEqual(r.x, o.x) &&
+    nearlyEqual(r.y, o.y) &&
+    nearlyEqual(r.rotationZ, o.rotationZ, 0.001) &&
+    nearlyEqual(r.rotationSpeed, o.rotationSpeed, 1.0) &&
+    nearlyEqual(r.speed, o.speed, 1.0) &&
+    nearlyEqual(r.health, o.health) &&
+    nearlyEqual(r.fuel, o.fuel, parameters.networkToFuelRatio) &&
+    nearlyEqual(r.verticalSpeed, o.verticalSpeed, 1.0) &&
+    nearlyEqual(r.z, o.z, 1.0) &&
+    nearlyEqual(r.ordnanceChannel1Byte1, o.ordnanceChannel1Byte1) &&
+    nearlyEqual(r.ordnanceChannel1Byte2, o.ordnanceChannel1Byte2) &&
+    nearlyEqual(r.ordnanceChannel2Byte1, o.ordnanceChannel2Byte1) &&
+    r.ordnanceChannel1Id === o.ordnanceChannel1Id &&
+    r.ordnanceChannel2Id === o.ordnanceChannel2Id;
+
+  // TODO: handle if differences due to rounding errors but practically same
+
+  o.inputsUp = r.inputsUp;
+  o.inputsDown = r.inputsDown;
+  o.inputsLeft = r.inputsLeft;
+  o.inputsRight = r.inputsRight;
+  o.inputsSpace = r.inputsSpace;
+  o.inputsD = r.inputsD;
+  o.inputsF = r.inputsF;
+
+  if (!isSame) {
+    o.x = r.x;
+    o.y = r.y;
+    o.rotationZ = r.rotationZ;
+    o.rotationSpeed = r.rotationSpeed;
+    o.speed = r.speed;
+    o.health = r.health;
+    o.fuel = r.fuel;
+    o.verticalSpeed = r.verticalSpeed;
+    o.z = r.z;
+    o.ordnanceChannel1Id = r.ordnanceChannel1Id;
+    o.ordnanceChannel1Byte1 = r.ordnanceChannel1Byte1;
+    o.ordnanceChannel1Byte2 = r.ordnanceChannel1Byte2;
+    o.ordnanceChannel2Id = r.ordnanceChannel2Id;
+    o.ordnanceChannel2Byte1 = r.ordnanceChannel2Byte1;
+    o.ordnanceChannel2Byte2 = r.ordnanceChannel2Byte2;
+  }
+
+  if (receivedTickNumber !== localTickNumber) {
+    let s = receivedTickNumber;
+    const nextLocalTickNumber = getNextSeq(localTickNumber);
+    while (s !== nextLocalTickNumber) {
+      const prevTick = ticksAttr[s];
+      const prev = prevTick[idOverNetwork];
+      s = getNextSeq(s);
+      const curTick = ticksAttr[s];
+      const cur = curTick[idOverNetwork];
+      handleMovement(cur, prev);
+      cur.health = prev.health;
+      cur.fuel = prev.fuel - cur.speed * 0.0001;
+      cur.ordnanceChannel1Id = prev.ordnanceChannel1Id;
+      cur.ordnanceChannel1Byte1 = prev.ordnanceChannel1Byte1;
+      cur.ordnanceChannel1Byte2 = prev.ordnanceChannel1Byte2;
+      cur.ordnanceChannel2Id = prev.ordnanceChannel2Id;
+      cur.ordnanceChannel2Byte1 = prev.ordnanceChannel2Byte1;
+      cur.ordnanceChannel2Byte2 = prev.ordnanceChannel2Byte2;
+      if (cur.gameEventIds.includes(0)) {
+        const count =
+          (cur.ordnanceChannel1Byte1 << 8) | cur.ordnanceChannel1Byte2;
+        const newCount = Math.max(0, count - 10);
+        cur.ordnanceChannel1Byte1 = (newCount >> 8) & 0xff;
+        cur.ordnanceChannel1Byte2 = newCount & 0xff;
+      }
+    }
+  }
+};
+
+const applyCurState = (
+  ticks: types.TickStateObject[][],
+  tickNumber: number,
+  idOverNetwork: number
+) => {
+  const t = ticks[tickNumber][idOverNetwork];
+  const s = globals.sharedObjects[idOverNetwork];
+  const o3d = s?.object3d;
+  if (s && o3d) {
+    o3d.position.x = t.x;
+    o3d.position.y = t.y;
+    o3d.rotation.z = t.rotationZ;
+    s.positionZ = t.z;
+    s.rotationSpeed = t.rotationSpeed;
+    s.speed = t.speed;
+    s.verticalSpeed = t.verticalSpeed;
+    s.bulletCount = (t.ordnanceChannel1Byte1 << 8) | t.ordnanceChannel1Byte2;
+    s.fuel = t.fuel;
+    s.health = t.health;
+  }
+};
+
+function subtractSeq8(a: number, b: number) {
+  return (a - b) & 0xff;
+}
+
+const handleLocalEvents = (
+  ticksAttr: types.TickStateObject[][],
+  tickNumber: number,
+  idOverNetwork: number,
+  handleGameEvent: (e: types.GameEvent) => void
+) => {
+  const cur = ticksAttr[tickNumber][idOverNetwork];
+  const prev = ticksAttr[getPrevSeq(tickNumber)][idOverNetwork];
+
+  cur.gameEventIds.length = 0;
+  let shotDelay = prev.shotDelay;
+  if (shotDelay > 0) {
+    shotDelay -= parameters.tickInterval;
+  }
+  const prevBullets =
+    (prev.ordnanceChannel1Byte1 << 8) | prev.ordnanceChannel1Byte2;
+  if (shotDelay <= 0 && cur.inputsSpace > 0 && prevBullets > 0) {
+    shotDelay += parameters.shotDelay;
+    cur.gameEventIds.push(0);
+    const curBullets = prevBullets - 10;
+    cur.ordnanceChannel1Byte1 = (curBullets >> 8) & 0xff;
+    cur.ordnanceChannel1Byte2 = curBullets & 0xff;
+    handleGameEvent({
+      type: types.EventType.Shot as const,
+      sequenceNumber: tickNumber,
+      tickStateObject: cur,
+    });
+  }
+  cur.shotDelay = shotDelay;
+};
+
+const handleSimulation = (
+  ticks: types.TickStateObject[][],
+  tickNumber: number,
+  offset: number,
+  handleGameEvent: (e: types.GameEvent) => void
+) => {
+  const authStateTickNum = subtractSeq8(tickNumber, offset);
+  const authState = authoritativeStates[authStateTickNum];
+  const prevPrevAuthState =
+    authoritativeStates[getPrevSeq(getPrevSeq(authStateTickNum))];
+  prevPrevAuthState.isStale = true;
+  if (authState.isStale) {
+    return;
+  }
+
+  const pSeq = getPrevSeq(authStateTickNum);
+  const ppSeq = getPrevSeq(pSeq);
+  const pppSeq = getPrevSeq(ppSeq);
+
+  for (let i = 0; i < parameters.maxRemoteObjects; i++) {
+    const r = authState.state[i];
+
+    if (globals.state.ownRemoteObjectIndex === i) {
+      handleSimulationRollback(tickNumber, authStateTickNum, i, r, ticks);
+    } else {
+      const o = ticks[tickNumber][i];
+      o.inputsUp = r.inputsUp;
+      o.inputsDown = r.inputsDown;
+      o.inputsLeft = r.inputsLeft;
+      o.inputsRight = r.inputsRight;
+      o.inputsSpace = r.inputsSpace;
+      o.inputsD = r.inputsD;
+      o.inputsF = r.inputsF;
+    }
+
+    if (globals.state.ownRemoteObjectIndex !== i) {
+      handleEventsRollback(
+        tickNumber,
+        i,
+        r,
+        ticks,
+        authStateTickNum,
+        pSeq,
+        ppSeq,
+        pppSeq,
+        handleGameEvent
+      );
+    }
+  }
+};
+
+const getPrevSeq = (seq: number) => {
+  return (seq - 1) & 0xff;
+};
+
+const getNextSeq = (seq: number) => {
+  return (seq + 1) & 0xff;
+};
+
+const handleControlsData = (
+  sendControlsData: (data: ArrayBuffer) => void,
+  tickNumber: number,
+  ownTickObj: types.TickStateObject | undefined
+) => {
+  const controlsData = gatherControlsDataBinary(tickNumber, ownTickObj);
+  if (controlsData) {
+    sendControlsData(controlsData);
+  }
+};
+
+const p = parameters;
+const handleMovement = (
+  currentTickObject: types.TickStateObject,
+  previousTickObject: types.TickStateObject
+) => {
+  const prev = previousTickObject;
+  const o = currentTickObject;
+
+  //
+  // 1. INPUT → VELOCITY
+  //
+  o.speed = prev.speed;
+  const dt = p.tickInterval / 1000;
+  const thrustFactor =
+    p.thrustMinFactor +
+    (1 - p.thrustMinFactor) * Math.min(prev.speed / p.thrustRampSpeed, 1);
+  o.speed +=
+    (o.inputsUp * p.thrustForce * thrustFactor -
+      p.dragCoefficient * prev.speed * prev.speed -
+      o.inputsDown * p.brakeForce) *
+    dt;
+
+  o.rotationSpeed = prev.rotationSpeed;
+  const leftBrake = o.inputsLeft > 0 && prev.rotationSpeed < 0 ? 4 : 1;
+  const rightBrake = o.inputsRight > 0 && prev.rotationSpeed > 0 ? 4 : 1;
+  o.rotationSpeed +=
+    o.inputsLeft * p.forceLeftOrRightToRotationFactor * leftBrake;
+  o.rotationSpeed -=
+    o.inputsRight * p.forceLeftOrRightToRotationFactor * rightBrake;
+
+  o.verticalSpeed = prev.verticalSpeed;
+  o.verticalSpeed += o.inputsF * p.forceAscOrDescToVerticalSpeedFactor;
+  o.verticalSpeed -= o.inputsD * p.forceAscOrDescToVerticalSpeedFactor;
+
+  //
+  // 2. CLAMP VELOCITIES
+  //
+  o.speed = Math.min(Math.max(o.speed, p.minSpeed), p.maxSpeed);
+  o.rotationSpeed = Math.min(
+    Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
+    p.maxRotationSpeedAbsolute
+  );
+  o.verticalSpeed = Math.min(
+    Math.max(o.verticalSpeed, -p.maxVerticalSpeedAbsolute),
+    p.maxVerticalSpeedAbsolute
+  );
+
+  //
+  // 3. APPLY DAMPING (time‑based exponential)
+  //
+  if (!o.inputsLeft && !o.inputsRight) {
+    const decay = p.rotationDecay ** (p.tickInterval / (1000 / 60));
+    o.rotationSpeed *= decay;
+    if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
+  }
+
+  if (!o.inputsD && !o.inputsF) {
+    const decay = p.verticalDecay ** (p.tickInterval / (1000 / 60));
+    o.verticalSpeed *= decay;
+    if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
+  }
+
+  object3d.position.set(prev.x, prev.y, 0);
+  object3d.setRotationFromAxisAngle(axis, prev.rotationZ);
+  object3d.rotateZ(o.rotationSpeed * p.rotationFactor * p.tickInterval);
+  object3d.translateY(o.speed * p.speedFactor * p.tickInterval);
+  o.x = object3d.position.x;
+  o.y = object3d.position.y;
+  o.rotationZ = object3d.rotation.z;
+
+  o.z = prev.z;
+  o.z += o.verticalSpeed * p.verticalSpeedFactor * p.tickInterval;
+};

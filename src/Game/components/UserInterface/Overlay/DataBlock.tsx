@@ -12,7 +12,7 @@ const InfoText = ({ gameObject }: { gameObject: types.SharedGameObject }) => {
 
   return (
     <div
-      className="absolute text-white text-xs pointer-events-none"
+      className="absolute text-white text-xs pointer-events-none select-none"
       ref={containerRef}
     >
       <div className="border-r border-neutral-500/40 w-1/2 h-40">&nbsp;</div>

@@ -7,11 +7,12 @@ import InfoBox from "./InfoBox";
 import ControlButtons from "./ControlButtons";
 import RadarBox from "./RadarBox";
 import * as types from "src/types";
+import DebugContainer from "src/Game/debug/DebugContainer";
 
-const InfoTexts = () => (
+const DataBlocks = () => (
   <>
     {globals.sharedObjects.reduce((acc: JSX.Element[], cur) => {
-      acc.push(<DataBlock key={cur.id} gameObject={cur} />);
+      if (cur) acc.push(<DataBlock key={cur.id} gameObject={cur} />);
       return acc;
     }, [])}
   </>
@@ -28,6 +29,10 @@ const Container = ({
   objectIds,
   staticObjects,
   radarBoxSize,
+  debugContentRef,
+  debugIsOn,
+  syncInfoRef,
+  inactivityWarning,
 }: {
   style: Object;
   infoBoxRef: RefObject<HTMLDivElement>;
@@ -36,10 +41,14 @@ const Container = ({
   objectIds: string[];
   staticObjects: types.BaseStateStaticObject[];
   radarBoxSize: { width: number; height: number };
+  debugContentRef: RefObject<HTMLDivElement>;
+  debugIsOn: boolean;
+  syncInfoRef: RefObject<HTMLDivElement>;
+  inactivityWarning: number | null;
 }) => {
   return (
     <div className="absolute inset-0 z-1" style={style}>
-      <InfoTexts />
+      <DataBlocks />
       <ConnectingBox visible={!isConnectedToGameServer} />
       {isConnectedToGameServer && <InfoBox infoBoxRef={infoBoxRef} />}
       <ControlButtons />
@@ -49,6 +58,18 @@ const Container = ({
         staticObjects={staticObjects}
         radarBoxSize={radarBoxSize}
       />
+      <DebugContainer debugContentRef={debugContentRef} debugIsOn={debugIsOn} />
+      {isConnectedToGameServer ? (
+        <div
+          className="w-80 h-40 flex justify-center items-center bg-white/75 absolute top-5 left-1/2 -translate-x-[50%]"
+          ref={syncInfoRef}
+        />
+      ) : null}
+      {inactivityWarning !== null && (
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-yellow-400 text-black font-bold px-6 py-3 rounded shadow-lg text-center pointer-events-none">
+          Disconnecting in {inactivityWarning}s due to inactivity
+        </div>
+      )}
     </div>
   );
 };

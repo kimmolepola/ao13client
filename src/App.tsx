@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import Game from "./Game/components/Container";
 import Frontpage from "./Frontpage";
@@ -13,6 +13,7 @@ const App = () => {
   const [iceServers, setIceServers] = useState<
     types.IceServerInfo[] | undefined
   >();
+  const [disconnectReason, setDisconnectReason] = useState<string>();
 
   useTokenRefresh(user, setUser);
   const { loadSavedUser } = frontpageHooks.useAuth(setUser);
@@ -21,15 +22,24 @@ const App = () => {
     loadSavedUser();
   }, [loadSavedUser]);
 
+  const handleChangePage = useCallback(
+    (p: "frontpage" | "game", reason?: string) => {
+      setPage(p);
+      setDisconnectReason(reason);
+    },
+    []
+  );
+
   return page === "frontpage" ? (
     <Frontpage
       user={user}
       onChangeUser={setUser}
-      onChangePage={setPage}
+      onChangePage={handleChangePage}
       onChangeIceServers={setIceServers}
+      disconnectReason={disconnectReason}
     />
   ) : (
-    <Game user={user} iceServers={iceServers} onChangePage={setPage} />
+    <Game user={user} iceServers={iceServers} onChangePage={handleChangePage} />
   );
 };
 

@@ -51,7 +51,9 @@ const createPeerConnection = (
   onChangeIsConnectedToGameServer: (value: boolean) => void,
   onChangeObjectIds: (value: string[]) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void,
+  setKickReason: (reason: string) => void
 ) => {
   onChangeConnectionMessage("Connecting to server...");
   const peerConnection = new RTCPeerConnection({
@@ -100,12 +102,15 @@ const createPeerConnection = (
   stringChannel.onmessage = ({ data }: { data: string }) => {
     try {
       const d = JSON.parse(data);
+      // console.log("--stringchannel d:", d);
       onReceiveStringData(
         d,
         handleReceiveBaseState,
         onChangeObjectIds,
         setChatMessages,
-        onChangeStaticObjects
+        onChangeStaticObjects,
+        setInactivityWarning,
+        setKickReason
       );
     } catch (err) {
       console.log("String channel onmessage error:", data);
@@ -115,6 +120,7 @@ const createPeerConnection = (
   controlsChannel.binaryType = "arraybuffer";
   stateChannel.binaryType = "arraybuffer";
   stateChannel.onmessage = ({ data }: { data: ArrayBuffer }) => {
+    // console.log("--onmessage:", data);
     onReceiveState(data, handleReceiveState);
   };
 
@@ -192,7 +198,9 @@ export const createOrUpdateHubConnection = (
   onChangeConnectionMessage: (value: string | undefined) => void,
   onChangeIsConnectedToGameServer: (value: boolean) => void,
   setChatMessages: Dispatch<SetStateAction<types.ChatMessage[]>>,
-  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void
+  onChangeStaticObjects: (value: types.BaseStateStaticObject[]) => void,
+  setInactivityWarning: (seconds: number) => void,
+  setKickReason: (reason: string) => void
 ) => {
   if (!hubConnectionRef.current) {
     hubConnectionRef.current = new HubConnectionBuilder()
@@ -234,7 +242,9 @@ export const createOrUpdateHubConnection = (
       onChangeIsConnectedToGameServer,
       onChangeObjectIds,
       setChatMessages,
-      onChangeStaticObjects
+      onChangeStaticObjects,
+      setInactivityWarning,
+      setKickReason
     );
   });
 
@@ -263,7 +273,9 @@ export const createOrUpdateHubConnection = (
         onChangeIsConnectedToGameServer,
         onChangeObjectIds,
         setChatMessages,
-        onChangeStaticObjects
+        onChangeStaticObjects,
+        setInactivityWarning,
+        setKickReason
       );
     peerConnectionHandleSignaling(msg, hubConnection);
   });

@@ -1,31 +1,26 @@
-import axios from "axios";
 import { backendUrl } from "src/config";
 import * as globals from "../../globals";
+import { apiGet, apiPost, ApiError } from "./api";
 
 export const setAccessToken = (accessToken: string) => {
   globals.accessToken.value = accessToken;
-  axios.defaults.headers.common = { Authorization: `Bearer ${accessToken}` };
 };
 
 export const getTurnCredentials = async () => {
   try {
-    const response = await axios.get(
-      `${backendUrl}/api/v1/auth/getTurnCredentials`
-    );
-    return { data: response.data };
+    const data = await apiGet(`${backendUrl}/api/v1/auth/getTurnCredentials`);
+    return { data };
   } catch (err: any) {
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { error };
+    return { error: err.message ?? err.toString() };
   }
 };
 
 export const logout = async () => {
   try {
-    const response = await axios.post(`${backendUrl}/api/v1/auth/logout`);
-    return { data: response.data };
+    const data = await apiPost(`${backendUrl}/api/v1/auth/logout`);
+    return { data };
   } catch (err: any) {
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { error };
+    return { error: err.message ?? err.toString() };
   }
 };
 
@@ -39,18 +34,14 @@ export const resetPassword = async ({
   password: string;
 }) => {
   try {
-    const response = await axios.post(
-      `${backendUrl}/api/v1/auth/resetpassword`,
-      {
-        token,
-        email,
-        password,
-      }
-    );
-    return { data: response.data, error: null };
+    const data = await apiPost(`${backendUrl}/api/v1/auth/resetpassword`, {
+      token,
+      email,
+      password,
+    });
+    return { data, error: null };
   } catch (err: any) {
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { data: null, error };
+    return { data: null, error: err.message ?? err.toString() };
   }
 };
 
@@ -60,16 +51,13 @@ export const requestPasswordReset = async ({
   username: string;
 }) => {
   try {
-    const response = await axios.post(
+    const data = await apiPost(
       `${backendUrl}/api/v1/auth/requestResetPassword`,
-      {
-        username,
-      }
+      { username }
     );
-    return { data: response.data };
+    return { data };
   } catch (err: any) {
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { error };
+    return { error: err.message ?? err.toString() };
   }
 };
 
@@ -81,35 +69,31 @@ export const login = async ({
   password: string;
 }) => {
   try {
-    const response = await axios.post(`${backendUrl}/api/v1/auth/login`, {
+    const response = await apiPost(`${backendUrl}/api/v1/auth/login`, {
       username,
       password,
     });
     const data = {
-      username: response.data?.username,
-      score: response.data?.score,
-      accessToken: response.data?.accessToken,
-      refreshToken: response.data?.refreshToken,
+      username: response?.username,
+      score: response?.score,
+      accessToken: response?.accessToken,
+      refreshToken: response?.refreshToken,
     };
     return { data, error: null };
   } catch (err: any) {
-    if (err.response?.status === 401) {
+    if (err instanceof ApiError && err.status === 401) {
       return { data: null, error: "Invalid username, email or password" };
     }
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { data: null, error };
+    return { data: null, error: err.message ?? err.toString() };
   }
 };
 
 export const requestSignup = async ({ email }: { email: string }) => {
   try {
-    const response = await axios.post(`${backendUrl}/api/v1/auth/signup`, {
-      email,
-    });
-    return { data: response.data };
+    const data = await apiPost(`${backendUrl}/api/v1/auth/signup`, { email });
+    return { data };
   } catch (err: any) {
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { error };
+    return { error: err.message ?? err.toString() };
   }
 };
 
@@ -123,40 +107,34 @@ export const confirmSignup = async ({
   token: string;
 }) => {
   try {
-    const response = await axios.post(
-      `${backendUrl}/api/v1/auth/confirmSignup`,
-      {
-        email,
-        password,
-        token,
-      }
-    );
+    const response = await apiPost(`${backendUrl}/api/v1/auth/confirmSignup`, {
+      email,
+      password,
+      token,
+    });
     const data = {
-      username: response.data?.username,
-      score: response.data?.score,
-      accessToken: response.data?.accessToken,
-      refreshToken: response.data?.refreshToken,
+      username: response?.username,
+      score: response?.score,
+      accessToken: response?.accessToken,
+      refreshToken: response?.refreshToken,
     };
     return { data, error: null };
   } catch (err: any) {
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { data: null, error };
+    return { data: null, error: err.message ?? err.toString() };
   }
 };
 
 export const requestTokenRefresh = async (refreshToken: string) => {
   try {
-    const response = await axios.post(
-      `${backendUrl}/api/v1/auth/refreshToken`,
-      { refreshToken }
-    );
+    const response = await apiPost(`${backendUrl}/api/v1/auth/refreshToken`, {
+      refreshToken,
+    });
     const data = {
-      accessToken: response.data?.accessToken,
-      refreshToken: response.data?.refreshToken,
+      accessToken: response?.accessToken,
+      refreshToken: response?.refreshToken,
     };
     return { data };
   } catch (err: any) {
-    const error = err.response?.data ? err.response.data.error : err.toString();
-    return { error };
+    return { error: err.message ?? err.toString() };
   }
 };

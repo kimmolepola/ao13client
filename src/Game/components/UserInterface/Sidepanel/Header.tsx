@@ -1,23 +1,20 @@
-import { useState, useCallback, memo } from "react";
+import { memo } from "react";
 import { BiMove } from "react-icons/bi";
 import clsx from "clsx";
-import { debugOn } from "../../../debug/debug";
 
 const Header = ({
   move,
   onClickQuit,
   onClickMove,
+  debugIsOn,
+  onDebug,
 }: {
   move: boolean;
   onClickQuit: () => void;
   onClickMove: () => void;
+  debugIsOn: boolean;
+  onDebug: () => void;
 }) => {
-  const [debug, setDebug] = useState(false);
-  const onDebug = useCallback(() => {
-    setDebug(!debug);
-    debugOn.value = !debug;
-  }, [debug]);
-
   return (
     <div className="p-0.5 flex w-full justify-between flex-wrap gap-0.5">
       <div className="text-rose-900 font-bold select-none items-center">
@@ -29,7 +26,7 @@ const Header = ({
         </button>
         <button
           className={clsx(
-            debug ? "bg-yellow-400" : "",
+            debugIsOn ? "bg-yellow-400" : "",
             "w-14 h-6 border-2 active:brightness-80 text-xs font-bold"
           )}
           type="button"
@@ -40,7 +37,7 @@ const Header = ({
         <button
           className="w-10 h-6 text-rose-900 border-2 active:brightness-80 text-xs font-bold"
           type="button"
-          onClick={onClickQuit}
+          onClick={() => onClickQuit()}
         >
           Quit
         </button>

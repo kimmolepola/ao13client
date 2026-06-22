@@ -34,23 +34,26 @@ export const loadBox = (fileName?: string, size?: [number, number, number]) => {
   const height = size?.[1] || 1;
   const depth = size?.[2] || 1;
   const createGeometry = () => new THREE.BoxGeometry(width, height, depth);
-  const createMaterial = (x: THREE.Texture) => {
+  const createMaterial = (texture: THREE.Texture) => {
     const empty = new THREE.MeshBasicMaterial({
       transparent: true,
       opacity: 0,
     });
-    return [
-      empty,
-      empty,
-      empty,
-      empty,
-      new THREE.MeshBasicMaterial({
-        map: x,
-        transparent: true,
-      }),
-      empty,
-    ];
+
+    texture.premultiplyAlpha = false;
+    texture.needsUpdate = true;
+
+    const imageFace = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 1,
+      alphaTest: 0.5,
+      side: THREE.DoubleSide,
+    });
+
+    return [empty, empty, empty, empty, imageFace, empty];
   };
+
   return load<THREE.BoxGeometry, THREE.Material[]>(
     fileName || "default.png",
     createGeometry,
@@ -162,6 +165,7 @@ export const loadFighter = (color?: string) => {
       new THREE.MeshBasicMaterial({
         map: x,
         transparent: true,
+        alphaTest: 0.5,
         color,
       }),
       empty,
