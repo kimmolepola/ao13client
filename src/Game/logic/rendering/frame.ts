@@ -346,6 +346,7 @@ const handleSharedObjects = (
       (globals.sharedObjects[0]?.object3d?.position.y.toFixed(2) || 0);
   }
 
+  const isPortrait = window.matchMedia("(orientation: portrait)").matches;
   if (!prevAuthState.isStale && !authState.isStale) {
     for (let i = 0; i < parameters.maxRemoteObjects; i++) {
       const o = globals.sharedObjects[i];
@@ -367,6 +368,9 @@ const handleSharedObjects = (
                 handleRadarBoxItem(o, object3d, radarBoxRef);
               }
               handleCamera(delta, camera, object3d);
+              if (!isPortrait) {
+                handleDataBlock(o, object3d, camera, width, height);
+              }
             } else {
               interpolateRemoteObjectPositionAndRotation(
                 o,
@@ -375,8 +379,8 @@ const handleSharedObjects = (
                 prevAuthState.state
               );
               o.health = authState.state[i].health;
+              handleDataBlock(o, object3d, camera, width, height);
             }
-            handleDataBlock(o, object3d, camera, width, height);
           }
         }
       }
