@@ -22,6 +22,7 @@ const load = async (
   box.getSize(size);
   o.radius = Math.sqrt(size.x * size.x + size.y * size.y) / 2;
   o.object3d = mesh;
+  mesh.visible = false;
   scene.add(mesh);
 };
 
