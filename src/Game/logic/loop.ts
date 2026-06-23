@@ -13,6 +13,7 @@ import * as parameters from "src/parameters";
 let loopId: number | undefined;
 let previousTimestamp = 0;
 let accumulator = 0;
+let visibilityHandler: (() => void) | undefined;
 const tickBuffer = new Uint8Array(1);
 // TODO: set tick number based on server tick number
 let tickInterval = parameters.tickInterval;
@@ -151,6 +152,13 @@ export const startGameLoop = (
   const ticks: types.TickStateObject[][] = []; // outer array index is tickNumber, inner array index is idOverNetwork
   initializeTicks(ticks);
   initializeAuthoritativeState();
+  visibilityHandler = () => {
+    if (!document.hidden) {
+      previousTimestamp = performance.now();
+      accumulator = 0;
+    }
+  };
+  document.addEventListener("visibilitychange", visibilityHandler);
   const time = performance.now();
   previousTimestamp = time;
   loopId = time;
@@ -175,4 +183,8 @@ export const startGameLoop = (
 export const stopGameLoop = () => {
   loopId && cancelAnimationFrame(loopId);
   loopId = undefined;
+  if (visibilityHandler) {
+    document.removeEventListener("visibilitychange", visibilityHandler);
+    visibilityHandler = undefined;
+  }
 };
