@@ -205,6 +205,7 @@ export interface SharedGameObject extends GameObject {
     containerRef: RefObject<HTMLDivElement> | undefined;
     row1Ref: RefObject<HTMLDivElement> | undefined;
     row2Ref: RefObject<HTMLDivElement> | undefined;
+    row3Ref: RefObject<HTMLDivElement> | undefined;
   };
   shotDelay: number;
   positionZ: number;

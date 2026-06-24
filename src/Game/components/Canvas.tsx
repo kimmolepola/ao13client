@@ -1,7 +1,7 @@
-import { useEffect, useRef, memo, RefObject, useCallback } from "react";
+import { useEffect, useRef, memo, RefObject } from "react";
 import { Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import * as parameters from "src/parameters";
-import { startGameLoop, stopGameLoop } from "src/Game/logic/loop";
+import { startGameLoop, stopGameLoop, updateRenderSize } from "src/Game/logic/loop";
 import { sendControlsData } from "src/networking/logic/send";
 import { gameEventHandler } from "../logic/gameLogic";
 import { localLoad } from "../logic/rendering/loaderLocalObjects";
@@ -62,44 +62,42 @@ const Canvas = ({
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    updateRenderedSharedObjects(objectIds, scene, gameEventHandlerWrapper);
-  }, [objectIds]);
+    updateRenderedSharedObjects(objectIds, scene, gameEventHandlerWrapper, infoBoxRef);
+  }, [objectIds, infoBoxRef]);
 
   useEffect(() => {
     updateRenderedStaticObjects(staticObjects, scene);
   }, [staticObjects]);
 
-  const handleMount = useCallback(
-    (node: HTMLDivElement | null) => {
-      localLoad(scene, types.GameObjectType.Background);
-      node?.appendChild(renderer.domElement);
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
-      startGameLoop(
-        camera,
-        scene,
-        renderer,
-        width,
-        height,
-        infoBoxRef,
-        radarBoxRef,
-        debugContentRef,
-        syncInfoRef,
-        gameEventHandlerWrapper,
-        sendControlsData
-      );
-    },
-    [width, height, infoBoxRef, radarBoxRef, debugContentRef, syncInfoRef]
-  );
+  useEffect(() => {
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+    updateRenderSize(width, height);
+  }, [width, height]);
 
   useEffect(() => {
     const node = canvasRef.current;
-    handleMount(node);
-    return () => {
-      handleUnmount(node);
-    };
-  }, [handleMount]);
+    updateRenderSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+    localLoad(scene, types.GameObjectType.Background);
+    node?.appendChild(renderer.domElement);
+    startGameLoop(
+      camera,
+      scene,
+      renderer,
+      infoBoxRef,
+      radarBoxRef,
+      debugContentRef,
+      syncInfoRef,
+      gameEventHandlerWrapper,
+      sendControlsData
+    );
+    return () => handleUnmount(node);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <div ref={canvasRef} className="absolute inset-0" style={style} />;
 };

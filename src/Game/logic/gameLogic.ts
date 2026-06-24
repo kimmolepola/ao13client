@@ -129,6 +129,7 @@ export const gameEventHandler = async (
       const object3d = await localLoad(scene, types.GameObjectType.Explosion);
       if (object3d && pos) {
         object3d.position.copy(pos);
+        object3d.position.z = 1;
       }
       globals.localObjects.push({
         id: "explosion" + gameEvent.o.idOverNetwork + gameEvent.sequenceNumber,

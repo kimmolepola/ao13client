@@ -49,8 +49,8 @@ export const decodeAngle = (encodedAngle: number) => {
   // encode: Math.round(((angle - min) / (max - min)) * rangeMax);
 };
 
-export function decodeJWT(token: string) {
-  // Split the token into parts
+export function decodeJWT(token: string | undefined | null) {
+  if (!token) return null;
   const parts = token.split(".");
   if (parts.length !== 3) {
     throw new Error("Invalid JWT");

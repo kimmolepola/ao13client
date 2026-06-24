@@ -245,7 +245,7 @@ export const handleReceiveStateData = (dataView: DataView, save: boolean) => {
       ordnanceChannel2IsProvided;
 
     if (!possibleRecentObjectState && !allValuesAreProvided) {
-      console.error(
+      console.warn(
         "State decode invariant violated: partial update received but no reference state exists.",
         "seq:",
         sequenceNumber,

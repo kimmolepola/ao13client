@@ -70,7 +70,7 @@ const handleRadarBoxItem = (
   }
 };
 
-const handleInfoBox = (
+export const handleInfoBox = (
   o: types.SharedGameObject,
   object3d: THREE.Mesh,
   infoBoxRef: RefObject<HTMLDivElement>
@@ -79,14 +79,14 @@ const handleInfoBox = (
     const degree = Math.round(utils.radiansToDegrees(-object3d.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
     infoBoxRef.current.textContent = `
-    x: ${object3d.position.x | 0} ${(object3d.position.x * 20) | 0}
-    y: ${object3d.position.y | 0} ${(object3d.position.y * 20) | 0}
-    z: ${o.positionZ | 0}
-    heading: ${heading}
-    speed: ${o.speed.toFixed(1)}
-    health: ${o.health | 0}
-    fuel: ${o.fuel.toFixed(2)}
-    ammo: ${o.bulletCount}
+    x: ${(object3d.position.x * 0.02).toFixed(1)} km
+    y: ${(object3d.position.y * 0.02).toFixed(1)} km
+    alt: ${(o.positionZ * 65.617) | 0} ft
+    heading: ${heading}°
+    speed: ${(o.speed * 0.539957).toFixed(1)} kts
+    health: ${o.health | 0}%
+    fuel: ${(o.fuel * 2.20462) | 0} lbs
+    ammo: ${o.bulletCount} rds
     ${
       debug.debugOn.value
         ? `
@@ -116,40 +116,43 @@ const handleLocalPlayerMovement = (
   const frameScale = delta / (1000 / 60);
   const left = globals.keys.ArrowLeft ? frameScale : 0;
   const right = globals.keys.ArrowRight ? frameScale : 0;
-  const d = globals.keys.KeyD ? frameScale : 0;
-  const f = globals.keys.KeyF ? frameScale : 0;
 
   const dt = delta / 1000;
   const throttle = globals.keys.ArrowUp ? types.inputFull : 0;
   const brake = globals.keys.ArrowDown ? types.inputFull : 0;
+  const hasFuel = o.fuel > 0;
   const thrustFactor =
     p.thrustMinFactor +
     (1 - p.thrustMinFactor) * Math.min(o.speed / p.thrustRampSpeed, 1);
-  o.speed +=
-    (throttle * p.thrustForce * thrustFactor -
-      p.dragCoefficient * o.speed * o.speed -
-      brake * p.brakeForce) *
-    dt;
+  const thrust = hasFuel ? throttle * p.thrustForce * thrustFactor : 0;
+  const drag = hasFuel ? 0 : p.dragCoefficient * o.speed * o.speed;
+  o.speed += (thrust - drag - brake * p.brakeForce) * dt;
 
   const leftBrake = left > 0 && o.rotationSpeed < 0 ? 4 : 1;
   const rightBrake = right > 0 && o.rotationSpeed > 0 ? 4 : 1;
   o.rotationSpeed += left * p.forceLeftOrRightToRotationFactor * leftBrake;
   o.rotationSpeed -= right * p.forceLeftOrRightToRotationFactor * rightBrake;
 
-  o.verticalSpeed -= d * p.forceAscOrDescToVerticalSpeedFactor;
-  o.verticalSpeed += f * p.forceAscOrDescToVerticalSpeedFactor;
+  // Vertical speed: piecewise by speed (knots)
+  const kts = o.speed / 1.852;
+  if (kts < p.glideSlopeMinSpeedKts) {
+    o.verticalSpeed = p.glideSlopeVerticalSpeed - (p.glideSlopeMinSpeedKts - kts) * p.lowSpeedDescentFactor;
+  } else if (kts < p.glideSlopeMaxSpeedKts) {
+    o.verticalSpeed = p.glideSlopeVerticalSpeed;
+  } else if (kts < p.neutralMaxSpeedKts) {
+    o.verticalSpeed = 0;
+  } else {
+    o.verticalSpeed = (kts - p.neutralMaxSpeedKts) * p.ascentFactor;
+  }
 
   //
   // 2. CLAMP VELOCITIES
   //
-  o.speed = Math.min(Math.max(o.speed, p.minSpeed), p.maxSpeed);
+  const effectiveMinSpeed = o.positionZ > 0 ? p.minAirborneSpeedKmh : p.minSpeed;
+  o.speed = Math.min(Math.max(o.speed, effectiveMinSpeed), p.maxSpeed);
   o.rotationSpeed = Math.min(
     Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
     p.maxRotationSpeedAbsolute
-  );
-  o.verticalSpeed = Math.min(
-    Math.max(o.verticalSpeed, -p.maxVerticalSpeedAbsolute),
-    p.maxVerticalSpeedAbsolute
   );
 
   //
@@ -159,12 +162,6 @@ const handleLocalPlayerMovement = (
     const decay = p.rotationDecay ** (delta / (1000 / 60));
     o.rotationSpeed *= decay;
     if (Math.abs(o.rotationSpeed) < 0.00001) o.rotationSpeed = 0;
-  }
-
-  if (!d && !f) {
-    const decay = p.verticalDecay ** (delta / (1000 / 60));
-    o.verticalSpeed *= decay;
-    if (Math.abs(o.verticalSpeed) < 0.00001) o.verticalSpeed = 0;
   }
 
   //
@@ -181,6 +178,8 @@ const handleLocalPlayerMovement = (
   object3d.rotateZ(o.rotationSpeed * p.rotationFactor * delta);
   object3d.translateY(o.speed * p.speedFactor * delta);
   o.positionZ += o.verticalSpeed * p.verticalSpeedFactor * delta;
+  if (o.positionZ > p.maxAltitude) o.positionZ = p.maxAltitude;
+  if (o.positionZ < 0) o.positionZ = 0;
 };
 
 // const down = new THREE.Vector3(0, -1, 0);
@@ -210,8 +209,9 @@ const handleDataBlock = (
   const container = o.infoElement.containerRef?.current;
   const row1 = o.infoElement.row1Ref?.current;
   const row2 = o.infoElement.row2Ref?.current;
+  const row3 = o.infoElement.row3Ref?.current;
 
-  if (container && row1 && row2) {
+  if (container && row1 && row2 && row3) {
     // down.set(0, -1, 0);
     // down.applyQuaternion(camera.quaternion); // rotate into world space
     // const offsetPosition = position
@@ -226,10 +226,18 @@ const handleDataBlock = (
     const x = (dataBlockPosition.x + 1) * 0.5 * width - halfWidth;
     const y = (1 - dataBlockPosition.y) * 0.5 * height;
     const username = o.username;
-    const healthText = o.health.toFixed(0);
+    const healthVal = o.health | 0;
+    const healthBar = healthVal < 100
+      ? `<div style="width:calc(${healthVal}% - 6px);height:4px;background:rgba(255,255,255,0.8);margin:0 3px"></div>`
+      : "";
+    const altFt = Math.floor(o.positionZ * 65.617 / 100) * 100;
+    const altText = altFt < 3000 ? `alt ${altFt}` : "";
     container.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     if (row1.textContent !== username) row1.textContent = username;
-    if (row2.textContent !== healthText) row2.textContent = healthText;
+    if (row2.innerHTML !== healthBar) row2.innerHTML = healthBar;
+    if (row3.textContent !== altText) row3.textContent = altText;
+    const row2Padding = healthBar && !altText ? "2px" : "";
+    if (row2.style.paddingBottom !== row2Padding) row2.style.paddingBottom = row2Padding;
   }
 };
 

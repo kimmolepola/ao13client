@@ -59,7 +59,6 @@ export const onReceiveStringData = (
       break;
     }
     case types.ServerDataType.YouDied: {
-      setKickReason("You were shot down.");
       break;
     }
     default:

@@ -5,10 +5,12 @@ const InfoText = ({ gameObject }: { gameObject: types.SharedGameObject }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);
+  const row3Ref = useRef<HTMLDivElement>(null);
 
   gameObject.infoElement.containerRef = containerRef;
   gameObject.infoElement.row1Ref = row1Ref;
   gameObject.infoElement.row2Ref = row2Ref;
+  gameObject.infoElement.row3Ref = row3Ref;
 
   return (
     <div
@@ -17,7 +19,8 @@ const InfoText = ({ gameObject }: { gameObject: types.SharedGameObject }) => {
     >
       <div className="border-r border-neutral-500/40 w-1/2 h-40">&nbsp;</div>
       <div ref={row1Ref} className="bg-neutral-500/40 px-1 rounded-t-sm" />
-      <div ref={row2Ref} className="bg-neutral-500/40 px-1 rounded-b-sm" />
+      <div ref={row2Ref} className="bg-neutral-500/40" />
+      <div ref={row3Ref} className="bg-neutral-500/40 px-1 rounded-b-sm" />
     </div>
   );
 };

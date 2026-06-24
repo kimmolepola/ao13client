@@ -33,6 +33,12 @@ const getNextSeq = (seq: number) => {
 
 let isSyncing = false;
 
+const renderSize = { width: 0, height: 0 };
+export const updateRenderSize = (width: number, height: number) => {
+  renderSize.width = width;
+  renderSize.height = height;
+};
+
 const loop = (
   ticks: types.TickStateObject[][],
   timestamp: number,
@@ -40,8 +46,6 @@ const loop = (
   camera: THREE.Camera,
   scene: THREE.Scene,
   renderer: THREE.Renderer,
-  width: number,
-  height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   debugContentRef: RefObject<HTMLDivElement>,
@@ -49,6 +53,7 @@ const loop = (
   onGameEvent: (e: types.GameEvent) => void,
   onInputData: (data: ArrayBuffer) => void
 ) => {
+  const { width, height } = renderSize;
   const delta = timestamp - previousTimestamp;
   accumulator += delta;
   const isTickFrame = accumulator >= tickInterval;
@@ -124,8 +129,6 @@ const loop = (
         camera,
         scene,
         renderer,
-        width,
-        height,
         infoBoxRef,
         radarBoxRef,
         debugContentRef,
@@ -140,8 +143,6 @@ export const startGameLoop = (
   camera: THREE.Camera,
   scene: THREE.Scene,
   renderer: THREE.Renderer,
-  width: number,
-  height: number,
   infoBoxRef: RefObject<HTMLDivElement>,
   radarBoxRef: RefObject<{ [id: string]: RefObject<HTMLDivElement> }>,
   debugContentRef: RefObject<HTMLDivElement>,
@@ -149,6 +150,12 @@ export const startGameLoop = (
   onGameEvent: (e: types.GameEvent) => void,
   onInputData: (data: ArrayBuffer) => void
 ) => {
+  isSyncing = false;
+  tickInterval = parameters.tickInterval;
+  if (syncInfoRef.current) {
+    syncInfoRef.current.classList.remove("visible");
+    syncInfoRef.current.classList.add("invisible");
+  }
   const ticks: types.TickStateObject[][] = []; // outer array index is tickNumber, inner array index is idOverNetwork
   initializeTicks(ticks);
   initializeAuthoritativeState();
@@ -156,6 +163,12 @@ export const startGameLoop = (
     if (!document.hidden) {
       previousTimestamp = performance.now();
       accumulator = 0;
+      tickInterval = parameters.tickInterval;
+      isSyncing = false;
+      if (syncInfoRef.current) {
+        syncInfoRef.current.classList.remove("visible");
+        syncInfoRef.current.classList.add("invisible");
+      }
     }
   };
   document.addEventListener("visibilitychange", visibilityHandler);
@@ -169,8 +182,6 @@ export const startGameLoop = (
     camera,
     scene,
     renderer,
-    width,
-    height,
     infoBoxRef,
     radarBoxRef,
     debugContentRef,

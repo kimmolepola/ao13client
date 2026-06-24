@@ -1,7 +1,9 @@
+import { RefObject } from "react";
 import * as THREE from "three";
 import * as globals from "src/globals";
 import * as types from "src/types";
 import { loadFighter } from "./meshes";
+import { handleInfoBox } from "./frame";
 
 type MeshLoadFn = (
   color?: string
@@ -38,7 +40,8 @@ const removeSharedObject = (scene: THREE.Scene, objectsIndex: number) => {
 export const updateRenderedSharedObjects = (
   objectIds: string[],
   scene: THREE.Scene,
-  onGameEvent?: (e: types.GameEvent) => void
+  onGameEvent?: (e: types.GameEvent) => void,
+  infoBoxRef?: RefObject<HTMLDivElement>
 ) => {
   const os = globals.sharedObjects;
   for (let i = os.length - 1; i >= 0; i--) {
@@ -48,6 +51,12 @@ export const updateRenderedSharedObjects = (
         const isFound = o.object3d && scene.children.includes(o.object3d);
         !isFound && load(scene, loadFighter, o);
       } else {
+        o.health = 0;
+        o.speed = 0;
+        o.positionZ = 0;
+        const row2 = o.infoElement.row2Ref?.current;
+        if (row2) row2.textContent = "0";
+        if (o.isMe && infoBoxRef && o.object3d) handleInfoBox(o, o.object3d, infoBoxRef);
         if (o.object3d && onGameEvent) {
           onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: 0 });
         }
