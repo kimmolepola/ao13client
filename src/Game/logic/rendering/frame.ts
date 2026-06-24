@@ -315,6 +315,8 @@ const interpolateRemoteObjectPositionAndRotation = (
 };
 
 let nextInfoUpdate = Date.now();
+let prevDisplayedServerTick = -1;
+let serverTickChangedAt = 0;
 
 function subtractSeq8(a: number, b: number) {
   return (a - b) & 0xff;
@@ -338,7 +340,11 @@ const handleSharedObjects = (
   // const serverTickNumber = getPrevSeq(getPrevSeq(getPrevSeq(tickNumber)));
   const authState = authoritativeStates[serverTickNumber];
   const prevAuthState = authoritativeStates[getPrevSeq(serverTickNumber)];
-  const alpha = accumulator / parameters.tickInterval;
+  if (serverTickNumber !== prevDisplayedServerTick) {
+    prevDisplayedServerTick = serverTickNumber;
+    serverTickChangedAt = performance.now();
+  }
+  const alpha = Math.min(1, (performance.now() - serverTickChangedAt) / parameters.tickInterval);
 
   if (debug.debugOn.value && debugContentRef.current) {
     debugContentRef.current.textContent =
