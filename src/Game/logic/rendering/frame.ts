@@ -369,8 +369,10 @@ const handleSharedObjects = (
         const object3d = o.object3d;
         if (object3d) {
           if (!authState.state[i].exists) {
-            if (object3d.visible && prevAuthState.state[i].exists) {
+            if (object3d.visible) {
               object3d.visible = false;
+            }
+            if (prevAuthState.state[i].exists) {
               dataBlockHideAt[i] = performance.now() + 3000;
             }
             const row2 = o.infoElement.row2Ref?.current;
@@ -382,33 +384,47 @@ const handleSharedObjects = (
               container.style.display = "none";
             }
           } else {
-            if (!object3d.visible) {
-              object3d.visible = true;
-              dataBlockHideAt[i] = 0;
-              const container = o.infoElement.containerRef?.current;
-              if (container) container.style.display = "";
-            }
-            if (i === globals.state.ownRemoteObjectIndex) {
-              const deltaOrAccumulator = isTickFrame ? accumulator : delta;
-              handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
-              if (nextInfoUpdate < Date.now()) {
-                nextInfoUpdate = Date.now() + 1000;
-                handleInfoBox(o, object3d, infoBoxRef);
-                handleRadarBoxItem(o, object3d, radarBoxRef);
+            const isDying = authState.state[i].health <= 0;
+            if (isDying) {
+              if (object3d.visible) {
+                object3d.visible = false;
+                if (prevAuthState.state[i].health > 0) {
+                  onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: serverTickNumber });
+                }
               }
-              handleCamera(delta, camera, object3d);
-              if (!isPortrait) {
+              o.health = 0;
+              if (i !== globals.state.ownRemoteObjectIndex || !isPortrait) {
                 handleDataBlock(o, object3d, camera, width, height);
               }
             } else {
-              interpolateRemoteObjectPositionAndRotation(
-                o,
-                alpha,
-                authState.state,
-                prevAuthState.state
-              );
-              o.health = authState.state[i].health;
-              handleDataBlock(o, object3d, camera, width, height);
+              if (!object3d.visible) {
+                object3d.visible = true;
+                dataBlockHideAt[i] = 0;
+                const container = o.infoElement.containerRef?.current;
+                if (container) container.style.display = "";
+              }
+              if (i === globals.state.ownRemoteObjectIndex) {
+                const deltaOrAccumulator = isTickFrame ? accumulator : delta;
+                handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
+                if (nextInfoUpdate < Date.now()) {
+                  nextInfoUpdate = Date.now() + 1000;
+                  handleInfoBox(o, object3d, infoBoxRef);
+                  handleRadarBoxItem(o, object3d, radarBoxRef);
+                }
+                handleCamera(delta, camera, object3d);
+                if (!isPortrait) {
+                  handleDataBlock(o, object3d, camera, width, height);
+                }
+              } else {
+                interpolateRemoteObjectPositionAndRotation(
+                  o,
+                  alpha,
+                  authState.state,
+                  prevAuthState.state
+                );
+                o.health = authState.state[i].health;
+                handleDataBlock(o, object3d, camera, width, height);
+              }
             }
           }
         }

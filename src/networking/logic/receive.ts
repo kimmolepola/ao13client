@@ -59,6 +59,7 @@ export const onReceiveStringData = (
       break;
     }
     case types.ServerDataType.YouDied: {
+      setKickReason("You were destroyed.");
       break;
     }
     default:
