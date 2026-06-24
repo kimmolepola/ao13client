@@ -227,7 +227,7 @@ const handleDataBlock = (
     const y = (1 - dataBlockPosition.y) * 0.5 * height;
     const username = o.username;
     const healthVal = o.health | 0;
-    const healthBar = healthVal < 100
+    const healthBar = healthVal > 0 && healthVal < 100
       ? `<div style="width:calc(${healthVal}% - 6px);height:4px;background:rgba(255,255,255,0.8);margin:0 3px"></div>`
       : "";
     const altFt = Math.floor(o.positionZ * 65.617 / 100) * 100;
@@ -317,6 +317,7 @@ const interpolateRemoteObjectPositionAndRotation = (
 let nextInfoUpdate = Date.now();
 let prevDisplayedServerTick = -1;
 let serverTickChangedAt = 0;
+const dataBlockHideAt: number[] = [];
 
 function subtractSeq8(a: number, b: number) {
   return (a - b) & 0xff;
@@ -370,9 +371,23 @@ const handleSharedObjects = (
           if (!authState.state[i].exists) {
             if (object3d.visible && prevAuthState.state[i].exists) {
               object3d.visible = false;
+              dataBlockHideAt[i] = performance.now() + 3000;
+            }
+            const row2 = o.infoElement.row2Ref?.current;
+            const row3 = o.infoElement.row3Ref?.current;
+            if (row2 && row2.innerHTML !== "") { row2.innerHTML = ""; row2.style.paddingBottom = ""; }
+            if (row3 && row3.textContent !== "") row3.textContent = "";
+            const container = o.infoElement.containerRef?.current;
+            if (container && performance.now() >= (dataBlockHideAt[i] ?? 0)) {
+              container.style.display = "none";
             }
           } else {
-            if (!object3d.visible) object3d.visible = true;
+            if (!object3d.visible) {
+              object3d.visible = true;
+              dataBlockHideAt[i] = 0;
+              const container = o.infoElement.containerRef?.current;
+              if (container) container.style.display = "";
+            }
             if (i === globals.state.ownRemoteObjectIndex) {
               const deltaOrAccumulator = isTickFrame ? accumulator : delta;
               handleLocalPlayerMovement(deltaOrAccumulator, o, object3d);
