@@ -57,7 +57,7 @@ const ControlButton = ({ control }: { control: types.Key }) => {
 
 const ControlButtons = () => {
   return (
-    <div className="landscape:hidden absolute left-0 right-0 bottom-8 flex flex-col gap-4 items-center">
+    <div className="[@media(pointer:fine)]:hidden absolute left-0 right-0 bottom-8 flex flex-col gap-4 items-center">
       <ControlButton control={types.Key.ArrowUp} />
       <div className="w-full flex justify-evenly">
         <ControlButton control={types.Key.ArrowLeft} />

@@ -361,7 +361,7 @@ const handleSharedObjects = (
       (globals.sharedObjects[0]?.object3d?.position.y.toFixed(2) || 0);
   }
 
-  const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+  const isPortrait = window.matchMedia("(pointer: coarse)").matches;
   if (!prevAuthState.isStale && !authState.isStale) {
     for (let i = 0; i < parameters.maxRemoteObjects; i++) {
       const o = globals.sharedObjects[i];
@@ -388,6 +388,10 @@ const handleSharedObjects = (
             if (isDying) {
               if (object3d.visible) {
                 object3d.visible = false;
+                if (i === globals.state.ownRemoteObjectIndex) {
+                  o.health = 0;
+                  handleInfoBox(o, object3d, infoBoxRef);
+                }
                 if (prevAuthState.state[i].health > 0) {
                   onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: serverTickNumber });
                 }
@@ -423,6 +427,7 @@ const handleSharedObjects = (
                   prevAuthState.state
                 );
                 o.health = authState.state[i].health;
+                handleRadarBoxItem(o, object3d, radarBoxRef);
                 handleDataBlock(o, object3d, camera, width, height);
               }
             }
