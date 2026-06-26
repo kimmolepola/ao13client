@@ -299,6 +299,8 @@ const getPrevSeq = (seq: number) => {
 const interpolateRemoteObjectPositionAndRotation = (
   o: types.SharedGameObject,
   alpha: number,
+  offset: number,
+  delta: number,
   state: types.AuthoritativeState[],
   prevState: types.AuthoritativeState[]
 ) => {
@@ -306,13 +308,41 @@ const interpolateRemoteObjectPositionAndRotation = (
   const pa = prevState[o.idOverNetwork];
   const o3d = o.object3d;
   if (o3d) {
-    o3d.position.x = pa.x + (a.x - pa.x) * alpha;
-    o3d.position.y = pa.y + (a.y - pa.y) * alpha;
-    o3d.rotation.z =
-      pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * alpha;
-    o.positionZ = pa.z + (a.z - pa.z) * alpha;
+    const t = alpha + offset;
+    const targetX = pa.x + (a.x - pa.x) * t;
+    const targetY = pa.y + (a.y - pa.y) * t;
+    const targetRotZ = pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * t;
+    const targetZ = pa.z + (a.z - pa.z) * t;
+    const dx = targetX - o3d.position.x;
+    const dy = targetY - o3d.position.y;
+    const idx = o.idOverNetwork;
+    if (dx * dx + dy * dy > parameters.remotePlayerSnapDistSq) {
+      o3d.position.x = targetX;
+      o3d.position.y = targetY;
+      o3d.rotation.z = targetRotZ;
+      o.positionZ = targetZ;
+    } else {
+      const lf = 1 - Math.exp(-delta / parameters.remotePlayerLerpMs);
+      o3d.position.x += dx * lf;
+      o3d.position.y += dy * lf;
+      const vx = o3d.position.x - prevRemoteX[idx];
+      const vy = o3d.position.y - prevRemoteY[idx];
+      const vMagSq = vx * vx + vy * vy;
+      let blendedTargetRot = targetRotZ;
+      if (vMagSq > 1e-6) {
+        const velocityHeading = Math.atan2(-vx, vy);
+        blendedTargetRot = targetRotZ + normalizeAngle(velocityHeading - targetRotZ) * parameters.remoteVelocityBlendFactor;
+      }
+      o3d.rotation.z += normalizeAngle(blendedTargetRot - o3d.rotation.z) * lf;
+      o.positionZ += (targetZ - o.positionZ) * lf;
+    }
+    prevRemoteX[idx] = o3d.position.x;
+    prevRemoteY[idx] = o3d.position.y;
   }
 };
+
+const prevRemoteX = new Float32Array(parameters.maxRemoteObjects);
+const prevRemoteY = new Float32Array(parameters.maxRemoteObjects);
 
 let nextInfoUpdate = Date.now();
 let prevDisplayedServerTick = -1;
@@ -423,6 +453,8 @@ const handleSharedObjects = (
                 interpolateRemoteObjectPositionAndRotation(
                   o,
                   alpha,
+                  offset,
+                  delta,
                   authState.state,
                   prevAuthState.state
                 );

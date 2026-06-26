@@ -88,6 +88,9 @@ export const bulletSpeed = 3500;
 export const bulletSpeedReductionFactor = 0.999;
 export const bulletTimeToLive = 2000;
 
+export const remotePlayerLerpMs = 50;    // smoothing time constant for remote player position
+export const remotePlayerSnapDistSq = 25; // snap (no lerp) when distance² exceeds this (~5 units)
+export const remoteVelocityBlendFactor = 0.4; // blend visual heading toward velocity direction (0=server heading, 1=pure velocity)
 export const cameraDefaultZ = 80; // 160000 / oneDistanceUnitInMeters; // low orbit satellite altitude 160 - 2000 km. 160 km / 20 m = 8000
 export const worldWidth = maxWorldCoordinateValue - minWorldCoordinateValue;
 export const windowToRadarBoxRatio = 10;
