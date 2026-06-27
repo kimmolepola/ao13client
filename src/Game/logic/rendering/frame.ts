@@ -13,6 +13,8 @@ const cameraRotationAlpha = parameters.cameraRotationInterpolationAlpha;
 const cameraTarget = new THREE.Vector3(0, 0, parameters.cameraDefaultZ);
 const localObjectsRemoveIndexes: number[] = [];
 
+let prevAltitudeFt: number | null = null;
+
 const normalizeAngle = (a: number) => {
   a %= Math.PI * 2;
   if (a <= -Math.PI) a += Math.PI * 2;
@@ -78,10 +80,13 @@ export const handleInfoBox = (
   if (infoBoxRef.current) {
     const degree = Math.round(utils.radiansToDegrees(-object3d.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
+    const altFt = (o.positionZ * 65.617) | 0;
+    const altArrow = prevAltitudeFt === null ? "" : altFt > prevAltitudeFt ? " ↑" : altFt < prevAltitudeFt ? " ↓" : "";
+    prevAltitudeFt = altFt;
     infoBoxRef.current.textContent = `
     x: ${(object3d.position.x * 0.02).toFixed(1)} km
     y: ${(object3d.position.y * 0.02).toFixed(1)} km
-    alt: ${(o.positionZ * 65.617) | 0} ft
+    alt: ${altFt} ft${altArrow}
     heading: ${heading}°
     speed: ${(o.speed * 0.539957).toFixed(1)} kts
     health: ${o.health | 0}%
