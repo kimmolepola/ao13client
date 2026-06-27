@@ -81,7 +81,14 @@ export const handleInfoBox = (
     const degree = Math.round(utils.radiansToDegrees(-object3d.rotation.z));
     const heading = degree < 0 ? degree + 360 : degree;
     const altFt = (o.positionZ * 65.617) | 0;
-    const altArrow = prevAltitudeFt === null ? "" : altFt > prevAltitudeFt ? " ↑" : altFt < prevAltitudeFt ? " ↓" : "";
+    const altArrow =
+      prevAltitudeFt === null
+        ? ""
+        : altFt > prevAltitudeFt
+        ? " ↑"
+        : altFt < prevAltitudeFt
+        ? " ↓"
+        : "";
     prevAltitudeFt = altFt;
     infoBoxRef.current.textContent = `
     x: ${(object3d.position.x * 0.02).toFixed(1)} km
@@ -141,7 +148,9 @@ const handleLocalPlayerMovement = (
   // Vertical speed: piecewise by speed (knots)
   const kts = o.speed / 1.852;
   if (kts < p.glideSlopeMinSpeedKts) {
-    o.verticalSpeed = p.glideSlopeVerticalSpeed - (p.glideSlopeMinSpeedKts - kts) * p.lowSpeedDescentFactor;
+    o.verticalSpeed =
+      p.glideSlopeVerticalSpeed -
+      (p.glideSlopeMinSpeedKts - kts) * p.lowSpeedDescentFactor;
   } else if (kts < p.glideSlopeMaxSpeedKts) {
     o.verticalSpeed = p.glideSlopeVerticalSpeed;
   } else if (kts < p.neutralMaxSpeedKts) {
@@ -153,7 +162,8 @@ const handleLocalPlayerMovement = (
   //
   // 2. CLAMP VELOCITIES
   //
-  const effectiveMinSpeed = o.positionZ > 0 ? p.minAirborneSpeedKmh : p.minSpeed;
+  const effectiveMinSpeed =
+    o.positionZ > 0 ? p.minAirborneSpeedKmh : p.minSpeed;
   o.speed = Math.min(Math.max(o.speed, effectiveMinSpeed), p.maxSpeed);
   o.rotationSpeed = Math.min(
     Math.max(o.rotationSpeed, -p.maxRotationSpeedAbsolute),
@@ -232,17 +242,19 @@ const handleDataBlock = (
     const y = (1 - dataBlockPosition.y) * 0.5 * height;
     const username = o.username;
     const healthVal = o.health | 0;
-    const healthBar = healthVal > 0 && healthVal < 100
-      ? `<div style="width:max(2px,calc(${healthVal}% - 6px));height:4px;background:rgba(255,255,255,0.8);margin:0 3px"></div>`
-      : "";
-    const altFt = Math.floor(o.positionZ * 65.617 / 100) * 100;
+    const healthBar =
+      healthVal > 0 && healthVal < 100
+        ? `<div style="width:max(2px,calc(${healthVal}% - 6px));height:4px;background:rgba(255,255,255,0.8);margin:0 3px"></div>`
+        : "";
+    const altFt = Math.floor((o.positionZ * 65.617) / 100) * 100;
     const altText = altFt < 3000 ? `alt ${altFt}` : "";
     container.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     if (row1.textContent !== username) row1.textContent = username;
     if (row2.innerHTML !== healthBar) row2.innerHTML = healthBar;
     if (row3.textContent !== altText) row3.textContent = altText;
     const row2Padding = healthBar && !altText ? "2px" : "";
-    if (row2.style.paddingBottom !== row2Padding) row2.style.paddingBottom = row2Padding;
+    if (row2.style.paddingBottom !== row2Padding)
+      row2.style.paddingBottom = row2Padding;
   }
 };
 
@@ -316,7 +328,8 @@ const interpolateRemoteObjectPositionAndRotation = (
     const t = alpha + offset;
     const targetX = pa.x + (a.x - pa.x) * t;
     const targetY = pa.y + (a.y - pa.y) * t;
-    const targetRotZ = pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * t;
+    const targetRotZ =
+      pa.rotationZ + normalizeAngle(a.rotationZ - pa.rotationZ) * t;
     const targetZ = pa.z + (a.z - pa.z) * t;
     const dx = targetX - o3d.position.x;
     const dy = targetY - o3d.position.y;
@@ -336,7 +349,10 @@ const interpolateRemoteObjectPositionAndRotation = (
       let blendedTargetRot = targetRotZ;
       if (vMagSq > 1e-6) {
         const velocityHeading = Math.atan2(-vx, vy);
-        blendedTargetRot = targetRotZ + normalizeAngle(velocityHeading - targetRotZ) * parameters.remoteVelocityBlendFactor;
+        blendedTargetRot =
+          targetRotZ +
+          normalizeAngle(velocityHeading - targetRotZ) *
+            parameters.remoteVelocityBlendFactor;
       }
       o3d.rotation.z += normalizeAngle(blendedTargetRot - o3d.rotation.z) * lf;
       o.positionZ += (targetZ - o.positionZ) * lf;
@@ -380,7 +396,10 @@ const handleSharedObjects = (
     prevDisplayedServerTick = serverTickNumber;
     serverTickChangedAt = performance.now();
   }
-  const alpha = Math.min(1, (performance.now() - serverTickChangedAt) / parameters.tickInterval);
+  const alpha = Math.min(
+    1,
+    (performance.now() - serverTickChangedAt) / parameters.tickInterval
+  );
 
   if (debug.debugOn.value && debugContentRef.current) {
     debugContentRef.current.textContent =
@@ -412,7 +431,10 @@ const handleSharedObjects = (
             }
             const row2 = o.infoElement.row2Ref?.current;
             const row3 = o.infoElement.row3Ref?.current;
-            if (row2 && row2.innerHTML !== "") { row2.innerHTML = ""; row2.style.paddingBottom = ""; }
+            if (row2 && row2.innerHTML !== "") {
+              row2.innerHTML = "";
+              row2.style.paddingBottom = "";
+            }
             if (row3 && row3.textContent !== "") row3.textContent = "";
             const container = o.infoElement.containerRef?.current;
             if (container && performance.now() >= (dataBlockHideAt[i] ?? 0)) {
@@ -428,7 +450,11 @@ const handleSharedObjects = (
                   handleInfoBox(o, object3d, infoBoxRef);
                 }
                 if (prevAuthState.state[i].health > 0) {
-                  onGameEvent({ type: types.EventType.HealthZero, o, sequenceNumber: serverTickNumber });
+                  onGameEvent({
+                    type: types.EventType.HealthZero,
+                    o,
+                    sequenceNumber: serverTickNumber,
+                  });
                 }
               }
               o.health = 0;
