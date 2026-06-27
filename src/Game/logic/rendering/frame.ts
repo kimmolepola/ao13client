@@ -228,7 +228,7 @@ const handleDataBlock = (
     const username = o.username;
     const healthVal = o.health | 0;
     const healthBar = healthVal > 0 && healthVal < 100
-      ? `<div style="width:calc(${healthVal}% - 6px);height:4px;background:rgba(255,255,255,0.8);margin:0 3px"></div>`
+      ? `<div style="width:max(2px,calc(${healthVal}% - 6px));height:4px;background:rgba(255,255,255,0.8);margin:0 3px"></div>`
       : "";
     const altFt = Math.floor(o.positionZ * 65.617 / 100) * 100;
     const altText = altFt < 3000 ? `alt ${altFt}` : "";
